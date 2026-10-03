@@ -1,0 +1,12 @@
+# System & IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.vscode-shared/
+.antigravity-ide/
+*.log
+
+# Dependencies (if installed)
+node_modules/
+dist/
+.env.local

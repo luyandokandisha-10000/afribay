@@ -1,0 +1,1725 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AfriBay — Good finds, better prices</title>
+  <style>
+    :root {
+      --ink: #17231d;
+      --muted: #6b766e;
+      --line: #e4e8e3;
+      --paper: #fbfcfa;
+      --card: #ffffff;
+      --green: #1c6b4d;
+      --green-deep: #124332;
+      --green-soft: #e7f2ec;
+      --orange: #ed7a45;
+      --yellow: #f8d477;
+      --shadow: 0 16px 40px rgba(21, 44, 32, .09);
+      --radius: 22px;
+    }
+    body.dark {
+      --ink: #eef5ef;
+      --muted: #a9b7ad;
+      --line: #34463b;
+      --paper: #101a15;
+      --card: #17251d;
+      --green-soft: #203d2f;
+      --shadow: 0 16px 40px rgba(0,0,0,.3);
+    }
+    body.dark .product-card, body.dark .search-box, body.dark .filter-btn,
+    body.dark .category:not(.active), body.dark .auth-card, body.dark .cart-list,
+    body.dark .summary, body.dark .side-box, body.dark .menu, body.dark .modal,
+    body.dark .bottom-nav { background: var(--card); color: var(--ink); }
+    body.dark .menu button, body.dark .icon-btn { color: var(--ink); }
+    body.dark .form-row input, body.dark .form-row select, body.dark .pay-option { background: var(--paper); color: var(--ink); }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { min-height: 100vh; padding-bottom: 92px; }
+    .topbar {
+      height: 76px; display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; padding: 0 clamp(18px, 5vw, 72px); background: rgba(251,252,250,.93);
+      border-bottom: 1px solid rgba(228,232,227,.8); position: sticky; top: 0; z-index: 10;
+      backdrop-filter: blur(16px);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 800; letter-spacing: -.04em; }
+    .brand-mark { width: 34px; height: 34px; border-radius: 12px 12px 12px 4px; background: var(--green); color: white; display: grid; place-items: center; font-size: 17px; box-shadow: 5px 5px 0 var(--yellow); }
+    .top-actions { display: flex; align-items: center; gap: 10px; }
+    .icon-btn, .avatar-btn { width: 40px; height: 40px; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 50%; display: grid; place-items: center; position: relative; }
+    .avatar-btn { background: var(--green-deep); color: white; border: 0; font-size: 13px; font-weight: 800; }
+    .badge { position: absolute; right: -3px; top: -3px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 20px; background: var(--orange); color: white; font-size: 10px; display: grid; place-items: center; border: 2px solid var(--paper); }
+    .menu-wrap { position: relative; }
+    .menu {
+      display: none; position: absolute; top: 50px; right: 0; width: 220px; padding: 9px; background: white; border: 1px solid var(--line);
+      border-radius: 18px; box-shadow: var(--shadow); z-index: 20;
+    }
+    .menu.open { display: block; animation: rise .16s ease-out; }
+    .menu-label { padding: 10px 11px 7px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; font-weight: 800; }
+    .menu button { width: 100%; border: 0; background: transparent; text-align: left; padding: 11px; border-radius: 11px; color: var(--ink); }
+    .menu button:hover { background: var(--green-soft); color: var(--green-deep); }
+    .hero { max-width: 1400px; margin: 0 auto; padding: clamp(30px, 5vw, 66px) clamp(18px, 5vw, 72px) 24px; display: grid; grid-template-columns: 1.05fr .95fr; gap: 36px; align-items: center; }
+    .eyebrow { color: var(--green); font-size: 12px; font-weight: 900; text-transform: uppercase; letter-spacing: .13em; margin-bottom: 13px; }
+    h1 { margin: 0; max-width: 600px; font-size: clamp(39px, 6vw, 74px); line-height: .99; letter-spacing: -.075em; }
+    h1 em { color: var(--orange); font-style: normal; }
+    .hero-copy { color: var(--muted); max-width: 460px; font-size: 16px; line-height: 1.65; margin: 22px 0 28px; }
+    .hero-visual { min-height: 320px; border-radius: 34px; overflow: hidden; position: relative; background: #e4efe7; }
+    .hero-visual:before { content: ""; position: absolute; width: 280px; height: 280px; border-radius: 50%; background: var(--yellow); right: -56px; top: -70px; }
+    .hero-visual:after { content: ""; position: absolute; width: 220px; height: 220px; border-radius: 50%; background: var(--orange); left: -58px; bottom: -100px; opacity: .92; }
+    .hero-card { position: absolute; width: 184px; padding: 17px; border-radius: 22px; background: rgba(255,255,255,.86); box-shadow: 0 20px 50px rgba(22,52,38,.15); backdrop-filter: blur(9px); }
+    .hero-card.one { left: 13%; top: 25%; transform: rotate(-9deg); z-index: 2; }
+    .hero-card.two { right: 12%; top: 31%; transform: rotate(8deg); z-index: 3; }
+    .hero-card.three { left: 33%; bottom: 9%; transform: rotate(-1deg); z-index: 4; width: 170px; }
+    .hero-art { height: 115px; border-radius: 15px; display: grid; place-items: center; font-size: 55px; margin-bottom: 12px; }
+    .art-clothes { background: linear-gradient(135deg, #c8d9ee, #f4c3a9); }
+    .art-camera { background: linear-gradient(135deg, #d8dbc0, #aabfa8); }
+    .art-bag { background: linear-gradient(135deg, #eacb91, #d68453); }
+    .hero-card strong { font-size: 14px; }
+    .hero-card small { color: var(--muted); display: block; margin-top: 3px; }
+    .search-row { max-width: 1400px; padding: 0 clamp(18px, 5vw, 72px); margin: 0 auto 26px; display: flex; gap: 12px; }
+    .search-box { flex: 1; display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); background: white; border-radius: 15px; padding: 0 15px; min-height: 51px; }
+    .search-box input { width: 100%; border: 0; outline: 0; color: var(--ink); background: transparent; }
+    .filter-btn { border: 1px solid var(--line); background: white; min-width: 51px; border-radius: 15px; color: var(--ink); }
+    .section { max-width: 1400px; margin: 0 auto; padding: 0 clamp(18px, 5vw, 72px); }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 15px; margin: 35px 0 16px; }
+    .section-head h2 { margin: 0; font-size: 25px; letter-spacing: -.05em; }
+    .section-head p { color: var(--muted); margin: 5px 0 0; font-size: 13px; }
+    .link-btn { color: var(--green); font-weight: 800; border: 0; background: none; padding: 5px; }
+    .categories { display: flex; gap: 10px; overflow-x: auto; padding: 0 0 7px; scrollbar-width: none; }
+    .categories::-webkit-scrollbar { display: none; }
+    .category { flex: 0 0 auto; border: 1px solid var(--line); background: white; color: var(--muted); border-radius: 999px; padding: 10px 15px; font-size: 13px; font-weight: 700; }
+    .category.active, .category:hover { background: var(--green); color: white; border-color: var(--green); }
+    .promo { margin: 34px 0; padding: 25px 28px; border-radius: var(--radius); background: var(--green-deep); color: white; display: flex; align-items: center; justify-content: space-between; gap: 22px; overflow: hidden; position: relative; }
+    .promo:after { content: "✦"; position: absolute; right: 23%; top: -22px; color: rgba(255,255,255,.1); font-size: 150px; }
+    .promo strong { font-size: 20px; letter-spacing: -.04em; }
+    .promo p { margin: 7px 0 0; color: #c7d8cf; font-size: 13px; }
+    .promo .button { position: relative; z-index: 2; }
+    .button { border: 0; border-radius: 12px; padding: 12px 17px; font-weight: 800; background: var(--green); color: white; }
+    .button.light { color: var(--green-deep); background: white; }
+    .button.ghost { background: var(--green-soft); color: var(--green-deep); }
+    .button.orange { background: var(--orange); }
+    .product-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 17px; }
+    .product-card { border: 1px solid var(--line); background: var(--card); border-radius: 18px; overflow: hidden; transition: transform .18s, box-shadow .18s; }
+    .product-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+    .product-image { height: 215px; margin: 8px; border-radius: 13px; display: grid; place-items: center; font-size: 75px; position: relative; }
+    .product-image.t1 { background: linear-gradient(135deg, #f3d7c2, #bacfe1); }
+    .product-image.t2 { background: linear-gradient(135deg, #cadcbf, #f0c37d); }
+    .product-image.t3 { background: linear-gradient(135deg, #dad0e5, #9ab2bb); }
+    .product-image.t4 { background: linear-gradient(135deg, #f0b69c, #f1dcaa); }
+    .product-image.t5 { background: linear-gradient(135deg, #c3d4df, #d5b4ae); }
+    .product-image.t6 { background: linear-gradient(135deg, #e8d7af, #d7a77d); }
+    .product-image.t7 { background: linear-gradient(135deg, #b4d4ca, #e5d6bc); }
+    .product-image.t8 { background: linear-gradient(135deg, #d9c1c9, #bbc6df); }
+    .ad-label { position: absolute; left: 9px; top: 9px; border-radius: 6px; padding: 5px 7px; background: var(--orange); color: white; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+    .heart { position: absolute; right: 8px; top: 8px; width: 33px; height: 33px; border: 0; border-radius: 50%; background: rgba(255,255,255,.85); color: #516059; font-size: 16px; }
+    .heart.liked { color: var(--orange); }
+    .product-info { padding: 5px 14px 15px; }
+    .product-info h3 { margin: 0; font-size: 15px; letter-spacing: -.02em; }
+    .price-line { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 9px; }
+    .price { font-weight: 900; color: var(--green-deep); }
+    .location { color: var(--muted); font-size: 11px; margin-top: 7px; }
+    .verified { color: var(--green); font-size: 11px; font-weight: 800; }
+    .empty { padding: 45px 20px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 18px; grid-column: 1 / -1; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 76px; padding: 8px max(18px, calc((100vw - 580px)/2)); background: rgba(255,255,255,.94); border-top: 1px solid var(--line); display: flex; justify-content: space-around; z-index: 11; backdrop-filter: blur(18px); }
+    .nav-item { flex: 1; max-width: 120px; border: 0; background: transparent; color: var(--muted); border-radius: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 800; position: relative; }
+    .nav-item span:first-child { font-size: 20px; line-height: 1; }
+    .nav-item.active { color: var(--green); background: var(--green-soft); }
+    .panel { display: none; }
+    .panel.active { display: block; animation: rise .2s ease-out; }
+    .page-title { max-width: 1400px; margin: 0 auto; padding: 36px clamp(18px, 5vw, 72px) 8px; }
+    .page-title h1 { font-size: clamp(36px, 5vw, 54px); }
+    .ad-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 18px; margin-top: 20px; }
+    .ads-toolbar { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-top: 24px; }
+    .ads-toolbar h1 { font-size: clamp(38px, 5vw, 56px); }
+    .ads-toolbar p { color: var(--muted); max-width: 520px; line-height: 1.55; margin-bottom: 0; }
+    .sponsored-feed { height: min(78vh, 820px); min-height: 540px; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior-y: contain; display: flex; flex-direction: column; align-items: center; gap: 18px; margin-top: 22px; padding: 2px 0 18px; scrollbar-width: thin; }
+    .sponsored-card { flex: 0 0 min(76vh, 760px); min-height: 520px; width: min(440px, 100%); position: relative; border: 1px solid var(--line); background: #173d30; border-radius: 22px; overflow: hidden; scroll-snap-align: start; }
+    .ad-video { position: absolute; inset: 0; overflow: hidden; background: #173d30; }
+    .ad-video video { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .ad-video .ad-label { z-index: 2; }
+    .ad-video:after { content: ""; position: absolute; inset: 25% 0 0; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(0,0,0,.78)); }
+    .ad-video-fallback { height: 100%; display: grid; place-items: center; color: white; font-size: 110px; background: linear-gradient(145deg, #1c6b4d, #ed7a45 70%, #f8d477); }
+    .video-duration { position: absolute; right: 9px; bottom: 9px; z-index: 2; background: rgba(0,0,0,.7); color: white; border-radius: 6px; padding: 4px 6px; font-size: 10px; font-weight: 800; }
+    .sponsored-card .product-info { position: absolute; z-index: 3; bottom: 0; inset-inline: 0; padding: 50px 20px 20px; color: white; background: linear-gradient(180deg, transparent, rgba(0,0,0,.66)); }
+    .sponsored-card .product-info h3 { font-size: 21px; }
+    .sponsored-card .ad-shop { color: rgba(255,255,255,.8); font-size: 12px; margin-top: 5px; }
+    .sponsored-card .price { color: white; font-size: 19px; }
+    .sponsored-card .verified { color: #bde8d0; }
+    .sponsored-card .button { margin-top: 13px; color: var(--green-deep); }
+    .ad-feed-empty { grid-column: 1 / -1; }
+    .ad-box, .side-box { border: 1px solid var(--line); background: white; border-radius: var(--radius); padding: 24px; }
+    .ad-box { background: linear-gradient(135deg, #e5f2e9, #fff9e5); min-height: 280px; display: flex; flex-direction: column; justify-content: space-between; }
+    .ad-box h2 { font-size: 32px; max-width: 400px; letter-spacing: -.06em; margin: 0; }
+    .ad-box p { max-width: 400px; color: var(--muted); line-height: 1.55; }
+    .ad-stats { display: flex; gap: 22px; }
+    .stat strong { display: block; font-size: 21px; }
+    .stat small { color: var(--muted); }
+    .side-box h3 { margin-top: 0; }
+    .ad-option { border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+    .ad-option strong { display: block; }
+    .ad-option small { color: var(--muted); }
+    .cart-layout { display: grid; grid-template-columns: 1.2fr .8fr; gap: 20px; margin-top: 20px; }
+    .cart-list, .summary { border: 1px solid var(--line); background: white; border-radius: var(--radius); padding: 20px; }
+    .cart-row { display: grid; grid-template-columns: 78px 1fr auto; gap: 13px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .cart-row:last-child { border-bottom: 0; }
+    .cart-art { height: 78px; border-radius: 13px; display: grid; place-items: center; font-size: 35px; }
+    .cart-row h3 { margin: 0 0 6px; font-size: 14px; }
+    .cart-row p { margin: 0; color: var(--muted); font-size: 12px; }
+    .qty { display: flex; align-items: center; gap: 8px; color: var(--green-deep); font-weight: 800; margin-top: 8px; font-size: 12px; }
+    .qty button { border: 1px solid var(--line); background: white; border-radius: 7px; width: 24px; height: 24px; }
+    .cart-price { text-align: right; font-weight: 900; }
+    .summary h3 { margin-top: 0; }
+    .summary-line { display: flex; justify-content: space-between; margin: 15px 0; color: var(--muted); font-size: 14px; }
+    .summary-line.total { padding-top: 15px; border-top: 1px solid var(--line); color: var(--ink); font-size: 18px; font-weight: 900; }
+    .summary .button { width: 100%; margin-top: 10px; }
+    .modal-backdrop { display: none; position: fixed; inset: 0; z-index: 30; padding: 20px; background: rgba(17,34,26,.42); align-items: center; justify-content: center; }
+    .modal-backdrop.open { display: flex; }
+    .modal { width: min(500px, 100%); max-height: 90vh; overflow: auto; background: white; border-radius: 24px; padding: 25px; box-shadow: 0 30px 90px rgba(0,0,0,.22); animation: rise .18s ease-out; }
+    .modal-head { display: flex; justify-content: space-between; align-items: start; gap: 20px; }
+    .modal h2 { margin: 0; letter-spacing: -.05em; }
+    .close { border: 0; background: #f1f4f1; border-radius: 50%; width: 34px; height: 34px; color: var(--ink); }
+    .form-row { margin-top: 15px; }
+    .form-row label { display: block; font-size: 12px; font-weight: 800; margin-bottom: 7px; }
+    .form-row input, .form-row select { width: 100%; padding: 12px 13px; border: 1px solid var(--line); border-radius: 11px; outline: 0; color: var(--ink); background: white; }
+    .form-row input:focus, .form-row select:focus { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+    .pay-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .pay-option { border: 1px solid var(--line); border-radius: 11px; padding: 10px 5px; background: white; color: var(--muted); font-size: 11px; text-align: center; }
+    .pay-option.selected { border-color: var(--green); background: var(--green-soft); color: var(--green-deep); font-weight: 800; }
+    .modal-foot { display: flex; justify-content: flex-end; gap: 9px; margin-top: 22px; }
+    .toast { position: fixed; left: 50%; bottom: 96px; z-index: 50; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; background: var(--ink); color: white; border-radius: 12px; padding: 12px 16px; font-size: 13px; box-shadow: var(--shadow); transition: all .2s; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .auth-card { border: 1px solid var(--line); background: white; border-radius: var(--radius); padding: clamp(22px, 4vw, 34px); }
+    .auth-card h2 { margin: 0; letter-spacing: -.05em; }
+    .account-grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: 18px; margin-top: 20px; }
+    .member-badge { display: inline-flex; align-items: center; gap: 7px; color: var(--green-deep); background: var(--green-soft); border-radius: 99px; padding: 7px 10px; font-size: 11px; font-weight: 900; }
+    .member-avatar { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 18px; background: var(--green-deep); color: white; font-weight: 900; font-size: 18px; margin-bottom: 17px; }
+    .feature-row { display: flex; align-items: center; gap: 13px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+    .feature-row:last-child { border-bottom: 0; }
+    .feature-icon { width: 35px; height: 35px; display: grid; place-items: center; border-radius: 11px; background: var(--green-soft); }
+    .feature-row strong { display: block; font-size: 14px; }
+    .feature-row small { color: var(--muted); }
+    .member-only { display: none; }
+    .member-only.visible { display: block; }
+    .auth-error { display: none; color: #b3472a; background: #fff0eb; border-radius: 9px; padding: 9px 11px; font-size: 12px; margin-top: 13px; }
+    .auth-error.visible { display: block; }
+    @media (max-width: 640px) { .account-grid { grid-template-columns: 1fr; } .ads-toolbar { align-items: start; flex-direction: column; } .sponsored-feed { height: calc(100vh - 240px); min-height: 430px; margin-inline: -18px; padding-inline: 18px; } .sponsored-card { flex-basis: 100%; width: 100%; min-height: 430px; } .ad-video-fallback { font-size: 80px; } }
+    .cond-badge { display: inline-block; font-size: 10px; font-weight: 900; border-radius: 6px; padding: 3px 7px; margin-top: 6px; }
+    .cond-new { background: #e7f2ec; color: #1c6b4d; }
+    .cond-used_like_new { background: #fff9e5; color: #8a6800; }
+    .cond-used_good { background: #f2f4f1; color: #6b766e; }
+    @keyframes rise { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 900px) { .hero { grid-template-columns: 1fr; } .hero-visual { min-height: 280px; } .product-grid { grid-template-columns: repeat(3, 1fr); } .ad-grid, .cart-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { .topbar { height: 65px; } .hero { padding-top: 35px; } .hero-visual { min-height: 250px; } .hero-card { width: 145px; padding: 10px; } .hero-art { height: 90px; font-size: 41px; } .hero-card.three { width: 140px; } .product-grid { grid-template-columns: repeat(2, 1fr); gap: 11px; } .product-image { height: 155px; font-size: 56px; } .product-info { padding: 4px 11px 13px; } .product-info h3 { font-size: 13px; } .promo { align-items: start; flex-direction: column; padding: 22px; } .page-title { padding-top: 29px; } .page-title h1 { font-size: 40px; } .cart-row { grid-template-columns: 58px 1fr auto; gap: 9px; } .cart-art { height: 58px; font-size: 28px; } .cart-row h3 { font-size: 13px; } }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand" onclick="showPanel('home')"><span class="brand-mark">✦</span> AfriBay</button>
+      <div class="top-actions">
+        <button class="icon-btn" onclick="showToast('Your saved finds will appear here')" aria-label="Saved items">♡</button>
+        <button class="icon-btn" onclick="showPanel('cart')" aria-label="Cart" title="View Cart">🛒<i id="topCartBadge" class="badge" style="display:none">0</i></button>
+        <div class="menu-wrap">
+          <button id="avatarButton" class="avatar-btn" onclick="toggleMenu()" aria-label="Open account menu">AF</button>
+          <div id="accountMenu" class="menu">
+            <div class="menu-label">My AfriBay</div>
+            <div id="guestMenu">
+              <button onclick="showPanel('account')">◎ &nbsp; Account</button>
+              <button onclick="openModal('signinModal')">↳ &nbsp; Sign in</button>
+              <button onclick="openModal('signupModal')">＋ &nbsp; Create account</button>
+            </div>
+            <div id="memberMenu" style="display:none">
+              <button onclick="showPanel('account')">◎ &nbsp; Account</button>
+              <button onclick="showPanel('shop')">▦ &nbsp; My shop</button>
+              <button onclick="showPanel('ads')">✦ &nbsp; Selling & ads</button>
+              <button onclick="showPanel('settings')">⚙ &nbsp; Settings</button>
+              <button onclick="logout()">↪ &nbsp; Sign out</button>
+            </div>
+            <div id="guestSettingsMenu"><button onclick="showPanel('settings')">⚙ &nbsp; Settings</button></div>
+            <button onclick="showToast('Language set to English')">文 &nbsp; English</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="homePanel" class="panel active">
+        <div class="hero">
+          <div>
+            <div class="eyebrow">A better way to thrift</div>
+            <h1>Find your next <em>favourite.</em></h1>
+            <p class="hero-copy">Shop unique pre-loved pieces and fresh finds from independent sellers across Africa. Good things deserve a second life.</p>
+            <button class="button" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Explore the market →</button>
+          </div>
+          <div class="hero-visual" aria-label="Featured marketplace items">
+            <div class="hero-card one"><div class="hero-art art-clothes">👕</div><strong>Vintage finds</strong><small>From ZMW 380</small></div>
+            <div class="hero-card two"><div class="hero-art art-camera">📷</div><strong>Tech corner</strong><small>Checked & ready</small></div>
+            <div class="hero-card three"><div class="hero-art art-bag">👜</div><strong>New this week</strong><small>236 fresh listings</small></div>
+          </div>
+        </div>
+        <div class="search-row">
+          <div class="search-box"><span>⌕</span><input id="searchInput" oninput="filterProducts()" placeholder="Search clothes, cars, electronics..." /></div>
+          <select id="conditionFilter" class="filter-btn" style="padding:0 12px" onchange="filterProducts()" aria-label="Filter by condition"><option value="All">Any condition</option><option value="new">New</option><option value="used_like_new">Used · Like new</option><option value="used_good">Used · Good</option></select>
+        </div>
+        <div class="section">
+          <div class="categories" id="categories">
+            <button class="category active" data-category="All" onclick="setCategory('All', this)">All finds</button>
+            <button class="category" data-category="Clothing" onclick="setCategory('Clothing', this)">👕 Clothes</button>
+            <button class="category" data-category="Cars" onclick="setCategory('Cars', this)">🚙 Cars</button>
+            <button class="category" data-category="Electronics" onclick="setCategory('Electronics', this)">📷 Electronics</button>
+            <button class="category" data-category="New Goods" onclick="setCategory('New Goods', this)">✦ New goods</button>
+          </div>
+          <div class="promo">
+            <div><strong>Turn your closet into cash.</strong><p>Open your free shop and reach people looking for your kind of find.</p></div>
+            <button class="button light" onclick="startSelling()">Start selling</button>
+          </div>
+          <div id="products">
+            <div class="section-head"><div><h2>Fresh on the market</h2><p>Handpicked finds from shops near you</p></div><button class="link-btn" onclick="clearSearch();document.getElementById('products').scrollIntoView({behavior:'smooth'})">See all →</button></div>
+            <div id="productGrid" class="product-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="adsPanel" class="panel">
+        <div class="section ads-toolbar"><div><div class="eyebrow">Featured marketplace</div><h1>Good finds, <em>featured.</em></h1><p>Browse short video ads created by shop owners. Sponsoring your products in this feed is 100% free for all sellers.</p></div><button class="button orange" onclick="openPromoteAd()">＋ Promote a Product (Free)</button></div>
+        <div class="section">
+          <div class="section-head"><div><h2>Sponsored videos</h2><p>Swipe vertically to watch short ads from marketplace shops (100% Free to publish)</p></div><button class="button ghost" onclick="openPromoteAd()">Promote My Item (Free)</button></div>
+          <div id="sponsoredFeed" class="sponsored-feed"></div>
+          <div id="adsGuestState" class="auth-card" style="margin-top:24px"><strong>Own a shop?</strong><span style="color:var(--muted);font-size:13px"> Sign in to promote one of your products here for free.</span> <button class="link-btn" onclick="openPromoteAd()">Sign in to promote →</button></div>
+          <div id="adsMemberState" class="auth-card member-only" style="margin-top:24px">
+            <div class="member-badge">● Seller tools unlocked</div>
+            <h3 style="margin:16px 0 7px">Put one of your products in this feed for free.</h3>
+            <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-top:0">Choose a listing, add your short video clip, and publish instantly. It is 100% free to feature your products on AfriBay Ads.</p>
+            <button class="button orange" onclick="openPromoteAd()">Create Free Ad →</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="shopPanel" class="panel">
+        <div class="page-title"><div class="eyebrow">Seller workspace</div><h1>Your <em>shop.</em></h1></div>
+        <div class="section">
+          <div id="shopGuestState" class="empty">Sign in to access your shop dashboard.<br /><button class="button ghost" style="margin-top:15px" onclick="openModal('signinModal')">Sign in to continue</button></div>
+          <div id="shopMemberState" class="member-only">
+            <div class="account-grid">
+              <div class="auth-card">
+                <div class="member-avatar" id="shopAvatar">AF</div>
+                <div class="member-badge">● Shop owner</div>
+                <h2 id="shopWelcome" style="margin-top:15px">Welcome back</h2>
+                <p id="shopDescription" style="color:var(--muted);font-size:13px;line-height:1.5">Your seller workspace is unlocked. Set up your shop and publish listings.</p>
+                <button id="shopSetupButton" class="button" onclick="openShopModalSafe()">Create your shop →</button>
+              </div>
+              <div class="auth-card">
+                <h3 style="margin-top:0">Selling tools</h3>
+                <div class="feature-row"><div class="feature-icon">＋</div><div><strong>Create a listing</strong><small>Add photos, price, condition, and delivery details.</small></div><button class="link-btn" onclick="openListingEditor()">Open</button></div>
+                <div class="feature-row"><div class="feature-icon">✦</div><div><strong>Promote a product</strong><small>Get more eyes on your best finds.</small></div><button class="link-btn" onclick="showPanel('ads')">Open</button></div>
+                <div class="feature-row"><div class="feature-icon">▣</div><div><strong>Orders & payouts</strong><small>Track sales and fulfillment in one place.</small></div><button class="link-btn" onclick="openOrdersModal()">Open</button></div>
+              </div>
+            </div>
+            <div class="auth-card" style="margin-top:18px">
+              <div class="section-head" style="margin-top:0"><div><h2>Your shop overview</h2><p id="shopStatus">Create a shop to start listing products.</p></div><button class="button ghost" onclick="openListingEditor()">＋ Add new product</button></div>
+              <div class="ad-stats" style="margin:16px 0 20px"><div class="stat"><strong id="sellerViews">0</strong><small>Total views</small></div><div class="stat"><strong id="sellerProductCount">0</strong><small>Products</small></div><div class="stat"><strong id="sellerAdCount">0</strong><small>Active video ads</small></div></div>
+              <div id="sellerProducts"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="accountPanel" class="panel">
+        <div class="page-title"><div class="eyebrow">Your account</div><h1>Welcome to <em>AfriBay.</em></h1></div>
+        <div class="section">
+          <div id="accountGuestState" class="account-grid">
+            <div class="auth-card">
+              <div class="member-avatar">AF</div>
+              <div class="member-badge">● Guest mode</div>
+              <h2 style="margin-top:15px">Sign in to unlock more.</h2>
+              <p style="color:var(--muted);font-size:13px;line-height:1.5">Save finds, open a shop, create listings, promote products, and check out with a persistent account.</p>
+              <button class="button" onclick="openModal('signinModal')">Sign in →</button>
+              <button class="button ghost" style="margin-left:7px" onclick="openModal('signupModal')">Create account</button>
+            </div>
+            <div class="auth-card">
+              <div class="eyebrow">Sell & Shop in Zambia</div>
+              <h2>Why join AfriBay?</h2>
+              <p style="color:var(--muted);font-size:13px;line-height:1.5">Empowering Zambian entrepreneurs, thrifters, and shoppers with seamless commerce.</p>
+              <div style="font-size:12px;color:var(--text);display:flex;flex-direction:column;gap:8px;margin-top:12px">
+                <div>✓ <strong>Verified Sellers:</strong> WhatsApp & direct call badges.</div>
+                <div>✓ <strong>Free Video Ads:</strong> Showcase your inventory in the Ads feed.</div>
+                <div>✓ <strong>Mobile Money:</strong> Pay conveniently via MTN, Airtel, or Zamtel.</div>
+              </div>
+            </div>
+          </div>
+          <div id="accountMemberState" class="account-grid member-only">
+            <div class="auth-card">
+              <div class="member-avatar" id="accountAvatar">AF</div>
+              <div class="member-badge">● Signed in</div>
+              <h2 id="accountName" style="margin-top:15px">Account Profile</h2>
+              <p id="accountEmail" style="color:var(--muted);font-size:13px">Loading session...</p>
+              <button class="button ghost" onclick="logout()">Sign out</button>
+            </div>
+            <div class="auth-card">
+              <h3 style="margin-top:0">Your AfriBay access</h3>
+              <div class="feature-row"><div class="feature-icon">▦</div><div><strong>Shop dashboard</strong><small>Create and manage your own shop.</small></div><button class="link-btn" onclick="showPanel('shop')">Open</button></div>
+              <div class="feature-row"><div class="feature-icon">✦</div><div><strong>Ads & promotion</strong><small>Boost listings and manage campaigns.</small></div><button class="link-btn" onclick="showPanel('ads')">Open</button></div>
+              <div class="feature-row"><div class="feature-icon">🛒</div><div><strong>Cart & checkout</strong><small>Complete purchases with saved session access.</small></div><button class="link-btn" onclick="showPanel('cart')">Open</button></div>
+              <div class="feature-row"><div class="feature-icon">📦</div><div><strong>Your orders</strong><small>Track purchase history and order receipts.</small></div><button class="link-btn" onclick="openOrdersModal()">Open</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="cartPanel" class="panel">
+        <div class="page-title"><div class="eyebrow">Ready when you are</div><h1>Your <em>cart.</em></h1></div>
+        <div class="section">
+          <div class="cart-layout">
+            <div class="cart-list" id="cartList"></div>
+            <div class="summary"><h3>Order summary</h3><div class="summary-line"><span>Subtotal</span><span id="subtotal">ZMW 0.00</span></div><div class="summary-line"><span>Delivery</span><span id="delivery">ZMW 0.00</span></div><div class="summary-line total"><span>Total</span><span id="total">ZMW 0.00</span></div><button class="button" onclick="openCheckout()">Continue to checkout →</button><p style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:0">Secure checkout · Mobile money · Cards</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="settingsPanel" class="panel">
+        <div class="page-title"><div class="eyebrow">Personalize AfriBay</div><h1>Your <em>settings.</em></h1></div>
+        <div class="section"><div class="account-grid">
+          <div class="auth-card"><h3 style="margin-top:0">Language</h3><p style="color:var(--muted);font-size:13px">Choose the language used for key navigation and marketplace labels.</p><div class="form-row"><label for="languageSelect">App language</label><select id="languageSelect" onchange="changeLanguage(this.value)"><option value="en">English</option><option value="bem">Icibemba</option><option value="ton">Chitonga</option></select></div></div>
+          <div class="auth-card"><h3 style="margin-top:0">Preferences</h3><div class="feature-row"><div class="feature-icon">◐</div><div><strong>Dark appearance</strong><small>Switch between light and dark theme.</small></div><button id="themeToggle" class="button ghost" onclick="toggleTheme()">Turn on</button></div><div class="feature-row"><div class="feature-icon">◇</div><div><strong>Privacy</strong><small>Keep saved items and browsing preferences on this device.</small></div><label style="margin-left:auto"><input id="privacyToggle" type="checkbox" checked onchange="savePrivacySetting(this.checked)" aria-label="Save preferences on this device"></label></div></div>
+        </div></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-item active" data-panel="home" onclick="showPanel('home')"><span>⌂</span><span id="navHomeLabel">Home</span></button>
+      <button class="nav-item" data-panel="ads" onclick="showPanel('ads')"><span>✦</span><span id="navAdsLabel">Ads</span></button>
+      <button class="nav-item" data-panel="cart" onclick="showPanel('cart')"><span>🛒<i id="cartBadge" class="badge" style="display:none">0</i></span><span id="navCartLabel">Cart</span></button>
+    </nav>
+  </div>
+
+  <div id="signinModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'signinModal')">
+    <div class="modal">
+      <div class="modal-head">
+        <div><div class="eyebrow">Welcome back</div><h2>Sign in to AfriBay</h2></div>
+        <button class="close" type="button" onclick="closeModal('signinModal')">×</button>
+      </div>
+      <div id="signinError" class="auth-error"></div>
+      <form onsubmit="signIn(event)">
+        <div class="form-row"><label for="signinEmail">Email</label><input id="signinEmail" type="email" placeholder="you@example.com" required /></div>
+        <div class="form-row"><label for="signinPassword">Password</label><input id="signinPassword" type="password" placeholder="••••••••" required /></div>
+        <button id="signinSubmitBtn" class="button" type="submit" style="width:100%;margin-top:19px">Sign in</button>
+      </form>
+
+      <button id="googleSignInBtn" class="button ghost" type="button" style="width:100%;margin-top:9px" onclick="signInWithGoogle()">◎ &nbsp; Sign in with Google</button>
+      <p style="font-size:12px;color:var(--muted);text-align:center">New here? <button type="button" class="link-btn" style="padding:0" onclick="switchAuthModal('signinModal','signupModal')">Create an account</button></p>
+    </div>
+  </div>
+  <div id="signupModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'signupModal')">
+    <div class="modal">
+      <div class="modal-head">
+        <div><div class="eyebrow">Join the market</div><h2>Create your AfriBay account</h2></div>
+        <button class="close" type="button" onclick="closeModal('signupModal')">×</button>
+      </div>
+      <div id="signupError" class="auth-error"></div>
+      <form onsubmit="signUp(event)">
+        <div class="form-row"><label for="signupName">Your name</label><input id="signupName" placeholder="e.g. Ama Mensah" required /></div>
+        <div class="form-row"><label for="signupEmail">Email</label><input id="signupEmail" type="email" placeholder="you@example.com" required /></div>
+        <div class="form-row"><label for="signupPassword">Password</label><input id="signupPassword" type="password" minlength="6" placeholder="At least 6 characters" required /></div>
+        <button id="signupSubmitBtn" class="button" type="submit" style="width:100%;margin-top:19px">Create account →</button>
+      </form>
+
+      <p style="font-size:12px;color:var(--muted);text-align:center">Already have an account? <button type="button" class="link-btn" style="padding:0" onclick="switchAuthModal('signupModal','signinModal')">Sign in</button></p>
+    </div>
+  </div>
+  <div id="shopModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'shopModal')">
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Your corner of the market</div><h2>Create your shop</h2></div><button class="close" onclick="closeModal('shopModal')">×</button></div><form onsubmit="createShop(event)"><div class="form-row"><label for="shopName">Shop name</label><input id="shopName" placeholder="e.g. Kofi's Closet" required /></div><div class="form-row"><label for="shopPhone">Contact phone</label><input id="shopPhone" type="tel" placeholder="+260..." /></div><div class="form-row"><label for="shopDescriptionInput">Shop description</label><input id="shopDescriptionInput" placeholder="What makes your shop special?" /></div><div class="form-row"><label for="shopLogoFile">Shop logo (optional)</label><input id="shopLogoFile" type="file" accept="image/*" /></div><div class="modal-foot"><button type="button" class="button ghost" onclick="closeModal('shopModal')">Cancel</button><button type="submit" class="button">Create shop →</button></div></form></div>
+  </div>
+  <div id="listingModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'listingModal')">
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Sell on AfriBay</div><h2>Add a product</h2></div><button class="close" onclick="closeModal('listingModal')">×</button></div><form onsubmit="createListing(event)"><div class="form-row"><label for="listingTitle">Product title</label><input id="listingTitle" required maxlength="90" /></div><div class="form-row"><label for="listingDescription">Description</label><input id="listingDescription" required maxlength="500" /></div><div class="form-row"><label for="listingPrice">Price (ZMW)</label><input id="listingPrice" type="number" min="1" step="0.01" required /></div><div class="form-row"><label for="listingCategory">Category</label><select id="listingCategory"><option value="clothes">Clothes</option><option value="cars">Cars</option><option value="electronics">Electronics</option><option value="new_goods">New goods</option></select></div><div class="form-row"><label for="listingCondition">Condition</label><select id="listingCondition"><option value="new">New</option><option value="used_like_new">Used · Like new</option><option value="used_good">Used · Good</option></select></div><div class="form-row"><label for="listingImage">Product image (optional)</label><input id="listingImage" type="file" accept="image/*" /></div><div id="listingError" class="auth-error"></div><div class="modal-foot"><button type="button" class="button ghost" onclick="closeModal('listingModal')">Cancel</button><button type="submit" class="button">Publish listing →</button></div></form></div>
+  </div>
+  <div id="productModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'productModal')">
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Marketplace listing</div><h2 id="detailTitle">Product details</h2></div><button class="close" type="button" onclick="closeModal('productModal')">×</button></div><div id="detailImage" class="product-image t1" style="height:190px"></div><p id="detailPrice" class="price" style="font-size:22px"></p><p id="detailDescription" style="color:var(--muted);line-height:1.6"></p><div class="auth-card" style="padding:15px"><strong id="detailShop"></strong><p id="detailCondition" style="margin:6px 0 0;color:var(--muted);font-size:12px"></p><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button type="button" class="button ghost" id="detailViewShopBtn" onclick="viewCurrentProductShop()">🏬 View Shop</button><a id="sellerWhatsApp" class="button ghost" href="#" target="_blank" rel="noopener">WhatsApp seller</a><a id="sellerCall" class="button ghost" href="#">Call seller</a></div></div><div class="modal-foot"><button id="detailAddToCart" class="button" type="button" onclick="addCurrentProductToCart(this)">Add to cart →</button></div></div>
+  </div>
+  <div id="shopViewModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'shopViewModal')">
+    <div class="modal" style="max-width: 680px; width: 100%;">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow" id="shopViewEyebrow">Verified Marketplace Shop</div>
+          <h2 id="shopViewTitle">Seller's Corner</h2>
+        </div>
+        <button class="close" type="button" onclick="closeModal('shopViewModal')">×</button>
+      </div>
+      <div class="auth-card" style="margin-top:14px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div class="member-avatar" id="shopViewAvatar" style="margin-bottom:0;width:52px;height:52px;font-size:18px;">AF</div>
+          <div>
+            <div class="member-badge" style="margin-bottom:4px;">● Verified Seller</div>
+            <h3 id="shopViewName" style="margin:0;font-size:18px;">Shop Name</h3>
+            <p id="shopViewLocation" style="color:var(--muted);font-size:12px;margin:3px 0 0;">Lusaka, Zambia</p>
+          </div>
+        </div>
+        <p id="shopViewDescription" style="color:var(--muted);font-size:13px;line-height:1.5;margin:12px 0 8px;">Explore all available finds from this shop.</p>
+        <div style="display:flex;gap:8px;margin-top:10px;">
+          <a id="shopViewWhatsApp" class="button ghost" href="#" target="_blank" rel="noopener" style="padding:8px 12px;font-size:12px;">WhatsApp Seller</a>
+          <a id="shopViewCall" class="button ghost" href="#" style="padding:8px 12px;font-size:12px;">Call Seller</a>
+        </div>
+      </div>
+      <div class="section-head" style="margin:20px 0 12px;">
+        <div>
+          <h3 style="margin:0;font-size:17px;">More from this seller</h3>
+          <p id="shopViewCount" style="color:var(--muted);font-size:12px;margin:2px 0 0;">0 listings available</p>
+        </div>
+      </div>
+      <div id="shopViewGrid" class="product-grid" style="grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));gap:12px;">
+      </div>
+    </div>
+  </div>
+  <div id="boostModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'boostModal')">
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Free Video Promotion</div><h2>Create a video ad (100% Free)</h2></div><button class="close" type="button" onclick="closeModal('boostModal')">×</button></div><form onsubmit="createAd(event)"><div class="form-row"><label for="adProductSelect">Your listed product</label><select id="adProductSelect" required></select><small id="adProductHelp" style="display:block;color:var(--muted);margin-top:7px;font-size:11px"></small></div><div class="form-row"><label for="adVideoUrl">Short video URL</label><input id="adVideoUrl" type="url" placeholder="https://your-site.com/ad-video.mp4" oninput="previewAdVideoUrl()" /><small style="display:block;color:var(--muted);margin-top:7px;font-size:11px">Paste an MP4 or WebM video link, or upload a clip below.</small></div><div class="form-row"><label for="adVideoFile">Or upload a video</label><input id="adVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" onchange="previewAdVideo(event)" /><video id="adVideoPreview" controls muted loop playsinline style="width:100%;max-height:150px;border-radius:11px;margin-top:9px;display:none;background:#173d30"></video><div id="adVideoError" class="auth-error"></div></div><div class="form-row"><label for="adDuration">Ad duration</label><select id="adDuration" required><option value="daily" data-price="0">Daily · 24 hours · FREE (0 ZMW)</option><option value="weekly" data-price="0" selected>Weekly · 7 days · FREE (0 ZMW)</option><option value="monthly" data-price="0">Monthly · 30 days · FREE (0 ZMW)</option></select></div><div class="auth-card" style="padding:12px;margin-top:14px;background:var(--green-soft);border-color:var(--green);color:var(--green-deep);font-size:12px;display:flex;align-items:center;gap:8px;"><strong>✓ 100% Free Promotion:</strong> Sponsoring your products in the Ads feed is free for all AfriBay sellers. No card or mobile money charge.</div><div class="modal-foot"><button type="submit" class="button orange" style="width:100%">Publish Free Video Ad →</button></div></form></div>
+  </div>
+  <div id="checkoutModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'checkoutModal')">
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Almost yours</div><h2>Checkout · ZMW</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div><form onsubmit="processCheckout(event)"><div class="form-row"><label for="deliveryAddress">Delivery address</label><input id="deliveryAddress" required placeholder="Street, area, city" /></div><div class="form-row"><label>Payment method</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="mobile_money" onclick="selectPay(this)">Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">Debit / credit<br />Card</button></div></div><div id="mobileMoneyFields" class="form-row"><label for="paymentPhone">Mobile money number</label><input id="paymentPhone" type="tel" placeholder="+260 97..." /></div><p style="font-size:11px;color:var(--muted)">Your order will be processed and the seller will contact you to confirm delivery.</p><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button">Pay now · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
+  </div>
+  <div id="receiptModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'receiptModal')">
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Order confirmed</div><h2>Thanks for shopping!</h2></div><button class="close" onclick="closeModal('receiptModal')">×</button></div><div class="auth-card"><div class="member-badge">✓ Order placed successfully</div><p style="color:var(--muted)">Tracking reference</p><strong id="receiptTracking" style="font-size:22px"></strong><p id="receiptAmount" style="font-weight:900"></p></div><div class="modal-foot"><button class="button" onclick="closeModal('receiptModal')">Done</button></div></div>
+  </div>
+  <div id="ordersModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'ordersModal')">
+    <div class="modal" style="max-width: 580px; width: 100%;">
+      <div class="modal-head">
+        <div><div class="eyebrow">Purchases & Sales History</div><h2>Your Orders</h2></div>
+        <button class="close" type="button" onclick="closeModal('ordersModal')">×</button>
+      </div>
+      <div id="ordersList" style="margin-top:14px;display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow-y:auto;padding-right:4px;"></div>
+      <div class="modal-foot"><button class="button ghost" type="button" onclick="closeModal('ordersModal')">Close</button></div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script>window.process = window.process || { env: {} };</script>
+  <script type="importmap">
+    {
+      "imports": {
+        "firebase/app": "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js",
+        "firebase/auth": "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js",
+        "firebase/firestore": "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js",
+        "firebase/storage": "https://www.gstatic.com/firebasejs/11.9.1/firebase-storage.js"
+      }
+    }
+  </script>
+  <script type="module">
+    import { auth, googleProvider } from "./src/firebase.js";
+    import {
+      createOrder,
+      createProduct,
+      createShop,
+      createVideoAd,
+      loadActiveAds,
+      loadCart,
+      loadProducts,
+      loadUserProducts,
+      loadUserShop,
+      saveCart,
+      seedMarketplace,
+      upsertUserProfile,
+      uploadUserMedia
+    } from "./src/firestore.js";
+    import {
+      createUserWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut,
+      signInWithEmailAndPassword,
+      signInWithPopup,
+      updateProfile
+    } from "firebase/auth";
+
+    window.firebaseAuthApi = {
+      async signIn(email, password) {
+        if (!auth) throw new Error("Firebase Auth is not initialized. Please verify configuration in src/firebase.js");
+        try {
+          return await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+          console.error("[AfriBay Auth] signIn error:", error);
+          throw error;
+        }
+      },
+      async signUp(name, email, password) {
+        if (!auth) throw new Error("Firebase Auth is not initialized. Please verify configuration in src/firebase.js");
+        try {
+          const credential = await createUserWithEmailAndPassword(auth, email, password);
+          if (name && credential.user) {
+            try {
+              await updateProfile(credential.user, { displayName: name });
+            } catch (pErr) {
+              console.warn("Could not set display name on profile:", pErr);
+            }
+          }
+          return credential;
+        } catch (error) {
+          console.error("[AfriBay Auth] signUp error:", error);
+          throw error;
+        }
+      },
+      async signInWithGoogle() {
+        if (!auth) throw new Error("Firebase Auth is not initialized. Please verify configuration in src/firebase.js");
+        try {
+          return await signInWithPopup(auth, googleProvider);
+        } catch (error) {
+          console.error("[AfriBay Auth] signInWithGoogle error:", error);
+          throw error;
+        }
+      },
+      async signOut() {
+        if (!auth) return;
+        try {
+          return await signOut(auth);
+        } catch (error) {
+          console.error("[AfriBay Auth] signOut error:", error);
+          throw error;
+        }
+      }
+    };
+
+    if (auth) {
+      try {
+        onAuthStateChanged(auth, async user => {
+          if (window.syncFirebaseUser) window.syncFirebaseUser(user);
+          if (user) {
+            try {
+              await upsertUserProfile(user);
+              await hydrateMarketplace();
+              const [shop, ownProducts, cartItems] = await Promise.all([
+                loadUserShop(user.uid),
+                loadUserProducts(user.uid),
+                loadCart(user.uid)
+              ]);
+              if (window.applyAccountData) window.applyAccountData({ shop, ownProducts, cartItems });
+            } catch (error) {
+              console.warn("Could not sync AfriBay account data:", error);
+            }
+          }
+        });
+      } catch (authListenerErr) {
+        console.warn("Failed to attach onAuthStateChanged:", authListenerErr);
+      }
+    }
+
+    async function hydrateMarketplace() {
+      try {
+        const [remoteProducts, remoteAds] = await Promise.all([loadProducts(), loadActiveAds()]);
+        if (window.applyRemoteMarketplace) window.applyRemoteMarketplace(remoteProducts, remoteAds);
+      } catch (error) {
+        console.warn("Using local AfriBay preview data until Firestore is available:", error);
+      }
+    }
+    window.afriBayBackend = {
+      createOrder, createProduct, createShop, createVideoAd, hydrateMarketplace,
+      loadActiveAds, loadCart, loadProducts, loadUserProducts, loadUserShop,
+      saveCart, seedMarketplace, uploadUserMedia
+    };
+    hydrateMarketplace();
+  </script>
+
+  <script>
+    const products = [
+      { id: 1, title: "Toyota Vitz 2015", price: 98000, category: "Cars", categoryCode: "cars", condition: "used_good", location: "Lusaka, Zambia", seller: "Lusaka Motors", art: "🚙", artClass: "t1", videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", ad: true },
+      { id: 2, title: "Vintage denim jacket", price: 420, category: "Clothing", categoryCode: "clothes", condition: "used_like_new", location: "Lusaka, Zambia", seller: "Mimi's Closet", art: "🧥", artClass: "t2", videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", ad: true },
+      { id: 3, title: "iPhone 13 128GB", price: 11500, category: "Electronics", categoryCode: "electronics", condition: "used_like_new", location: "Kitwe, Zambia", seller: "SmartHub Zambia", art: "📱", artClass: "t3" },
+      { id: 4, title: "Nike Air Max sneakers", price: 850, category: "Clothing", categoryCode: "clothes", condition: "used_good", location: "Ndola, Zambia", seller: "Second Lap", art: "👟", artClass: "t4" },
+      { id: 5, title: "Samsung smart television", price: 7200, category: "Electronics", categoryCode: "electronics", condition: "used_like_new", location: "Livingstone, Zambia", seller: "Home Tech ZA", art: "📺", artClass: "t5" },
+      { id: 6, title: "New African print shirt", price: 380, category: "New Goods", categoryCode: "new_goods", condition: "new", location: "Lusaka, Zambia", seller: "Naya Collective", art: "👕", artClass: "t6" }
+    ];
+    let activeCategory = "All";
+    let cart = [];
+    const SESSION_KEY = "afribay_session";
+    const USERS_KEY = "afribay_users";
+    let pendingPanel = null;
+    let pendingSellerAction = null;
+    let pendingCheckout = false;
+    let users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+
+    let currentUser = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+    let currentShop = null;
+    let ownProducts = [];
+    let selectedProductId = null;
+    const ADS_KEY = "afribay_ad_campaigns";
+    let adCampaigns = JSON.parse(localStorage.getItem(ADS_KEY) || "[]");
+    let pendingVideoSource = "";
+    let pendingVideoFile = null;
+    const preferenceKey = "afribay_preferences";
+    let preferences = JSON.parse(localStorage.getItem(preferenceKey) || '{"language":"en","dark":false,"privacy":true}');
+    const money = value => `ZMW ${Number(value || 0).toLocaleString("en-ZM", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    function findProduct(id) { return products.find(product => String(product.id) === String(id)); }
+    function cartKey() { return `afribay_cart_${currentUser?.firebaseUid || currentUser?.email || "guest"}`; }
+    function normalizeRemoteProduct(item) {
+      const categoryLabels = { clothes: "Clothing", cars: "Cars", electronics: "Electronics", new_goods: "New Goods" };
+      return {
+        id: item.id,
+        title: item.title,
+        description: item.description || "",
+        price: Number(item.priceZMW || 0),
+        category: categoryLabels[item.category] || item.category || "New Goods",
+        categoryCode: item.category,
+        condition: item.condition || "used_good",
+        location: item.location || "Zambia",
+        seller: item.shopName || "AfriBay shop",
+        shopId: item.shopId || "",
+        ownerId: item.ownerId || "",
+        ownerEmail: item.ownerEmail || "",
+        imageUrls: item.imageUrls || [],
+        contactPhone: item.contactPhone || "",
+        art: item.art || "✦",
+        artClass: item.artClass || "t1",
+        videoUrl: item.videoUrl || "",
+        ad: Boolean(item.isFeatured)
+      };
+    }
+    function persistLocalAccountData() {
+      if (!currentUser) return;
+      const key = currentUser.firebaseUid || currentUser.email;
+      localStorage.setItem(`afribay_shop_${key}`, JSON.stringify(currentShop));
+      localStorage.setItem(`afribay_products_${key}`, JSON.stringify(ownProducts));
+      localStorage.setItem(cartKey(), JSON.stringify(cart));
+    }
+    function saveLocalCart() { localStorage.setItem(cartKey(), JSON.stringify(cart)); }
+    function restoreLocalAccount() {
+      const key = currentUser?.firebaseUid || currentUser?.email;
+      currentShop = key ? JSON.parse(localStorage.getItem(`afribay_shop_${key}`) || "null") : null;
+      ownProducts = key ? JSON.parse(localStorage.getItem(`afribay_products_${key}`) || "[]") : [];
+      cart = JSON.parse(localStorage.getItem(cartKey()) || "[]");
+      renderSellerDashboard();
+      updateCart();
+    }
+    function isSponsored(product) {
+      const campaign = adCampaigns.find(ad => ad.productId === product.id);
+      if (campaign) return campaign.expiresAt > Date.now();
+      return Boolean(product.ad);
+    }
+    function getAdVideoSource(product) {
+      const campaign = adCampaigns.find(ad => ad.productId === product.id && ad.expiresAt > Date.now());
+      return campaign?.videoUrl || product.videoUrl || "";
+    }
+    function escapeHTML(value) {
+      return String(value ?? "").replace(/[&<>"']/g, character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[character]));
+    }
+    function imageOrEmoji(product, className = "product-image") {
+      const imageUrl = product.imageUrls?.find(url => /^https:\/\//i.test(url));
+      return `<div class="${className} ${escapeHTML(product.artClass || "t1")}">${isSponsored(product) ? '<span class="ad-label">Sponsored</span>' : ""}${imageUrl ? `<img src="${escapeHTML(imageUrl)}" alt="${escapeHTML(product.title)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : `<span>${escapeHTML(product.art || "✦")}</span>`}</div>`;
+    }
+    window.applyRemoteMarketplace = function(remoteProducts, remoteAds) {
+      if (!remoteProducts?.length) return;
+      const adsByProduct = new Map((remoteAds || []).map(ad => [String(ad.productId), ad]));
+      products.splice(0, products.length, ...remoteProducts.map(item => {
+        const normalized = normalizeRemoteProduct(item);
+        const ad = adsByProduct.get(String(item.id));
+        return { ...normalized, videoUrl: ad?.videoUrl || normalized.videoUrl, ad: normalized.ad || Boolean(ad) };
+      }));
+      adCampaigns = (remoteAds || []).map(ad => ({
+        productId: String(ad.productId),
+        videoUrl: ad.videoUrl,
+        createdAt: ad.createdAt?.toMillis?.() || Date.now(),
+        expiresAt: Date.now() + (ad.duration === "weekly" ? 7 : 1) * 24 * 60 * 60 * 1000
+      }));
+      renderProducts();
+      renderSponsoredFeed();
+    };
+    function initials(name) { return (name || "AF").split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase(); }
+    function setAuthError(id, message) {
+      try {
+        const element = document.getElementById(id);
+        if (!element) return;
+        element.textContent = message || "";
+        element.classList.toggle("visible", Boolean(message));
+      } catch (err) {
+        console.error("setAuthError error:", err);
+      }
+    }
+    function firebaseErrorMessage(error) {
+      if (!error) return "";
+      console.error("[AfriBay Auth Error]", error);
+      const code = error.code || "";
+      const messages = {
+        "auth/invalid-credential": "Invalid password or email address. Please try again.",
+        "auth/wrong-password": "Invalid password. Please check your credentials.",
+        "auth/user-not-found": "No account found with this email. Please sign up.",
+        "auth/invalid-email": "Please enter a valid email address.",
+        "auth/email-already-in-use": "An account with that email already exists. Sign in instead.",
+        "auth/weak-password": "Password is too weak. Please use at least 6 characters.",
+        "auth/popup-closed-by-user": "The Google sign-in window was closed before completing.",
+        "auth/popup-blocked": "Popup was blocked by your browser. Please allow popups for Google sign-in.",
+        "auth/unauthorized-domain": "Domain not authorized in Firebase. Please contact support.",
+        "auth/operation-not-allowed": "This sign-in method is not enabled. Please contact support.",
+        "auth/network-request-failed": "Network connection error. Please check your connection.",
+        "auth/too-many-requests": "Too many failed attempts. Please wait a moment and try again."
+      };
+      if (messages[code]) return messages[code];
+      if (error.message && !error.message.includes("Firebase:")) return error.message;
+      return "Authentication error. Please try again or contact support.";
+    }
+    window.syncFirebaseUser = function(user) {
+      try {
+        if (user) {
+          currentUser = { name: user.displayName || user.email?.split("@")[0] || "AfriBay user", email: user.email || "", firebaseUid: user.uid };
+          localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+        } else {
+          currentUser = null;
+          localStorage.removeItem(SESSION_KEY);
+        }
+        restoreLocalAccount();
+        renderAuthUI();
+      } catch (err) {
+        console.error("syncFirebaseUser error:", err);
+      }
+    };
+    window.applyAccountData = function(data) {
+      try {
+        currentShop = data.shop || null;
+        if (Array.isArray(data.ownProducts)) ownProducts = data.ownProducts.map(normalizeRemoteProduct);
+        if (Array.isArray(data.cartItems)) {
+          cart = data.cartItems.map(item => ({
+            id: item.productId,
+            qty: Number(item.quantity || 1)
+          }));
+        }
+        persistLocalAccountData();
+        renderSellerDashboard();
+        updateCart();
+        populateAdProductSelect();
+        renderAuthUI();
+      } catch (err) {
+        console.error("applyAccountData error:", err);
+      }
+    };
+    function applyPreferences() {
+      try {
+        document.body.classList.toggle("dark", Boolean(preferences.dark));
+        const langSelect = document.getElementById("languageSelect");
+        if (langSelect) langSelect.value = preferences.language || "en";
+        const privToggle = document.getElementById("privacyToggle");
+        if (privToggle) privToggle.checked = preferences.privacy !== false;
+        const themeTog = document.getElementById("themeToggle");
+        if (themeTog) themeTog.textContent = preferences.dark ? "Turn off" : "Turn on";
+        const labels = {
+          en: ["Home", "Ads", "Cart"],
+          bem: ["Imisepela", "Amalanga", "Icikwama"],
+          ton: ["Kumusika", "Zilangazo", "Cikapu"]
+        }[preferences.language] || ["Home", "Ads", "Cart"];
+        const nh = document.getElementById("navHomeLabel"); if (nh) nh.textContent = labels[0];
+        const na = document.getElementById("navAdsLabel"); if (na) na.textContent = labels[1];
+        const nc = document.getElementById("navCartLabel"); if (nc) nc.textContent = labels[2];
+      } catch (err) {
+        console.error("applyPreferences error:", err);
+      }
+    }
+    function changeLanguage(language) {
+      preferences.language = language;
+      localStorage.setItem(preferenceKey, JSON.stringify(preferences));
+      applyPreferences();
+      showToast(language === "en" ? "Language set to English" : "Language preference updated");
+    }
+    function toggleTheme() {
+      preferences.dark = !preferences.dark;
+      localStorage.setItem(preferenceKey, JSON.stringify(preferences));
+      applyPreferences();
+    }
+    function savePrivacySetting(enabled) {
+      preferences.privacy = enabled;
+      localStorage.setItem(preferenceKey, JSON.stringify(preferences));
+      showToast(enabled ? "On-device preferences enabled" : "On-device preferences disabled");
+    }
+    function setSession(user, message) {
+      try {
+        currentUser = { name: user.name, email: user.email, firebaseUid: user.firebaseUid || null, shopName: user.shopName || "" };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+        restoreLocalAccount();
+        renderAuthUI();
+        closeModal("signinModal");
+        closeModal("signupModal");
+        const destination = pendingPanel || "account";
+        pendingPanel = null;
+        showPanel(destination);
+        if (pendingCheckout) {
+          pendingCheckout = false;
+          openModal("checkoutModal");
+        }
+        showToast(message || `Signed in as ${currentUser.email}`);
+      } catch (err) {
+        console.error("setSession error:", err);
+      }
+    }
+
+    async function signIn(event) {
+      if (event && event.preventDefault) event.preventDefault();
+      const submitBtn = document.getElementById("signinSubmitBtn") || event?.target?.querySelector?.('button[type="submit"]');
+      const emailInput = document.getElementById("signinEmail");
+      const passwordInput = document.getElementById("signinPassword");
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+      const password = passwordInput ? passwordInput.value : "";
+      if (!email || !password) {
+        setAuthError("signinError", "Please enter your email and password.");
+        return;
+      }
+      try {
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Signing in..."; }
+        setAuthError("signinError", "");
+        if (window.firebaseAuthApi) {
+          try {
+            const result = await window.firebaseAuthApi.signIn(email, password);
+            setAuthError("signinError", "");
+            setSession({ name: result.user.displayName || email.split("@")[0], email: result.user.email, firebaseUid: result.user.uid });
+            return;
+          } catch (firebaseErr) {
+            console.error("Firebase signIn failed:", firebaseErr);
+            const localUser = users.find(u => u.email === email && u.password === password);
+            if (localUser) {
+              setSession(localUser, "Signed in with local profile");
+              return;
+            }
+            setAuthError("signinError", firebaseErrorMessage(firebaseErr));
+            return;
+          }
+        }
+        setAuthError("signinError", "Please sign in with Google or create an account.");
+      } catch (err) {
+        console.error("signIn error:", err);
+        setAuthError("signinError", err.message || "Sign in failed.");
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Sign in"; }
+      }
+    }
+    async function signUp(event) {
+      if (event && event.preventDefault) event.preventDefault();
+      const submitBtn = document.getElementById("signupSubmitBtn") || event?.target?.querySelector?.('button[type="submit"]');
+      const nameInput = document.getElementById("signupName");
+      const emailInput = document.getElementById("signupEmail");
+      const passwordInput = document.getElementById("signupPassword");
+      const name = nameInput ? nameInput.value.trim() : "";
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : "";
+      const password = passwordInput ? passwordInput.value : "";
+      if (!name || !email || !password) {
+        setAuthError("signupError", "Please fill in all fields.");
+        return;
+      }
+      if (password.length < 6) {
+        setAuthError("signupError", "Password must be at least 6 characters.");
+        return;
+      }
+      try {
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Creating account..."; }
+        setAuthError("signupError", "");
+        if (window.firebaseAuthApi) {
+          try {
+            const result = await window.firebaseAuthApi.signUp(name, email, password);
+            setAuthError("signupError", "");
+            setSession({ name, email: result.user.email, firebaseUid: result.user.uid }, "Account created — welcome to AfriBay");
+            return;
+          } catch (firebaseErr) {
+            console.error("Firebase signUp failed:", firebaseErr);
+            setAuthError("signupError", firebaseErrorMessage(firebaseErr));
+            return;
+          }
+        }
+        if (users.some(user => user.email === email)) {
+          setAuthError("signupError", "An account with that email already exists. Sign in instead.");
+          return;
+        }
+        const user = { name, email, password, shopName: "" };
+        users.push(user);
+        localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        setAuthError("signupError", "");
+        setSession(user, "Account created — welcome to AfriBay");
+      } catch (err) {
+        console.error("signUp error:", err);
+        setAuthError("signupError", err.message || "Account creation failed.");
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Create account →"; }
+      }
+    }
+    async function signInWithGoogle() {
+      const googleBtn = document.getElementById("googleSignInBtn");
+      try {
+        if (googleBtn) { googleBtn.disabled = true; googleBtn.textContent = "Connecting to Google..."; }
+        setAuthError("signinError", "");
+        if (!window.firebaseAuthApi) {
+          setAuthError("signinError", "Firebase is not ready. Please refresh and try again.");
+          return;
+        }
+        const result = await window.firebaseAuthApi.signInWithGoogle();
+        setAuthError("signinError", "");
+        setSession({ name: result.user.displayName || result.user.email?.split("@")[0] || "Google User", email: result.user.email, firebaseUid: result.user.uid }, "Signed in with Google");
+      } catch (error) {
+        console.error("Google sign-in error:", error);
+        setAuthError("signinError", firebaseErrorMessage(error));
+      } finally {
+        if (googleBtn) { googleBtn.disabled = false; googleBtn.textContent = "◎   Sign in with Google"; }
+      }
+    }
+    async function logout() {
+      try {
+        if (window.firebaseAuthApi) {
+          try { await window.firebaseAuthApi.signOut(); } catch (error) { console.warn("Sign out notice:", error); }
+        }
+        currentUser = null;
+        currentShop = null;
+        ownProducts = [];
+        localStorage.removeItem(SESSION_KEY);
+        renderAuthUI();
+        showPanel("home");
+        showToast("You have been signed out");
+      } catch (err) {
+        console.error("logout error:", err);
+      }
+    }
+    function renderAuthUI() {
+      try {
+        const signedIn = Boolean(currentUser);
+        const guestMenu = document.getElementById("guestMenu"); if (guestMenu) guestMenu.style.display = signedIn ? "none" : "block";
+        const memberMenu = document.getElementById("memberMenu"); if (memberMenu) memberMenu.style.display = signedIn ? "block" : "none";
+        const guestSettingsMenu = document.getElementById("guestSettingsMenu"); if (guestSettingsMenu) guestSettingsMenu.style.display = signedIn ? "none" : "block";
+        const avatarButton = document.getElementById("avatarButton"); if (avatarButton) avatarButton.textContent = signedIn ? initials(currentUser.name) : "AF";
+        const accountGuest = document.getElementById("accountGuestState"); if (accountGuest) accountGuest.classList.toggle("member-only", signedIn);
+        const accountMember = document.getElementById("accountMemberState"); if (accountMember) accountMember.classList.toggle("visible", signedIn);
+        const accountName = document.getElementById("accountName"); if (accountName) accountName.textContent = signedIn ? currentUser.name : "Sign in to AfriBay";
+        const accountEmail = document.getElementById("accountEmail"); if (accountEmail) accountEmail.textContent = signedIn ? currentUser.email : "";
+        const accountAvatar = document.getElementById("accountAvatar"); if (accountAvatar) accountAvatar.textContent = signedIn ? initials(currentUser.name) : "AF";
+        const shopGuest = document.getElementById("shopGuestState"); if (shopGuest) shopGuest.style.display = signedIn ? "none" : "block";
+        const shopMember = document.getElementById("shopMemberState"); if (shopMember) shopMember.classList.toggle("visible", signedIn);
+        const shopAvatar = document.getElementById("shopAvatar"); if (shopAvatar) shopAvatar.textContent = signedIn ? initials(currentUser.name) : "AF";
+        const shopWelcome = document.getElementById("shopWelcome"); if (shopWelcome) shopWelcome.textContent = signedIn ? `Welcome, ${currentUser.name.split(" ")[0]}` : "Welcome back";
+        const adsGuest = document.getElementById("adsGuestState"); if (adsGuest) adsGuest.style.display = signedIn ? "none" : "block";
+        const adsMember = document.getElementById("adsMemberState"); if (adsMember) adsMember.classList.toggle("visible", signedIn);
+        renderSellerDashboard();
+      } catch (err) {
+        console.error("renderAuthUI error:", err);
+      }
+    }
+    function switchAuthModal(from, to) { closeModal(from); openModal(to); }
+    function startSelling() {
+      try {
+        if (!currentUser) {
+          pendingPanel = "shop";
+          openModal("signinModal");
+          showToast("Please sign in to open a shop");
+          return;
+        }
+        showPanel("shop");
+        if (!currentShop) {
+          openModal("shopModal");
+        }
+      } catch (err) {
+        console.error("startSelling error:", err);
+      }
+    }
+    function openShopModalSafe() {
+      try {
+        if (!currentUser) {
+          pendingPanel = "shop";
+          openModal("signinModal");
+          showToast("Please sign in to create a shop");
+          return;
+        }
+        openModal("shopModal");
+      } catch (err) {
+        console.error("openShopModalSafe error:", err);
+      }
+    }
+    async function createShop(event) {
+      if (event && event.preventDefault) event.preventDefault();
+      try {
+        if (!currentUser) return startSelling();
+        const shopNameEl = document.getElementById("shopName");
+        const shopPhoneEl = document.getElementById("shopPhone");
+        const shopDescEl = document.getElementById("shopDescriptionInput");
+        const shopLogoEl = document.getElementById("shopLogoFile");
+        const shopName = shopNameEl ? shopNameEl.value.trim() : "";
+        const contactPhone = shopPhoneEl ? shopPhoneEl.value.trim() : "";
+        const description = shopDescEl ? shopDescEl.value.trim() : "";
+        let logoUrl = "";
+        const logoFile = shopLogoEl?.files?.[0];
+        if (!shopName) {
+          showToast("Please enter a shop name");
+          return;
+        }
+        try {
+          if (logoFile && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
+            logoUrl = await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, logoFile, "shop-logos");
+          }
+          if (window.afriBayBackend?.createShop && currentUser.firebaseUid) {
+            const ref = await window.afriBayBackend.createShop(currentUser.firebaseUid, { shopName, contactPhone, description, logoUrl });
+            currentShop = { id: ref.id, userId: currentUser.firebaseUid, shopName, contactPhone, description, logoUrl, status: "active" };
+          } else {
+            currentShop = { id: `local-${Date.now()}`, userId: currentUser.firebaseUid || currentUser.email, shopName, contactPhone, description, logoUrl, status: "active" };
+          }
+        } catch (error) {
+          console.warn("Falling back to local shop session:", error);
+          currentShop = { id: `local-${Date.now()}`, userId: currentUser.firebaseUid || currentUser.email, shopName, contactPhone, description, logoUrl, status: "active" };
+        }
+        const userIndex = users.findIndex(user => user.email === currentUser.email);
+        if (userIndex >= 0) { users[userIndex].shopName = shopName; localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
+        currentUser.shopName = shopName;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+        persistLocalAccountData();
+        closeModal("shopModal");
+        showToast(`${shopName} is ready for its first listing!`);
+        showPanel("shop");
+        renderSellerDashboard();
+        if (pendingSellerAction === "listing") {
+          pendingSellerAction = null;
+          openModal("listingModal");
+        }
+      } catch (err) {
+        console.error("createShop error:", err);
+        showToast("Error saving shop: " + (err.message || "Unknown error"));
+      }
+    }
+    function getOwnedProducts() {
+      if (!currentUser) return [];
+      if (currentUser.firebaseUid && ownProducts.length) return ownProducts;
+      const filtered = products.filter(product => product.ownerEmail === currentUser.email || product.ownerId === currentUser.firebaseUid);
+      if (filtered.length) return filtered;
+      return products.slice(0, 3);
+    }
+    function openProduct(id) {
+      viewProduct(id);
+    }
+    function renderSellerDashboard() {
+      try {
+        const container = document.getElementById("sellerProducts");
+        if (!container) return;
+        const signedIn = Boolean(currentUser);
+        const listed = signedIn ? getOwnedProducts() : [];
+        const activeAds = listed.filter(product => isSponsored(product)).length;
+        const views = listed.reduce((sum, product) => sum + Number(product.viewCount || 0), 0);
+        const sv = document.getElementById("sellerViews"); if (sv) sv.textContent = views.toLocaleString();
+        const spc = document.getElementById("sellerProductCount"); if (spc) spc.textContent = String(listed.length);
+        const sac = document.getElementById("sellerAdCount"); if (sac) sac.textContent = String(activeAds);
+        const ss = document.getElementById("shopStatus"); if (ss) ss.textContent = currentShop ? `${currentShop.shopName} · ${currentShop.status || "active"}` : "Create a shop to start listing products.";
+        const sw = document.getElementById("shopWelcome"); if (sw) sw.textContent = currentShop?.shopName || (signedIn ? `Welcome, ${currentUser.name.split(" ")[0]}` : "Welcome back");
+        const sd = document.getElementById("shopDescription"); if (sd) sd.textContent = currentShop?.description || "Set up your shop and publish listings to start selling.";
+        const ssb = document.getElementById("shopSetupButton"); if (ssb) ssb.textContent = currentShop ? "Edit shop profile" : "Create your shop →";
+        container.innerHTML = listed.length ? listed.map(product => `
+          <div class="feature-row"><div class="feature-icon">${product.art || "✦"}</div><div><strong>${escapeHTML(product.title)}</strong><small>${money(product.price)} · ${product.condition || "condition not set"} · ${product.viewCount || 0} views</small></div><button type="button" class="link-btn" onclick="openProduct(${JSON.stringify(String(product.id))})">View</button></div>`).join("") : '<div class="empty" style="padding:24px">Your listings will appear here. Create your first product to get started.</div>';
+      } catch (err) {
+        console.error("renderSellerDashboard error:", err);
+      }
+    }
+    function openListingEditor() {
+      if (!currentUser) {
+        pendingPanel = "shop";
+        pendingSellerAction = "listing";
+        return openModal("signinModal");
+      }
+      if (!currentShop) {
+        pendingSellerAction = "listing";
+        openModal("shopModal");
+        return showToast("Create your shop first, then add a listing");
+      }
+      openModal("listingModal");
+    }
+    function categoryLabel(code) {
+      return ({ clothes: "Clothing", cars: "Cars", electronics: "Electronics", new_goods: "New Goods" })[code] || code;
+    }
+    async function createListing(event) {
+      event.preventDefault();
+      if (!currentUser) return showPanel("shop");
+      if (!currentShop) { pendingSellerAction = "listing"; closeModal("listingModal"); return openModal("shopModal"); }
+      const file = document.getElementById("listingImage").files[0];
+      const productData = {
+        title: document.getElementById("listingTitle").value.trim(),
+        description: document.getElementById("listingDescription").value.trim(),
+        priceZMW: Number(document.getElementById("listingPrice").value),
+        category: document.getElementById("listingCategory").value,
+        condition: document.getElementById("listingCondition").value
+      };
+      let imageUrls = [];
+      try {
+        if (file && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
+          imageUrls.push(await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, file, "product-images"));
+        }
+        let product;
+        if (currentUser.firebaseUid && window.afriBayBackend?.createProduct) {
+          const ref = await window.afriBayBackend.createProduct(currentUser.firebaseUid, {
+            ...productData, shopId: currentShop.id, shopName: currentShop.shopName,
+            contactPhone: currentShop.contactPhone, location: "Zambia", imageUrls
+          });
+          product = normalizeRemoteProduct({ ...productData, id: ref.id, priceZMW: productData.priceZMW, shopId: currentShop.id, shopName: currentShop.shopName, ownerId: currentUser.firebaseUid, imageUrls, location: "Zambia", viewCount: 0, isFeatured: false });
+        } else {
+          product = {
+            ...productData, id: `local-${Date.now()}`, price: productData.priceZMW,
+            category: categoryLabel(productData.category), categoryCode: productData.category,
+            shopId: currentShop.id, seller: currentShop.shopName,
+            ownerEmail: currentUser.email, location: "Zambia", imageUrls, art: "✦",
+            artClass: `t${(products.length % 8) + 1}`, viewCount: 0, ad: false
+          };
+        }
+        ownProducts.unshift(product);
+        products.unshift(product);
+        persistLocalAccountData();
+        renderProducts();
+        renderSellerDashboard();
+        populateAdProductSelect();
+        closeModal("listingModal");
+        event.target.reset();
+        showToast("Your product listing is live");
+      } catch (error) {
+        setAuthError("listingError", error.message || "Could not publish this listing.");
+      }
+    }
+    function openPromoteAd() {
+      try {
+        if (!currentUser) {
+          pendingPanel = "ads";
+          openModal("signinModal");
+          showToast("Please sign in to promote products");
+          return;
+        }
+        populateAdProductSelect();
+        pendingVideoSource = "";
+        const adUrlInput = document.getElementById("adVideoUrl");
+        if (adUrlInput) adUrlInput.value = "";
+        const adPreview = document.getElementById("adVideoPreview");
+        if (adPreview) { adPreview.removeAttribute("src"); adPreview.style.display = "none"; }
+        openModal("boostModal");
+      } catch (err) {
+        console.error("openPromoteAd error:", err);
+      }
+    }
+    function populateAdProductSelect() {
+      try {
+        const select = document.getElementById("adProductSelect");
+        if (!select) return;
+        const ownedProducts = getOwnedProducts();
+        const available = ownedProducts.length ? ownedProducts : products.slice(0, 4);
+        select.innerHTML = available.map(product => `<option value="${product.id}">${product.title} · ${money(product.price)}</option>`).join("");
+        select.disabled = false;
+        const help = document.getElementById("adProductHelp");
+        if (help) {
+          help.textContent = `${available.length} listing${available.length === 1 ? "" : "s"} ready to promote.`;
+        }
+      } catch (err) {
+        console.error("populateAdProductSelect error:", err);
+      }
+    }
+    function previewAdVideo(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      pendingVideoFile = file;
+      pendingVideoSource = URL.createObjectURL(file);
+      const preview = document.getElementById("adVideoPreview");
+      preview.src = pendingVideoSource;
+      preview.style.display = "block";
+      preview.play().catch(() => {});
+      setAuthError("adVideoError", "");
+    }
+    function previewAdVideoUrl() {
+      if (pendingVideoSource) return;
+      const url = document.getElementById("adVideoUrl").value.trim();
+      const preview = document.getElementById("adVideoPreview");
+      if (!url) { preview.removeAttribute("src"); preview.style.display = "none"; return; }
+      preview.src = url;
+      preview.style.display = "block";
+      preview.play().catch(() => {});
+    }
+    async function createAd(event) {
+      if (event && event.preventDefault) event.preventDefault();
+      try {
+        if (!currentUser) return openPromoteAd();
+        const prodSelect = document.getElementById("adProductSelect");
+        const productId = prodSelect ? prodSelect.value : "";
+        const durSelect = document.getElementById("adDuration");
+        const duration = durSelect ? durSelect.value : "weekly";
+        const product = findProduct(productId);
+        if (!product) return showToast("Select a listing before creating an ad");
+        let videoUrl = pendingVideoSource || document.getElementById("adVideoUrl")?.value?.trim() || "";
+        if (!videoUrl) return setAuthError("adVideoError", "Add a short video URL or upload a video clip to feature.");
+        const days = duration === "weekly" ? 7 : (duration === "monthly" ? 30 : 1);
+        const price = 0; // 100% Free to publish!
+        if (window.afriBayBackend?.createVideoAd && currentUser.firebaseUid && product.shopId) {
+          try {
+            if (pendingVideoFile) videoUrl = await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, pendingVideoFile, "video-ads");
+            await window.afriBayBackend.createVideoAd(currentUser.firebaseUid, {
+              shopId: product.shopId,
+              productId: product.id,
+              videoUrl,
+              caption: `${product.title} on AfriBay`,
+              priceZMW: 0,
+              isPaid: true,
+              duration
+            });
+          } catch (error) {
+            console.warn("Could not save video ad to Firestore, saving locally:", error);
+          }
+        }
+        adCampaigns = adCampaigns.filter(ad => String(ad.productId) !== String(productId));
+        adCampaigns.push({ productId, duration, price: 0, videoUrl, createdBy: currentUser.email, createdAt: Date.now(), expiresAt: Date.now() + days * 24 * 60 * 60 * 1000 });
+        localStorage.setItem(ADS_KEY, JSON.stringify(adCampaigns));
+        pendingVideoFile = null;
+        pendingVideoSource = "";
+        renderProducts();
+        renderSponsoredFeed();
+        renderSellerDashboard();
+        closeModal("boostModal");
+        showPanel("ads");
+        showToast(`✓ Free Ad Published! "${product.title}" is now live in the Ads feed`);
+      } catch (err) {
+        console.error("createAd error:", err);
+        setAuthError("adVideoError", err.message || "Failed to create ad.");
+      }
+    }
+    function renderSponsoredFeed() {
+      const sponsored = products.filter(isSponsored);
+      const feed = document.getElementById("sponsoredFeed");
+      feed.innerHTML = sponsored.length ? sponsored.map(product => `
+        <article class="sponsored-card">
+          <div class="ad-video"><span class="ad-label" style="background:var(--green)">✓ Free Featured Ad</span>${getAdVideoSource(product) ? `<video src="${escapeHTML(getAdVideoSource(product))}" muted loop playsinline controls preload="metadata" onerror="this.style.display='none';this.parentElement.querySelector('.ad-video-fallback').style.display='grid'"></video>` : ""}<div class="ad-video-fallback" style="display:${getAdVideoSource(product) ? "none" : "grid"}">${escapeHTML(product.art)}</div><span class="video-duration">▶ short video</span></div>
+          <div class="product-info"><h3>${escapeHTML(product.title)}</h3><div class="ad-shop">Shop · ${escapeHTML(product.seller)}</div><div class="price-line"><span class="price">${money(product.price)}</span><span class="verified">✓ verified</span></div><button class="button" style="width:100%" onclick="buyNow(${JSON.stringify(String(product.id))})">Buy Now · ${money(product.price)}</button><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px"><button class="button ghost" style="width:100%" onclick="viewProduct(${JSON.stringify(String(product.id))})">👁 Product</button><button class="button ghost" style="width:100%" onclick="viewShopByProduct(${JSON.stringify(String(product.id))})">🏬 Shop</button></div><button class="button" style="width:100%;margin-top:8px;background:var(--orange)" onclick="openPromoteAd()">✦ Promote Your Item (Free)</button></div>
+        </article>`).join("") : '<div class="empty ad-feed-empty">No sponsored short videos are live yet. Be the first to promote a product for free!</div>';
+      if ("IntersectionObserver" in window) {
+        const observer = new IntersectionObserver(entries => entries.forEach(entry => {
+          const video = entry.target.querySelector("video");
+          if (!video) return;
+          if (entry.isIntersecting && entry.intersectionRatio > .6) video.play().catch(() => {});
+          else video.pause();
+        }), { root: feed, threshold: [.2, .6, .9] });
+        feed.querySelectorAll(".sponsored-card").forEach(card => observer.observe(card));
+      }
+    }
+    function viewProduct(id) {
+      try {
+        const product = findProduct(id);
+        if (!product) return showToast("Product not found");
+        selectedProductId = product.id;
+        const dt = document.getElementById("detailTitle"); if (dt) dt.textContent = product.title;
+        const dp = document.getElementById("detailPrice"); if (dp) dp.textContent = money(product.price);
+        const dd = document.getElementById("detailDescription"); if (dd) dd.textContent = product.description || "Verified marketplace listing on AfriBay. Contact the seller directly or add to your cart.";
+        const ds = document.getElementById("detailShop"); if (ds) ds.textContent = `${product.seller} · ${product.location || "Zambia"}`;
+        const conditions = { new: "New", used_like_new: "Used · Like new", used_good: "Used · Good" };
+        const dc = document.getElementById("detailCondition"); if (dc) dc.textContent = `${categoryLabel(product.categoryCode || product.category)} · ${conditions[product.condition] || "Condition: Good"}`;
+        const detailImage = document.getElementById("detailImage");
+        if (detailImage) {
+          detailImage.className = `product-image ${escapeHTML(product.artClass || "t1")}`;
+          detailImage.innerHTML = product.imageUrls?.[0] && /^https:\/\//i.test(product.imageUrls[0])
+            ? `<img src="${escapeHTML(product.imageUrls[0])}" alt="${escapeHTML(product.title)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`
+            : `<span>${escapeHTML(product.art || "✦")}</span>`;
+        }
+        const phone = (product.contactPhone || currentShop?.contactPhone || "+260971234567").replace(/[^\d+]/g, "");
+        const wa = document.getElementById("sellerWhatsApp");
+        if (wa) {
+          wa.href = phone ? `https://wa.me/${phone.replace(/\D/g, "")}` : "#";
+          wa.style.display = "inline-flex";
+        }
+        const call = document.getElementById("sellerCall");
+        if (call) {
+          call.href = phone ? `tel:${phone}` : "#";
+          call.style.display = "inline-flex";
+        }
+        const addBtn = document.getElementById("detailAddToCart");
+        if (addBtn) {
+          addBtn.textContent = `Add to cart · ${money(product.price)} →`;
+          addBtn.disabled = false;
+        }
+        openModal("productModal");
+      } catch (err) {
+        console.error("viewProduct error:", err);
+      }
+    }
+    function viewCurrentProductShop() {
+      if (selectedProductId != null) {
+        closeModal("productModal");
+        viewShopByProduct(selectedProductId);
+      }
+    }
+    function viewShopByProduct(productId) {
+      try {
+        const product = findProduct(productId);
+        if (!product) return;
+        const sellerName = product.seller || "AfriBay Shop";
+        
+        // Find all products by this seller/shop
+        let sellerProducts = products.filter(p => 
+          (product.shopId && p.shopId === product.shopId) ||
+          (product.ownerEmail && p.ownerEmail === product.ownerEmail) ||
+          (product.seller && p.seller.toLowerCase() === sellerName.toLowerCase())
+        );
+        // If this seller has only 1 listing, include related products from same category so visitors have plenty to explore
+        if (sellerProducts.length <= 1) {
+          const sameCat = products.filter(p => String(p.id) !== String(product.id) && (p.category === product.category || p.categoryCode === product.categoryCode));
+          sellerProducts = [product, ...sameCat.slice(0, 3)];
+        }
+
+        const titleEl = document.getElementById("shopViewTitle"); if (titleEl) titleEl.textContent = sellerName;
+        const nameEl = document.getElementById("shopViewName"); if (nameEl) nameEl.textContent = sellerName;
+        const avEl = document.getElementById("shopViewAvatar"); if (avEl) avEl.textContent = initials(sellerName);
+        const locEl = document.getElementById("shopViewLocation"); if (locEl) locEl.textContent = `${product.location || "Lusaka, Zambia"} · Active Seller`;
+        const descEl = document.getElementById("shopViewDescription"); if (descEl) descEl.textContent = `Welcome to ${sellerName}! Browse all active listings from this verified merchant.`;
+        const countEl = document.getElementById("shopViewCount"); if (countEl) countEl.textContent = `${sellerProducts.length} listing${sellerProducts.length === 1 ? "" : "s"} from this seller`;
+
+        const phone = (product.contactPhone || "+260971234567").replace(/[^\d+]/g, "");
+        const wa = document.getElementById("shopViewWhatsApp"); if (wa) wa.href = `https://wa.me/${phone.replace(/\D/g, "")}`;
+        const call = document.getElementById("shopViewCall"); if (call) call.href = `tel:${phone}`;
+
+        const grid = document.getElementById("shopViewGrid");
+        if (grid) {
+          grid.innerHTML = sellerProducts.map(p => `
+            <article class="product-card" style="border-radius:14px;overflow:hidden">
+              <div style="position:relative">${imageOrEmoji(p)}<div class="cond-badge cond-${escapeHTML(p.condition || 'used_good')}" style="position:absolute;left:8px;bottom:8px">${escapeHTML({new:'✦ New',used_like_new:'★ Like new',used_good:'◎ Good'}[p.condition]||'◎ Good')}</div></div>
+              <div class="product-info" style="padding:10px 12px 14px">
+                <h4 style="margin:0 0 5px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(p.title)}</h4>
+                <div class="price" style="font-size:14px;font-weight:900;color:var(--green-deep)">${money(p.price)}</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px">
+                  <button type="button" class="button ghost" style="padding:7px 4px;font-size:11px" onclick="closeModal('shopViewModal');viewProduct(${JSON.stringify(String(p.id))})">Details</button>
+                  <button type="button" class="button" style="padding:7px 4px;font-size:11px" onclick="addToCart(${JSON.stringify(String(p.id))}, this)">+ Cart</button>
+                </div>
+              </div>
+            </article>
+          `).join("");
+        }
+
+        openModal("shopViewModal");
+      } catch (err) {
+        console.error("viewShopByProduct error:", err);
+      }
+    }
+    function renderProducts() {
+      const q = document.getElementById("searchInput").value.toLowerCase().trim();
+      const condition = document.getElementById("conditionFilter").value;
+      const visible = products.filter(p =>
+        (activeCategory === "All" || p.category === activeCategory) &&
+        (condition === "All" || p.condition === condition) &&
+        (!q || `${p.title} ${p.category} ${p.location} ${p.seller}`.toLowerCase().includes(q))
+      );
+      document.getElementById("productGrid").innerHTML = visible.length ? visible.map(p => `
+        <article class="product-card">
+          <div style="position:relative">${imageOrEmoji(p)}<button class="heart" onclick="this.classList.toggle('liked');this.textContent=this.classList.contains('liked')?'♥':'♡'">♡</button></div>
+          <div class="product-info">
+            <h3>${escapeHTML(p.title)}</h3>
+            <div class="price-line"><span class="price">${money(p.price)}</span><span class="verified">✓ verified</span></div>
+            <div class="cond-badge cond-${escapeHTML(p.condition || 'used_good')}">${escapeHTML({new:'✦ New',used_like_new:'★ Like new',used_good:'◎ Good'}[p.condition]||'◎ Good')}</div>
+            <div class="location">${escapeHTML(p.location || "Zambia")} · ${escapeHTML(p.seller)}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px">
+              <button type="button" class="button ghost" style="padding:8px 4px;font-size:12px;width:100%" onclick="viewProduct(${JSON.stringify(String(p.id))})">👁 View Product</button>
+              <button type="button" class="button ghost" style="padding:8px 4px;font-size:12px;width:100%" onclick="viewShopByProduct(${JSON.stringify(String(p.id))})">🏬 View Shop</button>
+            </div>
+            <button type="button" class="button" style="width:100%;margin-top:7px;padding:9px" onclick="addToCart(${JSON.stringify(String(p.id))}, this)">Add to cart</button>
+          </div>
+        </article>`).join("") : '<div class="empty">No finds match that search yet.<br /><button class="button ghost" style="margin-top:14px" onclick="clearSearch()">Clear search</button></div>';
+    }
+    function clearSearch() { document.getElementById("searchInput").value = ""; document.getElementById("conditionFilter").value = "All"; activeCategory = "All"; document.querySelectorAll(".category").forEach((el, i) => el.classList.toggle("active", i === 0)); renderProducts(); }
+    function filterProducts() { renderProducts(); }
+    function setCategory(category, button) { activeCategory = category; document.querySelectorAll(".category").forEach(el => el.classList.remove("active")); button.classList.add("active"); renderProducts(); }
+    function addToCart(id, buttonEl) {
+      try {
+        const product = findProduct(id);
+        if (!product) return showToast("That listing is no longer available");
+        const item = cart.find(x => String(x.id) === String(id));
+        if (item) item.qty++; else cart.push({ id: product.id, qty: 1 });
+        updateCart();
+        persistCart();
+        showToast(`Added "${product.title}" to your cart`);
+        
+        // Tactile responsive feedback on the clicked button
+        if (buttonEl && buttonEl.tagName === 'BUTTON') {
+          const originalText = buttonEl.textContent;
+          buttonEl.textContent = "✓ Added!";
+          buttonEl.style.background = "var(--green-deep)";
+          buttonEl.style.color = "white";
+          setTimeout(() => {
+            buttonEl.textContent = originalText;
+            buttonEl.style.background = "";
+            buttonEl.style.color = "";
+          }, 1200);
+        }
+      } catch (err) {
+        console.error("addToCart error:", err);
+      }
+    }
+    function buyNow(id) {
+      try {
+        addToCart(id);
+        showPanel("cart");
+      } catch (err) {
+        console.error("buyNow error:", err);
+      }
+    }
+    function updateCart() {
+      try {
+        const count = cart.reduce((sum, x) => sum + x.qty, 0);
+        const badge = document.getElementById("cartBadge");
+        if (badge) { badge.textContent = count; badge.style.display = count ? "grid" : "none"; }
+        const topBadge = document.getElementById("topCartBadge");
+        if (topBadge) { topBadge.textContent = count; topBadge.style.display = count ? "grid" : "none"; }
+        const list = document.getElementById("cartList");
+        if (!list) return;
+        if (!cart.length) {
+          list.innerHTML = '<div class="empty" style="border:0;padding:45px 5px">Your cart is waiting for a good find.<br /><button type="button" class="button ghost" style="margin-top:15px" onclick="showPanel(\'home\')">Browse the market →</button></div>';
+        } else {
+          const lines = cart.map(item => ({ item, product: findProduct(item.id) })).filter(row => row.product);
+          list.innerHTML = `<h3 style="margin-top:0">Your items <span style="color:var(--muted);font-size:12px;font-weight:400">(${count})</span></h3>` + lines.map(({ item, product }) => `<div class="cart-row"><div class="cart-art ${escapeHTML(product.artClass || "t1")}">${escapeHTML(product.art || "✦")}</div><div><h3>${escapeHTML(product.title)}</h3><p>${escapeHTML(product.seller)} · ${money(product.price)}</p><div class="qty"><button type="button" onclick="changeQty(${JSON.stringify(String(product.id))}, -1)">−</button>${item.qty}<button type="button" onclick="changeQty(${JSON.stringify(String(product.id))}, 1)">+</button></div></div><div class="cart-price">${money(product.price * item.qty)}</div></div>`).join("");
+        }
+        const subtotal = cart.reduce((sum, item) => { const p = findProduct(item.id); return sum + (p ? p.price * item.qty : 0); }, 0);
+        const delivery = subtotal ? 35 : 0;
+        const subEl = document.getElementById("subtotal"); if (subEl) subEl.textContent = money(subtotal);
+        const delEl = document.getElementById("delivery"); if (delEl) delEl.textContent = money(delivery);
+        const totEl = document.getElementById("total"); if (totEl) totEl.textContent = money(subtotal + delivery);
+        const coTot = document.getElementById("checkoutTotal"); if (coTot) coTot.textContent = money(subtotal + delivery);
+      } catch (err) {
+        console.error("updateCart error:", err);
+      }
+    }
+    function changeQty(id, amount) {
+      try {
+        const item = cart.find(x => String(x.id) === String(id));
+        if (!item) return;
+        item.qty += amount;
+        if (item.qty < 1) cart = cart.filter(x => String(x.id) !== String(id));
+        updateCart();
+        persistCart();
+      } catch (err) {
+        console.error("changeQty error:", err);
+      }
+    }
+    async function persistCart() {
+      try {
+        saveLocalCart();
+        if (currentUser?.firebaseUid && window.afriBayBackend?.saveCart) {
+          const items = cart.map(item => {
+            const product = findProduct(item.id);
+            return { productId: String(item.id), quantity: item.qty, priceZMW: product?.price || 0 };
+          });
+          try { await window.afriBayBackend.saveCart(currentUser.firebaseUid, items); }
+          catch (error) { console.warn("Cart Firestore sync warning:", error); }
+        }
+      } catch (err) {
+        console.error("persistCart error:", err);
+      }
+    }
+    function addCurrentProductToCart() {
+      try {
+        if (selectedProductId == null) return;
+        addToCart(selectedProductId);
+        closeModal("productModal");
+      } catch (err) {
+        console.error("addCurrentProductToCart error:", err);
+      }
+    }
+    function showPanel(name) {
+      try {
+        if (name === "shop" && !currentUser) {
+          pendingPanel = name;
+          openModal("signinModal");
+          showToast("Please sign in to access seller tools");
+          return;
+        }
+        document.querySelectorAll(".panel").forEach(el => el.classList.remove("active"));
+        const targetPanel = document.getElementById(name + "Panel");
+        if (targetPanel) targetPanel.classList.add("active");
+        document.querySelectorAll(".nav-item").forEach(el => el.classList.toggle("active", el.dataset.panel === name));
+        const accountMenu = document.getElementById("accountMenu");
+        if (accountMenu) accountMenu.classList.remove("open");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (err) {
+        console.error("showPanel error:", err);
+      }
+    }
+    function toggleMenu() {
+      try {
+        const menu = document.getElementById("accountMenu");
+        if (menu) menu.classList.toggle("open");
+      } catch (err) {
+        console.error("toggleMenu error:", err);
+      }
+    }
+    function openModal(id) {
+      try {
+        const modal = document.getElementById(id);
+        if (!modal) return;
+        modal.classList.add("open");
+        const accountMenu = document.getElementById("accountMenu");
+        if (accountMenu) accountMenu.classList.remove("open");
+        const errs = modal.querySelectorAll(".auth-error");
+        errs.forEach(err => { err.textContent = ""; err.classList.remove("visible"); });
+      } catch (err) {
+        console.error("openModal error:", err);
+      }
+    }
+    function closeModal(id) {
+      try {
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.remove("open");
+      } catch (err) {
+        console.error("closeModal error:", err);
+      }
+    }
+    function closeOnBackdrop(event, id) {
+      try {
+        if (event && event.target && event.target.id === id) closeModal(id);
+      } catch (err) {
+        console.error("closeOnBackdrop error:", err);
+      }
+    }
+    function openOrdersModal() {
+      try {
+        if (!currentUser) {
+          pendingPanel = "account";
+          openModal("signinModal");
+          showToast("Please sign in to view your orders");
+          return;
+        }
+        const key = currentUser.firebaseUid || currentUser.email;
+        const orders = JSON.parse(localStorage.getItem(`afribay_orders_${key}`) || "[]");
+        const list = document.getElementById("ordersList");
+        if (list) {
+          list.innerHTML = orders.length ? orders.map(ord => `
+            <div class="auth-card" style="padding:14px;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                <div>
+                  <div class="member-badge" style="background:#e7f2ec;color:#1c6b4d">✓ ${escapeHTML(ord.paymentStatus || 'Completed')}</div>
+                  <strong style="display:block;margin-top:6px;font-size:14px">${escapeHTML(ord.trackingId || 'AFB-ORDER')}</strong>
+                </div>
+                <div style="text-align:right">
+                  <span class="price" style="font-size:15px;color:var(--green-deep)">${money(ord.totalZMW)}</span>
+                  <small style="display:block;color:var(--muted);font-size:11px;margin-top:2px">${new Date(ord.createdAt || Date.now()).toLocaleDateString()}</small>
+                </div>
+              </div>
+              <p style="font-size:12px;color:var(--muted);margin:0 0 6px;">Delivery: ${escapeHTML(ord.deliveryAddress || 'Lusaka, Zambia')}</p>
+              <div style="font-size:12px;border-top:1px solid var(--border);padding-top:6px;display:flex;flex-direction:column;gap:4px;">
+                ${(ord.items || []).map(it => `<div>• ${escapeHTML(it.title)} × ${it.quantity} (${money(it.priceZMW)})</div>`).join('')}
+              </div>
+            </div>
+          `).join('') : '<div class="empty" style="padding:24px">No orders placed yet.<br /><button class="button ghost" type="button" style="margin-top:12px" onclick="closeModal(\'ordersModal\');showPanel(\'home\')">Shop finds now →</button></div>';
+        }
+        openModal("ordersModal");
+      } catch (err) {
+        console.error("openOrdersModal error:", err);
+      }
+    }
+    function openCheckout() {
+      try {
+        if (!cart.length) return showToast("Add a find before checking out");
+        if (!currentUser) {
+          pendingPanel = "cart";
+          pendingCheckout = true;
+          openModal("signinModal");
+          return showToast("Please sign in to place an order");
+        }
+        openModal("checkoutModal");
+      } catch (err) {
+        console.error("openCheckout error:", err);
+      }
+    }
+    function selectPay(button) {
+      try {
+        if (!button || !button.parentElement) return;
+        button.parentElement.querySelectorAll(".pay-option").forEach(el => el.classList.remove("selected"));
+        button.classList.add("selected");
+        const mmFields = document.getElementById("mobileMoneyFields");
+        if (mmFields && button.dataset.payment) {
+          mmFields.style.display = button.dataset.payment === "mobile_money" ? "block" : "none";
+        }
+      } catch (err) {
+        console.error("selectPay error:", err);
+      }
+    }
+    async function processCheckout(event) {
+      if (event && event.preventDefault) event.preventDefault();
+      const submitBtn = event?.target?.querySelector?.('button[type="submit"]');
+      try {
+        if (!currentUser) {
+          closeModal("checkoutModal");
+          pendingPanel = "cart";
+          pendingCheckout = true;
+          openModal("signinModal");
+          return;
+        }
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Processing order..."; }
+        setAuthError("checkoutError", "");
+        const selectedPayment = document.querySelector("#checkoutModal .pay-option.selected")?.dataset.payment || "mobile_money";
+        const paymentPhoneEl = document.getElementById("paymentPhone");
+        const paymentPhone = paymentPhoneEl ? paymentPhoneEl.value.trim() : "";
+        if (selectedPayment === "mobile_money" && !paymentPhone) {
+          setAuthError("checkoutError", "Enter the mobile money number to continue.");
+          return;
+        }
+        const subtotal = cart.reduce((sum, item) => {
+          const product = findProduct(item.id);
+          return sum + (product ? product.price * item.qty : 0);
+        }, 0);
+        if (!subtotal) {
+          setAuthError("checkoutError", "Your cart has no available products. Return to the marketplace and add an item.");
+          return;
+        }
+        const totalZMW = subtotal + 35;
+        const trackingId = `AFB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+        const deliveryAddressEl = document.getElementById("deliveryAddress");
+        const deliveryAddress = deliveryAddressEl ? deliveryAddressEl.value.trim() : "Lusaka, Zambia";
+        const order = {
+          trackingId,
+          items: cart.map(item => {
+            const product = findProduct(item.id);
+            return {
+              productId: String(item.id),
+              title: product?.title || "Marketplace item",
+              quantity: item.qty,
+              priceZMW: Number(product?.price || 0)
+            };
+          }),
+          totalZMW,
+          paymentMethod: selectedPayment,
+          paymentPhone: selectedPayment === "mobile_money" ? paymentPhone : "",
+          paymentStatus: "completed",
+          deliveryAddress
+        };
+        try {
+          if (currentUser.firebaseUid && window.afriBayBackend?.createOrder) {
+            await window.afriBayBackend.createOrder(currentUser.firebaseUid, order);
+          } else {
+            const key = currentUser.firebaseUid || currentUser.email;
+            const priorOrders = JSON.parse(localStorage.getItem(`afribay_orders_${key}`) || "[]");
+            priorOrders.unshift({ ...order, createdAt: new Date().toISOString() });
+            localStorage.setItem(`afribay_orders_${key}`, JSON.stringify(priorOrders));
+          }
+        } catch (error) {
+          console.warn("Saving order to local storage fallback:", error);
+          const key = currentUser.firebaseUid || currentUser.email;
+          const priorOrders = JSON.parse(localStorage.getItem(`afribay_orders_${key}`) || "[]");
+          priorOrders.unshift({ ...order, createdAt: new Date().toISOString() });
+          localStorage.setItem(`afribay_orders_${key}`, JSON.stringify(priorOrders));
+        }
+        cart = [];
+        updateCart();
+        await persistCart();
+        closeModal("checkoutModal");
+        const recTrack = document.getElementById("receiptTracking"); if (recTrack) recTrack.textContent = trackingId;
+        const recAmt = document.getElementById("receiptAmount"); if (recAmt) recAmt.textContent = `Order total: ${money(totalZMW)}`;
+        openModal("receiptModal");
+        if (event.target && event.target.reset) event.target.reset();
+        const mmFields = document.getElementById("mobileMoneyFields"); if (mmFields) mmFields.style.display = "block";
+        document.querySelectorAll("#checkoutModal .pay-option").forEach((button, index) => button.classList.toggle("selected", index === 0));
+      } catch (err) {
+        console.error("processCheckout error:", err);
+        setAuthError("checkoutError", err.message || "Could not complete checkout.");
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Pay now · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
+      }
+    }
+    let toastTimer;
+    function showToast(message) {
+      try {
+        const toast = document.getElementById("toast");
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+      } catch (err) {
+        console.error("showToast error:", err);
+      }
+    }
+    renderProducts(); renderSponsoredFeed(); updateCart(); renderAuthUI();
+  </script>
+</body>
+</html>
