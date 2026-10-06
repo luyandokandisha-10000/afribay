@@ -498,7 +498,7 @@
   </div>
   <div id="toast" class="toast"></div>
 
-  <script src="https://checkout.flutterwave.com/v3.js"></script>
+  <script src="https://checkout.flutterwave.com/v3.js" async></script>
   <script>window.process = window.process || { env: {} };</script>
   <script type="importmap">
     {
@@ -1760,6 +1760,49 @@
         console.error("showToast error:", err);
       }
     }
+    // ── Expose all onclick/onsubmit functions to window so they work from HTML attributes ──
+    window.viewProduct         = viewProduct;
+    window.viewShopByProduct   = viewShopByProduct;
+    window.viewCurrentProductShop = viewCurrentProductShop;
+    window.addToCart           = addToCart;
+    window.addCurrentProductToCart = addCurrentProductToCart;
+    window.buyNow              = buyNow;
+    window.changeQty           = changeQty;
+    window.updateCart          = updateCart;
+    window.renderProducts      = renderProducts;
+    window.filterProducts      = filterProducts;
+    window.clearSearch         = clearSearch;
+    window.setCategory         = setCategory;
+    window.showPanel           = showPanel;
+    window.openModal           = openModal;
+    window.closeModal          = closeModal;
+    window.closeOnBackdrop     = closeOnBackdrop;
+    window.toggleMenu          = toggleMenu;
+    window.signIn              = signIn;
+    window.signUp              = signUp;
+    window.signInWithGoogle    = signInWithGoogle;
+    window.logout              = logout;
+    window.switchAuthModal     = switchAuthModal;
+    window.startSelling        = startSelling;
+    window.openShopModalSafe   = openShopModalSafe;
+    window.createShop          = createShop;
+    window.openListingEditor   = openListingEditor;
+    window.createListing       = createListing;
+    window.openPromoteAd       = openPromoteAd;
+    window.createAd            = createAd;
+    window.previewAdVideo      = previewAdVideo;
+    window.previewAdVideoUrl   = previewAdVideoUrl;
+    window.openCheckout        = openCheckout;
+    window.processCheckout     = processCheckout;
+    window.selectPay           = selectPay;
+    window.selectMomoProvider  = selectMomoProvider;
+    window.openOrdersModal     = openOrdersModal;
+    window.openProduct         = openProduct;
+    window.showToast           = showToast;
+    window.toggleTheme         = toggleTheme;
+    window.changeLanguage      = changeLanguage;
+    window.savePrivacySetting  = savePrivacySetting;
+
     renderProducts(); renderSponsoredFeed(); updateCart(); renderAuthUI();
   </script>
 </body>
