@@ -1,0 +1,17 @@
+{
+  "name": "afrothrift-prototype-(2)",
+  "version": "1.0.0",
+  "description": "AfriBay is a full-featured web marketplace and video feed platform tailored for Zambia's new and second-hand (thrift) goods economy.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "flutterwave-react-v3": "^1.3.3",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  }
+}
