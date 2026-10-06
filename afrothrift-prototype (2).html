@@ -1103,7 +1103,7 @@
         const sd = document.getElementById("shopDescription"); if (sd) sd.textContent = currentShop?.description || "Set up your shop and publish listings to start selling.";
         const ssb = document.getElementById("shopSetupButton"); if (ssb) ssb.textContent = currentShop ? "Edit shop profile" : "Create your shop →";
         container.innerHTML = listed.length ? listed.map(product => `
-          <div class="feature-row"><div class="feature-icon">${product.art || "✦"}</div><div><strong>${escapeHTML(product.title)}</strong><small>${money(product.price)} · ${product.condition || "condition not set"} · ${product.viewCount || 0} views</small></div><button type="button" class="link-btn" onclick="openProduct(${JSON.stringify(String(product.id))})">View</button></div>`).join("") : '<div class="empty" style="padding:24px">Your listings will appear here. Create your first product to get started.</div>';
+          <div class="feature-row"><div class="feature-icon">${product.art || "✦"}</div><div><strong>${escapeHTML(product.title)}</strong><small>${money(product.price)} · ${product.condition || "condition not set"} · ${product.viewCount || 0} views</small></div><button type="button" class="link-btn" onclick="openProduct('${escapeHTML(String(product.id))}')">View</button></div>`).join("") : '<div class="empty" style="padding:24px">Your listings will appear here. Create your first product to get started.</div>';
       } catch (err) {
         console.error("renderSellerDashboard error:", err);
       }
@@ -1277,7 +1277,7 @@
       feed.innerHTML = sponsored.length ? sponsored.map(product => `
         <article class="sponsored-card">
           <div class="ad-video"><span class="ad-label" style="background:var(--green)">✓ Free Featured Ad</span>${getAdVideoSource(product) ? `<video src="${escapeHTML(getAdVideoSource(product))}" muted loop playsinline controls preload="metadata" onerror="this.style.display='none';this.parentElement.querySelector('.ad-video-fallback').style.display='grid'"></video>` : ""}<div class="ad-video-fallback" style="display:${getAdVideoSource(product) ? "none" : "grid"}">${escapeHTML(product.art)}</div><span class="video-duration">▶ short video</span></div>
-          <div class="product-info"><h3>${escapeHTML(product.title)}</h3><div class="ad-shop">Shop · ${escapeHTML(product.seller)}</div><div class="price-line"><span class="price">${money(product.price)}</span><span class="verified">✓ verified</span></div><button class="button" style="width:100%" onclick="buyNow(${JSON.stringify(String(product.id))})">Buy Now · ${money(product.price)}</button><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px"><button class="button ghost" style="width:100%" onclick="viewProduct(${JSON.stringify(String(product.id))})">👁 Product</button><button class="button ghost" style="width:100%" onclick="viewShopByProduct(${JSON.stringify(String(product.id))})">🏬 Shop</button></div><button class="button" style="width:100%;margin-top:8px;background:var(--orange)" onclick="openPromoteAd()">✦ Promote Your Item (Free)</button></div>
+          <div class="product-info"><h3>${escapeHTML(product.title)}</h3><div class="ad-shop">Shop · ${escapeHTML(product.seller)}</div><div class="price-line"><span class="price">${money(product.price)}</span><span class="verified">✓ verified</span></div><button class="button" style="width:100%" onclick="buyNow('${escapeHTML(String(product.id))}')">Buy Now · ${money(product.price)}</button><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px"><button class="button ghost" style="width:100%" onclick="viewProduct('${escapeHTML(String(product.id))}')">👁 Product</button><button class="button ghost" style="width:100%" onclick="viewShopByProduct('${escapeHTML(String(product.id))}')">🏬 Shop</button></div><button class="button" style="width:100%;margin-top:8px;background:var(--orange)" onclick="openPromoteAd()">✦ Promote Your Item (Free)</button></div>
         </article>`).join("") : '<div class="empty ad-feed-empty">No sponsored short videos are live yet. Be the first to promote a product for free!</div>';
       if ("IntersectionObserver" in window) {
         const observer = new IntersectionObserver(entries => entries.forEach(entry => {
@@ -1372,8 +1372,8 @@
                 <h4 style="margin:0 0 5px;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(p.title)}</h4>
                 <div class="price" style="font-size:14px;font-weight:900;color:var(--green-deep)">${money(p.price)}</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px">
-                  <button type="button" class="button ghost" style="padding:7px 4px;font-size:11px" onclick="closeModal('shopViewModal');viewProduct(${JSON.stringify(String(p.id))})">Details</button>
-                  <button type="button" class="button" style="padding:7px 4px;font-size:11px" onclick="addToCart(${JSON.stringify(String(p.id))}, this)">+ Cart</button>
+                  <button type="button" class="button ghost" style="padding:7px 4px;font-size:11px" onclick="closeModal('shopViewModal');viewProduct('${escapeHTML(String(p.id))}')">Details</button>
+                  <button type="button" class="button" style="padding:7px 4px;font-size:11px" onclick="addToCart('${escapeHTML(String(p.id))}', this)">+ Cart</button>
                 </div>
               </div>
             </article>
@@ -1402,10 +1402,10 @@
             <div class="cond-badge cond-${escapeHTML(p.condition || 'used_good')}">${escapeHTML({new:'✦ New',used_like_new:'★ Like new',used_good:'◎ Good'}[p.condition]||'◎ Good')}</div>
             <div class="location">${escapeHTML(p.location || "Zambia")} · ${escapeHTML(p.seller)}</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px">
-              <button type="button" class="button ghost" style="padding:8px 4px;font-size:12px;width:100%" onclick="viewProduct(${JSON.stringify(String(p.id))})">👁 View Product</button>
-              <button type="button" class="button ghost" style="padding:8px 4px;font-size:12px;width:100%" onclick="viewShopByProduct(${JSON.stringify(String(p.id))})">🏬 View Shop</button>
+              <button type="button" class="button ghost" style="padding:8px 4px;font-size:12px;width:100%" onclick="viewProduct('${escapeHTML(String(p.id))}')">👁 View Product</button>
+              <button type="button" class="button ghost" style="padding:8px 4px;font-size:12px;width:100%" onclick="viewShopByProduct('${escapeHTML(String(p.id))}')">🏬 View Shop</button>
             </div>
-            <button type="button" class="button" style="width:100%;margin-top:7px;padding:9px" onclick="addToCart(${JSON.stringify(String(p.id))}, this)">Add to cart</button>
+            <button type="button" class="button" style="width:100%;margin-top:7px;padding:9px" onclick="addToCart('${escapeHTML(String(p.id))}', this)">Add to cart</button>
           </div>
         </article>`).join("") : '<div class="empty">No finds match that search yet.<br /><button class="button ghost" style="margin-top:14px" onclick="clearSearch()">Clear search</button></div>';
     }
@@ -1459,7 +1459,7 @@
           list.innerHTML = '<div class="empty" style="border:0;padding:45px 5px">Your cart is waiting for a good find.<br /><button type="button" class="button ghost" style="margin-top:15px" onclick="showPanel(\'home\')">Browse the market →</button></div>';
         } else {
           const lines = cart.map(item => ({ item, product: findProduct(item.id) })).filter(row => row.product);
-          list.innerHTML = `<h3 style="margin-top:0">Your items <span style="color:var(--muted);font-size:12px;font-weight:400">(${count})</span></h3>` + lines.map(({ item, product }) => `<div class="cart-row"><div class="cart-art ${escapeHTML(product.artClass || "t1")}">${escapeHTML(product.art || "✦")}</div><div><h3>${escapeHTML(product.title)}</h3><p>${escapeHTML(product.seller)} · ${money(product.price)}</p><div class="qty"><button type="button" onclick="changeQty(${JSON.stringify(String(product.id))}, -1)">−</button>${item.qty}<button type="button" onclick="changeQty(${JSON.stringify(String(product.id))}, 1)">+</button></div></div><div class="cart-price">${money(product.price * item.qty)}</div></div>`).join("");
+          list.innerHTML = `<h3 style="margin-top:0">Your items <span style="color:var(--muted);font-size:12px;font-weight:400">(${count})</span></h3>` + lines.map(({ item, product }) => `<div class="cart-row"><div class="cart-art ${escapeHTML(product.artClass || "t1")}">${escapeHTML(product.art || "✦")}</div><div><h3>${escapeHTML(product.title)}</h3><p>${escapeHTML(product.seller)} · ${money(product.price)}</p><div class="qty"><button type="button" onclick="changeQty('${escapeHTML(String(product.id))}', -1)">−</button>${item.qty}<button type="button" onclick="changeQty('${escapeHTML(String(product.id))}', 1)">+</button></div></div><div class="cart-price">${money(product.price * item.qty)}</div></div>`).join("");
         }
         const subtotal = cart.reduce((sum, item) => { const p = findProduct(item.id); return sum + (p ? p.price * item.qty : 0); }, 0);
         const delivery = subtotal ? 35 : 0;
