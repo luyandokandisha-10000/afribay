@@ -2010,6 +2010,27 @@
           if (event && event.target && event.target.reset) event.target.reset();
         };
 
+        // If AfriBay backend OAuth server is reachable, initiate server session
+        try {
+          fetch("http://localhost:5000/api/checkout/initiate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              amount: totalZMW,
+              txRef: trackingId,
+              phoneNumber: paymentPhone,
+              paymentMethod: selectedPayment,
+              network: selectedMomoNetwork,
+              customer: {
+                email: currentUser.email || "shopper@afribay.com",
+                name: currentUser.name || "AfriBay Shopper"
+              }
+            })
+          }).then(r => r.json()).then(res => {
+            console.log("[AfriBay Backend] Server checkout initiated:", res);
+          }).catch(() => {});
+        } catch (_) {}
+
         if (typeof FlutterwaveCheckout === "function") {
           const flwPubKey = window.FLUTTERWAVE_PUBLIC_KEY || 
             (typeof process !== "undefined" && process.env && (process.env.VITE_FLUTTERWAVE_PUBLIC_KEY || process.env.REACT_APP_FLUTTERWAVE_PUBLIC_KEY)) ||
