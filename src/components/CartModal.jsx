@@ -86,7 +86,7 @@ export default function CartModal({
     tx_ref: txRef,
     amount: total,
     currency: 'ZMW',
-    payment_options: paymentMethod === 'mobile_money' ? 'mobilemoneyzambia' : 'card',
+    payment_options: paymentMethod === 'mobile_money' ? 'mobilemoneyzambia, card' : 'card, mobilemoneyzambia',
     customer: {
       email: currentUser?.email || 'shopper@afribay.com',
       phone_number: formattedPhone || '+260971234567',
