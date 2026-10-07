@@ -215,6 +215,24 @@
     .cond-new { background: #e7f2ec; color: #1c6b4d; }
     .cond-used_like_new { background: #fff9e5; color: #8a6800; }
     .cond-used_good { background: #f2f4f1; color: #6b766e; }
+    /* Gallery slides & ad view in Product Details */
+    .detail-gallery-container { position: relative; margin: 14px 0 10px; border-radius: 16px; overflow: hidden; background: #f2f5f3; border: 1px solid var(--line); }
+    .detail-slide-viewer { width: 100%; height: 260px; position: relative; display: flex; align-items: center; justify-content: center; }
+    .detail-slide-viewer img, .detail-slide-viewer video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .detail-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.1); color: var(--ink); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 900; cursor: pointer; z-index: 5; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: background .15s, transform .15s; }
+    .detail-nav-btn:hover { background: #ffffff; transform: translateY(-50%) scale(1.06); }
+    .detail-nav-btn.prev { left: 10px; }
+    .detail-nav-btn.next { right: 10px; }
+    .detail-slide-counter { position: absolute; bottom: 10px; right: 10px; background: rgba(18,33,26,0.78); color: white; padding: 4px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; z-index: 5; letter-spacing: 0.5px; }
+    .detail-slide-type-badge { position: absolute; top: 10px; left: 10px; background: var(--green-deep); color: white; padding: 4px 9px; border-radius: 8px; font-size: 10px; font-weight: 800; z-index: 5; text-transform: uppercase; letter-spacing: 0.5px; }
+    .detail-slide-type-badge.ad-badge { background: var(--orange); }
+    .detail-thumbnails { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; scrollbar-width: thin; }
+    .detail-thumb { width: 56px; height: 56px; border-radius: 10px; flex: 0 0 auto; border: 2px solid transparent; overflow: hidden; cursor: pointer; position: relative; background: #e9ece9; display: grid; place-items: center; font-size: 20px; transition: border-color .15s; }
+    .detail-thumb.active { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-soft); }
+    .detail-thumb img, .detail-thumb video { width: 100%; height: 100%; object-fit: cover; }
+    .detail-ad-box { margin-top: 14px; border-radius: 14px; padding: 14px; background: linear-gradient(135deg, #fdf8eb, #f5efe1); border: 1px solid #ebd9b5; display: flex; flex-direction: column; gap: 8px; }
+    .detail-ad-box .ad-title-row { display: flex; align-items: center; justify-content: space-between; }
+    .detail-ad-box .ad-pill { background: var(--orange); color: white; font-size: 10px; font-weight: 900; border-radius: 6px; padding: 3px 7px; text-transform: uppercase; }
     @keyframes rise { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
     @media (max-width: 900px) { .hero { grid-template-columns: 1fr; } .hero-visual { min-height: 280px; } .product-grid { grid-template-columns: repeat(3, 1fr); } .ad-grid, .cart-layout { grid-template-columns: 1fr; } }
     @media (max-width: 640px) { .topbar { height: 65px; } .hero { padding-top: 35px; } .hero-visual { min-height: 250px; } .hero-card { width: 145px; padding: 10px; } .hero-art { height: 90px; font-size: 41px; } .hero-card.three { width: 140px; } .product-grid { grid-template-columns: repeat(2, 1fr); gap: 11px; } .product-image { height: 155px; font-size: 56px; } .product-info { padding: 4px 11px 13px; } .product-info h3 { font-size: 13px; } .promo { align-items: start; flex-direction: column; padding: 22px; } .page-title { padding-top: 29px; } .page-title h1 { font-size: 40px; } .cart-row { grid-template-columns: 58px 1fr auto; gap: 9px; } .cart-art { height: 58px; font-size: 28px; } .cart-row h3 { font-size: 13px; } }
@@ -441,7 +459,57 @@
     <div class="modal"><div class="modal-head"><div><div class="eyebrow">Sell on AfriBay</div><h2>Add a product</h2></div><button class="close" onclick="closeModal('listingModal')">×</button></div><form onsubmit="createListing(event)"><div class="form-row"><label for="listingTitle">Product title</label><input id="listingTitle" required maxlength="90" /></div><div class="form-row"><label for="listingDescription">Description</label><input id="listingDescription" required maxlength="500" /></div><div class="form-row"><label for="listingPrice">Price (ZMW)</label><input id="listingPrice" type="number" min="1" step="0.01" required /></div><div class="form-row"><label for="listingCategory">Category</label><select id="listingCategory"><option value="clothes">Clothes</option><option value="cars">Cars</option><option value="electronics">Electronics</option><option value="new_goods">New goods</option></select></div><div class="form-row"><label for="listingCondition">Condition</label><select id="listingCondition"><option value="new">New</option><option value="used_like_new">Used · Like new</option><option value="used_good">Used · Good</option></select></div><div class="form-row"><label for="listingImage">Product image (optional)</label><input id="listingImage" type="file" accept="image/*" /></div><div id="listingError" class="auth-error"></div><div class="modal-foot"><button type="button" class="button ghost" onclick="closeModal('listingModal')">Cancel</button><button type="submit" class="button">Publish listing →</button></div></form></div>
   </div>
   <div id="productModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'productModal')">
-    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Marketplace listing</div><h2 id="detailTitle">Product details</h2></div><button class="close" type="button" onclick="closeModal('productModal')">×</button></div><div id="detailImage" class="product-image t1" style="height:190px"></div><p id="detailPrice" class="price" style="font-size:22px"></p><p id="detailDescription" style="color:var(--muted);line-height:1.6"></p><div class="auth-card" style="padding:15px"><strong id="detailShop"></strong><p id="detailCondition" style="margin:6px 0 0;color:var(--muted);font-size:12px"></p><div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button type="button" class="button ghost" id="detailViewShopBtn" onclick="viewCurrentProductShop()">🏬 View Shop</button><a id="sellerWhatsApp" class="button ghost" href="#" target="_blank" rel="noopener">WhatsApp seller</a><a id="sellerCall" class="button ghost" href="#">Call seller</a></div></div><div class="modal-foot"><button id="detailAddToCart" class="button" type="button" onclick="addCurrentProductToCart(this)">Add to cart →</button></div></div>
+    <div class="modal" style="max-width: 540px; width: 100%;">
+      <div class="modal-head">
+        <div><div class="eyebrow">Marketplace listing</div><h2 id="detailTitle">Product details</h2></div>
+        <button class="close" type="button" onclick="closeModal('productModal')">×</button>
+      </div>
+
+      <!-- Slide Carousel Viewer -->
+      <div class="detail-gallery-container">
+        <div id="detailSlideViewer" class="detail-slide-viewer">
+          <!-- Slide media injected dynamically -->
+        </div>
+        <button type="button" class="detail-nav-btn prev" id="detailSlidePrev" onclick="prevProductSlide()" aria-label="Previous slide">‹</button>
+        <button type="button" class="detail-nav-btn next" id="detailSlideNext" onclick="nextProductSlide()" aria-label="Next slide">›</button>
+        <div class="detail-slide-counter" id="detailSlideCounter">1 / 1</div>
+        <div class="detail-slide-type-badge" id="detailSlideTypeBadge">Photo</div>
+      </div>
+
+      <!-- Slide Thumbnails -->
+      <div id="detailThumbnails" class="detail-thumbnails"></div>
+
+      <!-- Attached Ad Video Preview Banner (if product has an ad) -->
+      <div id="detailAdSection" class="detail-ad-box" style="display: none;">
+        <div class="ad-title-row">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="ad-pill">✦ Featured Video Ad</span>
+            <strong style="font-size:12px;color:var(--green-deep)">Watch Seller Ad</strong>
+          </div>
+          <button type="button" class="link-btn" style="font-size:11px;padding:0" onclick="jumpToProductAdSlide()">Play in slides ▶</button>
+        </div>
+        <div id="detailAdVideoWrapper" style="border-radius:10px;overflow:hidden;background:#173d30;max-height:160px;position:relative">
+          <!-- Video element populated dynamically -->
+        </div>
+      </div>
+
+      <p id="detailPrice" class="price" style="font-size:22px;margin:12px 0 6px"></p>
+      <p id="detailDescription" style="color:var(--muted);line-height:1.6;margin:0 0 14px"></p>
+
+      <div class="auth-card" style="padding:15px">
+        <strong id="detailShop"></strong>
+        <p id="detailCondition" style="margin:6px 0 0;color:var(--muted);font-size:12px"></p>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button type="button" class="button ghost" id="detailViewShopBtn" onclick="viewCurrentProductShop()">🏬 View Shop</button>
+          <a id="sellerWhatsApp" class="button ghost" href="#" target="_blank" rel="noopener">WhatsApp seller</a>
+          <a id="sellerCall" class="button ghost" href="#">Call seller</a>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button id="detailAddToCart" class="button" type="button" onclick="addCurrentProductToCart(this)">Add to cart →</button>
+      </div>
+    </div>
   </div>
   <div id="shopViewModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'shopViewModal')">
     <div class="modal" style="max-width: 680px; width: 100%;">
@@ -625,12 +693,112 @@
 
   <script>
     const products = [
-      { id: 1, title: "Toyota Vitz 2015", price: 98000, category: "Cars", categoryCode: "cars", condition: "used_good", location: "Lusaka, Zambia", seller: "Lusaka Motors", art: "🚙", artClass: "t1", videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", ad: true },
-      { id: 2, title: "Vintage denim jacket", price: 420, category: "Clothing", categoryCode: "clothes", condition: "used_like_new", location: "Lusaka, Zambia", seller: "Mimi's Closet", art: "🧥", artClass: "t2", videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", ad: true },
-      { id: 3, title: "iPhone 13 128GB", price: 11500, category: "Electronics", categoryCode: "electronics", condition: "used_like_new", location: "Kitwe, Zambia", seller: "SmartHub Zambia", art: "📱", artClass: "t3" },
-      { id: 4, title: "Nike Air Max sneakers", price: 850, category: "Clothing", categoryCode: "clothes", condition: "used_good", location: "Ndola, Zambia", seller: "Second Lap", art: "👟", artClass: "t4" },
-      { id: 5, title: "Samsung smart television", price: 7200, category: "Electronics", categoryCode: "electronics", condition: "used_like_new", location: "Livingstone, Zambia", seller: "Home Tech ZA", art: "📺", artClass: "t5" },
-      { id: 6, title: "New African print shirt", price: 380, category: "New Goods", categoryCode: "new_goods", condition: "new", location: "Lusaka, Zambia", seller: "Naya Collective", art: "👕", artClass: "t6" }
+      {
+        id: 1,
+        title: "Toyota Vitz 2015",
+        price: 98000,
+        category: "Cars",
+        categoryCode: "cars",
+        condition: "used_good",
+        location: "Lusaka, Zambia",
+        seller: "Lusaka Motors",
+        art: "🚙",
+        artClass: "t1",
+        imageUrls: [
+          "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80",
+          "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80",
+          "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=800&q=80"
+        ],
+        videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        ad: true
+      },
+      {
+        id: 2,
+        title: "Vintage denim jacket",
+        price: 420,
+        category: "Clothing",
+        categoryCode: "clothes",
+        condition: "used_like_new",
+        location: "Lusaka, Zambia",
+        seller: "Mimi's Closet",
+        art: "🧥",
+        artClass: "t2",
+        imageUrls: [
+          "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=800&q=80",
+          "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=80"
+        ],
+        videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        ad: true
+      },
+      {
+        id: 3,
+        title: "iPhone 13 128GB",
+        price: 11500,
+        category: "Electronics",
+        categoryCode: "electronics",
+        condition: "used_like_new",
+        location: "Kitwe, Zambia",
+        seller: "SmartHub Zambia",
+        art: "📱",
+        artClass: "t3",
+        imageUrls: [
+          "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&q=80",
+          "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=800&q=80"
+        ],
+        videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+        ad: true
+      },
+      {
+        id: 4,
+        title: "Nike Air Max sneakers",
+        price: 850,
+        category: "Clothing",
+        categoryCode: "clothes",
+        condition: "used_good",
+        location: "Ndola, Zambia",
+        seller: "Second Lap",
+        art: "👟",
+        artClass: "t4",
+        imageUrls: [
+          "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
+          "https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=800&q=80"
+        ],
+        videoUrl: ""
+      },
+      {
+        id: 5,
+        title: "Samsung smart television",
+        price: 7200,
+        category: "Electronics",
+        categoryCode: "electronics",
+        condition: "used_like_new",
+        location: "Livingstone, Zambia",
+        seller: "Home Tech ZA",
+        art: "📺",
+        artClass: "t5",
+        imageUrls: [
+          "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=800&q=80",
+          "https://images.unsplash.com/photo-1461151304267-38535e780c79?auto=format&fit=crop&w=800&q=80"
+        ],
+        videoUrl: ""
+      },
+      {
+        id: 6,
+        title: "New African print shirt",
+        price: 380,
+        category: "New Goods",
+        categoryCode: "new_goods",
+        condition: "new",
+        location: "Lusaka, Zambia",
+        seller: "Naya Collective",
+        art: "👕",
+        artClass: "t6",
+        imageUrls: [
+          "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80",
+          "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80"
+        ],
+        videoUrl: ""
+      }
     ];
     let activeCategory = "All";
     let cart = [];
@@ -1289,6 +1457,74 @@
         feed.querySelectorAll(".sponsored-card").forEach(card => observer.observe(card));
       }
     }
+    let currentProductSlides = [];
+    let currentSlideIndex = 0;
+
+    function renderCurrentProductSlide() {
+      const viewer = document.getElementById("detailSlideViewer");
+      const counter = document.getElementById("detailSlideCounter");
+      const badge = document.getElementById("detailSlideTypeBadge");
+      const prevBtn = document.getElementById("detailSlidePrev");
+      const nextBtn = document.getElementById("detailSlideNext");
+      if (!viewer || !currentProductSlides.length) return;
+
+      const total = currentProductSlides.length;
+      if (counter) counter.textContent = `${currentSlideIndex + 1} / ${total}`;
+      if (prevBtn) prevBtn.style.display = total > 1 ? "flex" : "none";
+      if (nextBtn) nextBtn.style.display = total > 1 ? "flex" : "none";
+
+      const slide = currentProductSlides[currentSlideIndex];
+      if (badge) {
+        if (slide.type === "video") {
+          badge.textContent = "▶ Video Ad";
+          badge.className = "detail-slide-type-badge ad-badge";
+        } else {
+          badge.textContent = "Photo";
+          badge.className = "detail-slide-type-badge";
+        }
+      }
+
+      if (slide.type === "video") {
+        viewer.innerHTML = `<video id="detailModalVideo" src="${escapeHTML(slide.src)}" controls autoplay loop playsinline style="width:100%;height:100%;object-fit:cover;background:#173d30"></video>`;
+      } else if (slide.src) {
+        viewer.innerHTML = `<img src="${escapeHTML(slide.src)}" alt="Product slide" style="width:100%;height:100%;object-fit:cover">`;
+      } else {
+        viewer.innerHTML = `<div class="product-image ${escapeHTML(slide.artClass || 't1')}" style="width:100%;height:100%;margin:0;border-radius:0;display:grid;place-items:center;font-size:75px"><span>${escapeHTML(slide.art || '✦')}</span></div>`;
+      }
+
+      // Update active thumbnail
+      const thumbs = document.querySelectorAll(".detail-thumb");
+      thumbs.forEach((t, i) => t.classList.toggle("active", i === currentSlideIndex));
+    }
+
+    function prevProductSlide() {
+      if (!currentProductSlides.length) return;
+      currentSlideIndex = (currentSlideIndex - 1 + currentProductSlides.length) % currentProductSlides.length;
+      renderCurrentProductSlide();
+    }
+
+    function nextProductSlide() {
+      if (!currentProductSlides.length) return;
+      currentSlideIndex = (currentSlideIndex + 1) % currentProductSlides.length;
+      renderCurrentProductSlide();
+    }
+
+    function goToProductSlide(idx) {
+      if (idx >= 0 && idx < currentProductSlides.length) {
+        currentSlideIndex = idx;
+        renderCurrentProductSlide();
+      }
+    }
+
+    function jumpToProductAdSlide() {
+      const adIdx = currentProductSlides.findIndex(s => s.type === "video");
+      if (adIdx >= 0) {
+        goToProductSlide(adIdx);
+        const container = document.querySelector(".detail-gallery-container");
+        if (container) container.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+
     function viewProduct(id) {
       try {
         const product = findProduct(id);
@@ -1300,13 +1536,68 @@
         const ds = document.getElementById("detailShop"); if (ds) ds.textContent = `${product.seller} · ${product.location || "Zambia"}`;
         const conditions = { new: "New", used_like_new: "Used · Like new", used_good: "Used · Good" };
         const dc = document.getElementById("detailCondition"); if (dc) dc.textContent = `${categoryLabel(product.categoryCode || product.category)} · ${conditions[product.condition] || "Condition: Good"}`;
-        const detailImage = document.getElementById("detailImage");
-        if (detailImage) {
-          detailImage.className = `product-image ${escapeHTML(product.artClass || "t1")}`;
-          detailImage.innerHTML = product.imageUrls?.[0] && /^https:\/\//i.test(product.imageUrls[0])
-            ? `<img src="${escapeHTML(product.imageUrls[0])}" alt="${escapeHTML(product.title)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`
-            : `<span>${escapeHTML(product.art || "✦")}</span>`;
+
+        // Build slide collection: all images + video ad if available
+        currentProductSlides = [];
+        const adSource = getAdVideoSource(product);
+
+        if (Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
+          product.imageUrls.forEach((url, i) => {
+            if (url && /^https?:\/\//i.test(url)) {
+              currentProductSlides.push({ type: "image", src: url, label: `Photo ${i + 1}` });
+            }
+          });
         }
+
+        // If no valid image urls, use emoji/art
+        if (currentProductSlides.length === 0) {
+          currentProductSlides.push({ type: "art", art: product.art || "✦", artClass: product.artClass || "t1", label: "Overview" });
+        }
+
+        // If product has video ad or is sponsored, include the video slide
+        if (adSource) {
+          currentProductSlides.push({ type: "video", src: adSource, label: "Video Ad" });
+        }
+
+        currentSlideIndex = 0;
+        renderCurrentProductSlide();
+
+        // Render thumbnails strip
+        const thumbsContainer = document.getElementById("detailThumbnails");
+        if (thumbsContainer) {
+          if (currentProductSlides.length > 1) {
+            thumbsContainer.style.display = "flex";
+            thumbsContainer.innerHTML = currentProductSlides.map((slide, idx) => {
+              if (slide.type === "video") {
+                return `<button type="button" class="detail-thumb ${idx === 0 ? 'active' : ''}" onclick="goToProductSlide(${idx})" title="Watch Video Ad" style="background:#173d30;color:white;font-size:16px;font-weight:900">▶</button>`;
+              } else if (slide.src) {
+                return `<button type="button" class="detail-thumb ${idx === 0 ? 'active' : ''}" onclick="goToProductSlide(${idx})"><img src="${escapeHTML(slide.src)}" alt="Thumbnail"></button>`;
+              } else {
+                return `<button type="button" class="detail-thumb ${idx === 0 ? 'active' : ''}" onclick="goToProductSlide(${idx})"><span>${escapeHTML(slide.art || '✦')}</span></button>`;
+              }
+            }).join("");
+          } else {
+            thumbsContainer.style.display = "none";
+            thumbsContainer.innerHTML = "";
+          }
+        }
+
+        // Render attached video ad section if product has an ad
+        const adSection = document.getElementById("detailAdSection");
+        const adWrapper = document.getElementById("detailAdVideoWrapper");
+        if (adSection && adWrapper) {
+          if (adSource) {
+            adSection.style.display = "flex";
+            adWrapper.innerHTML = `
+              <video src="${escapeHTML(adSource)}" muted loop playsinline controls style="width:100%;height:140px;object-fit:cover;display:block"></video>
+              <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);color:white;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px">▶ Sponsored Ad</div>
+            `;
+          } else {
+            adSection.style.display = "none";
+            adWrapper.innerHTML = "";
+          }
+        }
+
         const phone = (product.contactPhone || currentShop?.contactPhone || "+260971234567").replace(/[^\d+]/g, "");
         const wa = document.getElementById("sellerWhatsApp");
         if (wa) {
@@ -1550,7 +1841,13 @@
     function closeModal(id) {
       try {
         const modal = document.getElementById(id);
-        if (modal) modal.classList.remove("open");
+        if (modal) {
+          modal.classList.remove("open");
+          if (id === "productModal") {
+            const vids = modal.querySelectorAll("video");
+            vids.forEach(v => { try { v.pause(); } catch(e){} });
+          }
+        }
       } catch (err) {
         console.error("closeModal error:", err);
       }
@@ -1798,6 +2095,10 @@
     window.selectMomoProvider  = selectMomoProvider;
     window.openOrdersModal     = openOrdersModal;
     window.openProduct         = openProduct;
+    window.prevProductSlide    = prevProductSlide;
+    window.nextProductSlide    = nextProductSlide;
+    window.goToProductSlide    = goToProductSlide;
+    window.jumpToProductAdSlide = jumpToProductAdSlide;
     window.showToast           = showToast;
     window.toggleTheme         = toggleTheme;
     window.changeLanguage      = changeLanguage;

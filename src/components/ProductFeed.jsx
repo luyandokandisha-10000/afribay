@@ -24,6 +24,7 @@ export default function ProductFeed({
   // Internal modal states ensuring buttons ALWAYS work even standalone
   const [modalProduct, setModalProduct] = useState(null);
   const [modalShopProduct, setModalShopProduct] = useState(null);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   const categories = [
     { label: 'All finds', value: 'All' },
@@ -71,6 +72,7 @@ export default function ProductFeed({
   };
 
   const handleViewProduct = (product) => {
+    setCurrentSlideIndex(0);
     setModalProduct(product);
     if (onViewProduct) onViewProduct(product.id);
   };
@@ -399,16 +401,125 @@ export default function ProductFeed({
               </button>
             </div>
 
-            <div
-              className={`product-image ${modalProduct.artClass || 't1'}`}
-              style={{ height: '190px', borderRadius: '14px', margin: '14px 0', display: 'grid', placeItems: 'center', fontSize: '65px', background: '#f2f5f3' }}
-            >
-              {modalProduct.imageUrls?.[0] ? (
-                <img src={modalProduct.imageUrls[0]} alt={modalProduct.title} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }} />
-              ) : (
-                <span>{modalProduct.art || '✦'}</span>
-              )}
-            </div>
+            {(() => {
+              const slides = [];
+              if (Array.isArray(modalProduct.imageUrls) && modalProduct.imageUrls.length > 0) {
+                modalProduct.imageUrls.forEach((u, i) => {
+                  if (u && /^https?:\/\//i.test(u)) slides.push({ type: 'image', src: u, label: `Photo ${i + 1}` });
+                });
+              }
+              if (slides.length === 0) {
+                slides.push({ type: 'art', art: modalProduct.art || '✦', artClass: modalProduct.artClass || 't1', label: 'Photo 1' });
+              }
+              if (modalProduct.videoUrl) {
+                slides.push({ type: 'video', src: modalProduct.videoUrl, label: 'Video Ad' });
+              }
+              const safeIndex = currentSlideIndex < slides.length ? currentSlideIndex : 0;
+              const currentSlide = slides[safeIndex];
+
+              return (
+                <div>
+                  {/* Slide Carousel Viewer */}
+                  <div style={{ position: 'relative', margin: '14px 0 8px', borderRadius: '16px', overflow: 'hidden', background: '#f2f5f3', border: '1px solid var(--line, #e4e8e3)' }}>
+                    <div style={{ width: '100%', height: '240px', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {currentSlide.type === 'video' ? (
+                        <video src={currentSlide.src} controls autoPlay loop playsInline style={{ width: '100%', height: '100%', objectFit: 'cover', background: '#173d30' }} />
+                      ) : currentSlide.src ? (
+                        <img src={currentSlide.src} alt={modalProduct.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ fontSize: '70px' }}>{currentSlide.art || '✦'}</div>
+                      )}
+                    </div>
+
+                    {slides.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentSlideIndex((safeIndex - 1 + slides.length) % slides.length)}
+                          style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', left: '10px', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer', zIndex: 5, fontSize: '16px', fontWeight: 900 }}
+                        >
+                          ‹
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCurrentSlideIndex((safeIndex + 1) % slides.length)}
+                          style={{ position: 'absolute', top: '50%', transform: 'translateY(-50%)', right: '10px', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(0,0,0,0.1)', cursor: 'pointer', zIndex: 5, fontSize: '16px', fontWeight: 900 }}
+                        >
+                          ›
+                        </button>
+                      </>
+                    )}
+
+                    <div style={{ position: 'absolute', bottom: '10px', right: '10px', background: 'rgba(18,33,26,0.78)', color: 'white', padding: '3px 8px', borderRadius: '999px', fontSize: '11px', fontWeight: 800 }}>
+                      {safeIndex + 1} / {slides.length}
+                    </div>
+
+                    <div style={{ position: 'absolute', top: '10px', left: '10px', background: currentSlide.type === 'video' ? 'var(--orange, #ed7a45)' : 'var(--green-deep, #124332)', color: 'white', padding: '3px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: 800 }}>
+                      {currentSlide.type === 'video' ? '▶ Video Ad' : 'Photo'}
+                    </div>
+                  </div>
+
+                  {/* Thumbnail Strip */}
+                  {slides.length > 1 && (
+                    <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', padding: '2px 2px 10px' }}>
+                      {slides.map((s, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setCurrentSlideIndex(idx)}
+                          style={{
+                            width: '52px',
+                            height: '52px',
+                            borderRadius: '10px',
+                            flex: '0 0 auto',
+                            border: idx === safeIndex ? '2px solid var(--green, #1c6b4d)' : '2px solid transparent',
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            background: '#e9ece9',
+                            display: 'grid',
+                            placeItems: 'center',
+                            padding: 0
+                          }}
+                        >
+                          {s.type === 'video' ? (
+                            <span style={{ fontSize: '16px', color: 'var(--green-deep, #124332)', fontWeight: 900 }}>▶</span>
+                          ) : s.src ? (
+                            <img src={s.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <span style={{ fontSize: '20px' }}>{s.art || '✦'}</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Attached Video Ad Box */}
+                  {modalProduct.videoUrl && (
+                    <div style={{ marginTop: '10px', borderRadius: '12px', padding: '12px', background: 'linear-gradient(135deg, #fdf8eb, #f5efe1)', border: '1px solid #ebd9b5' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ background: 'var(--orange, #ed7a45)', color: 'white', fontSize: '10px', fontWeight: 900, borderRadius: '6px', padding: '2px 6px' }}>✦ Featured Video Ad</span>
+                          <strong style={{ fontSize: '12px', color: 'var(--green-deep, #124332)' }}>Seller Ad</strong>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const vidIdx = slides.findIndex((sl) => sl.type === 'video');
+                            if (vidIdx >= 0) setCurrentSlideIndex(vidIdx);
+                          }}
+                          style={{ border: 0, background: 'none', color: 'var(--green, #1c6b4d)', fontSize: '11px', fontWeight: 800, cursor: 'pointer' }}
+                        >
+                          Play in slides ▶
+                        </button>
+                      </div>
+                      <div style={{ borderRadius: '8px', overflow: 'hidden', maxHeight: '130px', background: '#173d30' }}>
+                        <video src={modalProduct.videoUrl} muted loop playsInline controls style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block' }} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             <p className="price" style={{ fontSize: '22px', fontWeight: 900, color: 'var(--green-deep, #124332)', margin: '10px 0 6px' }}>
               {money(modalProduct.price)}
