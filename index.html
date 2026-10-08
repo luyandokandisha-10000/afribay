@@ -232,7 +232,21 @@
     .detail-thumb img, .detail-thumb video { width: 100%; height: 100%; object-fit: cover; }
     .detail-ad-box { margin-top: 14px; border-radius: 14px; padding: 14px; background: linear-gradient(135deg, #fdf8eb, #f5efe1); border: 1px solid #ebd9b5; display: flex; flex-direction: column; gap: 8px; }
     .detail-ad-box .ad-title-row { display: flex; align-items: center; justify-content: space-between; }
-    .detail-ad-box .ad-pill { background: var(--orange); color: white; font-size: 10px; font-weight: 900; border-radius: 6px; padding: 3px 7px; text-transform: uppercase; }
+    /* Escrow lifecycle & PIN indicators */
+    .escrow-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; border-radius: 99px; padding: 4px 10px; }
+    .escrow-held { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .escrow-transit { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .escrow-completed { background: #e7f2ec; color: #1c6b4d; border: 1px solid #bbf7d0; }
+    .escrow-pin-box { background: #eaf6ed; border: 2px dashed #1c6b4d; border-radius: 12px; padding: 12px; text-align: center; }
+    .escrow-pin-code { font-size: 24px; font-weight: 900; letter-spacing: 5px; color: #1c6b4d; font-family: monospace; }
+    .escrow-stepper { display: flex; align-items: center; justify-content: space-between; position: relative; margin: 16px 0; }
+    .escrow-step { display: flex; flex-direction: column; align-items: center; gap: 4px; z-index: 2; font-size: 10px; font-weight: 800; color: var(--muted); text-align: center; }
+    .escrow-step.active { color: var(--green-deep); }
+    .escrow-step-dot { width: 24px; height: 24px; border-radius: 50%; background: #e2e8f0; display: grid; place-items: center; font-size: 11px; font-weight: 900; }
+    .escrow-step.active .escrow-step-dot { background: var(--green); color: white; }
+    .escrow-step.done .escrow-step-dot { background: var(--green-deep); color: white; }
+    .escrow-step-line { flex: 1; height: 3px; background: #e2e8f0; margin-top: -14px; z-index: 1; }
+    .escrow-step-line.done { background: var(--green); }
     @keyframes rise { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
     @media (max-width: 900px) { .hero { grid-template-columns: 1fr; } .hero-visual { min-height: 280px; } .product-grid { grid-template-columns: repeat(3, 1fr); } .ad-grid, .cart-layout { grid-template-columns: 1fr; } }
     @media (max-width: 640px) { .topbar { height: 65px; } .hero { padding-top: 35px; } .hero-visual { min-height: 250px; } .hero-card { width: 145px; padding: 10px; } .hero-art { height: 90px; font-size: 41px; } .hero-card.three { width: 140px; } .product-grid { grid-template-columns: repeat(2, 1fr); gap: 11px; } .product-image { height: 155px; font-size: 56px; } .product-info { padding: 4px 11px 13px; } .product-info h3 { font-size: 13px; } .promo { align-items: start; flex-direction: column; padding: 22px; } .page-title { padding-top: 29px; } .page-title h1 { font-size: 40px; } .cart-row { grid-template-columns: 58px 1fr auto; gap: 9px; } .cart-art { height: 58px; font-size: 28px; } .cart-row h3 { font-size: 13px; } }
@@ -341,6 +355,43 @@
                 <div class="feature-row"><div class="feature-icon">▣</div><div><strong>Orders & payouts</strong><small>Track sales and fulfillment in one place.</small></div><button class="link-btn" onclick="openOrdersModal()">Open</button></div>
               </div>
             </div>
+            <!-- Vendor Financial Escrow Overview -->
+            <div class="auth-card" style="margin-top:18px;background:linear-gradient(135deg,#fcfdfc,#f5f9f6);border:1px solid #d2e4d9;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+                <div>
+                  <div class="eyebrow" style="color:var(--green-deep)">Escrow Payout Balances</div>
+                  <h2 style="margin:4px 0 0;font-size:20px;">Vendor Financial Overview</h2>
+                  <small style="color:var(--muted)">Funds are secured in platform escrow until driver drop-off is verified with the buyer's PIN.</small>
+                </div>
+                <button class="button" type="button" onclick="requestVendorPayout()" style="background:var(--green-deep)">Withdraw Funds</button>
+              </div>
+              <div class="ad-stats" style="margin:16px 0 0;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));">
+                <div class="stat" style="border-left:3px solid var(--green);">
+                  <strong id="sellerAvailablePayout" style="color:var(--green-deep)">ZMW 0.00</strong>
+                  <small>Available Payout (Delivered)</small>
+                </div>
+                <div class="stat" style="border-left:3px solid #eab308;">
+                  <strong id="sellerEscrowHeld" style="color:#a16207">ZMW 0.00</strong>
+                  <small>Escrow Held (In Transit)</small>
+                </div>
+                <div class="stat" style="border-left:3px solid #3b82f6;">
+                  <strong id="sellerOrdersCount">0</strong>
+                  <small>Shop Orders</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- Orders to Fulfill & Dispatch -->
+            <div class="auth-card" style="margin-top:18px">
+              <div class="section-head" style="margin-top:0">
+                <div>
+                  <h2>Orders to Fulfill & Dispatch</h2>
+                  <p>Customer orders awaiting courier handoff or transit confirmation.</p>
+                </div>
+              </div>
+              <div id="sellerFulfillmentList" style="display:flex;flex-direction:column;gap:10px;margin-top:14px;"></div>
+            </div>
+
             <div class="auth-card" style="margin-top:18px">
               <div class="section-head" style="margin-top:0"><div><h2>Your shop overview</h2><p id="shopStatus">Create a shop to start listing products.</p></div><button class="button ghost" onclick="openListingEditor()">＋ Add new product</button></div>
               <div class="ad-stats" style="margin:16px 0 20px"><div class="stat"><strong id="sellerViews">0</strong><small>Total views</small></div><div class="stat"><strong id="sellerProductCount">0</strong><small>Products</small></div><div class="stat"><strong id="sellerAdCount">0</strong><small>Active video ads</small></div></div>
@@ -568,15 +619,63 @@
     <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div><form onsubmit="processCheckout(event)"><div class="form-row"><label for="deliveryAddress">Delivery address</label><input id="deliveryAddress" required placeholder="Street, area, city (e.g. Woodlands, Lusaka)" /></div><div class="form-row"><label>Payment method (via Flutterwave)</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="mobile_money" onclick="selectPay(this)">📱 Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">💳 Debit / Credit Card<br />Visa · Mastercard</button></div></div><div id="mobileMoneyFields" class="form-row"><label>Mobile Money Provider</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"><button type="button" class="button ghost selected" data-provider="mtn" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:2px solid var(--green)">MTN MoMo</button><button type="button" class="button ghost" data-provider="airtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Airtel Money</button><button type="button" class="button ghost" data-provider="zamtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Zamtel</button></div><label for="paymentPhone">Zambian Mobile Money number</label><input id="paymentPhone" type="tel" placeholder="+260 97... or 096..." /><small style="display:block;color:var(--muted);margin-top:5px;font-size:11px;">Instant mobile prompt will be sent to your phone for PIN authorization.</small></div><div id="cardFields" class="form-row" style="display:none"><div style="padding:10px;background:var(--green-soft);border-radius:8px;font-size:12px;color:var(--green-deep)">🔒 Secure Zambian & International Card processing powered by Flutterwave.</div></div><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button">Pay now · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
   </div>
   <div id="receiptModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'receiptModal')">
-    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Order confirmed</div><h2>Thanks for shopping!</h2></div><button class="close" onclick="closeModal('receiptModal')">×</button></div><div class="auth-card"><div class="member-badge">✓ Order placed successfully</div><p style="color:var(--muted)">Tracking reference</p><strong id="receiptTracking" style="font-size:22px"></strong><p id="receiptAmount" style="font-weight:900"></p></div><div class="modal-foot"><button class="button" onclick="closeModal('receiptModal')">Done</button></div></div>
+    <div class="modal" style="max-width: 520px; width: 100%;">
+      <div class="modal-head">
+        <div><div class="eyebrow">Escrow Payment Secured</div><h2>Order Confirmed!</h2></div>
+        <button class="close" onclick="closeModal('receiptModal')">×</button>
+      </div>
+      <div class="auth-card" style="padding:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="escrow-badge escrow-held" id="receiptEscrowBadge">🛡️ Escrow Held / Processing</div>
+          <span id="receiptAmount" style="font-weight:900;color:var(--green-deep);font-size:16px;"></span>
+        </div>
+        <p style="color:var(--muted);font-size:12px;margin:8px 0 2px;">Tracking reference</p>
+        <strong id="receiptTracking" style="font-size:18px;display:block;letter-spacing:0.5px;"></strong>
+
+        <div class="escrow-pin-box" style="margin:14px 0;">
+          <small style="text-transform:uppercase;font-size:11px;font-weight:800;color:var(--green-deep);letter-spacing:1px;display:block;">Your Delivery Confirmation PIN</small>
+          <div class="escrow-pin-code" id="receiptPin">------</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4;">
+            🔒 <strong>Funds are protected in platform escrow.</strong><br />
+            Share this PIN with your delivery driver <strong>only</strong> when you receive and inspect your items. Entering this PIN confirms delivery and releases payment to the vendor.
+          </div>
+        </div>
+
+        <!-- 3-stage visual escrow stepper -->
+        <div class="escrow-stepper">
+          <div class="escrow-step active">
+            <div class="escrow-step-dot">1</div>
+            <span>Escrow Held</span>
+          </div>
+          <div class="escrow-step-line"></div>
+          <div class="escrow-step">
+            <div class="escrow-step-dot">2</div>
+            <span>Courier Transit</span>
+          </div>
+          <div class="escrow-step-line"></div>
+          <div class="escrow-step">
+            <div class="escrow-step-dot">3</div>
+            <span>Drop-off & Payout</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="button ghost" type="button" onclick="closeModal('receiptModal');openOrdersModal();">View in My Orders</button>
+        <button class="button" onclick="closeModal('receiptModal')">Done</button>
+      </div>
+    </div>
   </div>
   <div id="ordersModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'ordersModal')">
-    <div class="modal" style="max-width: 580px; width: 100%;">
+    <div class="modal" style="max-width: 600px; width: 100%;">
       <div class="modal-head">
-        <div><div class="eyebrow">Purchases & Sales History</div><h2>Your Orders</h2></div>
+        <div><div class="eyebrow">Mobile Money Escrow Lifecycle</div><h2>Orders & Logistics</h2></div>
         <button class="close" type="button" onclick="closeModal('ordersModal')">×</button>
       </div>
-      <div id="ordersList" style="margin-top:14px;display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow-y:auto;padding-right:4px;"></div>
+      <div style="display:flex;gap:6px;margin:10px 0 6px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+        <button type="button" class="button ghost selected" id="tabBuyerOrders" onclick="switchOrdersTab('buyer')" style="padding:6px 12px;font-size:12px;font-weight:800;border:2px solid var(--green)">🛍️ My Purchases</button>
+        <button type="button" class="button ghost" id="tabRiderOrders" onclick="switchOrdersTab('rider')" style="padding:6px 12px;font-size:12px;font-weight:800;border:1px solid var(--line)">🚚 Logistics & Rider Portal</button>
+      </div>
+      <div id="ordersList" style="margin-top:8px;display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow-y:auto;padding-right:4px;"></div>
       <div class="modal-foot"><button class="button ghost" type="button" onclick="closeModal('ordersModal')">Close</button></div>
     </div>
   </div>
@@ -609,7 +708,10 @@
       saveCart,
       seedMarketplace,
       upsertUserProfile,
-      uploadUserMedia
+      uploadUserMedia,
+      assignOrderTransit,
+      verifyDeliveryAndReleaseEscrow,
+      loadOrders
     } from "./src/firestore.js";
     import {
       createUserWithEmailAndPassword,
@@ -702,7 +804,8 @@
     window.afriBayBackend = {
       createOrder, createProduct, createShop, createVideoAd, hydrateMarketplace,
       loadActiveAds, loadCart, loadProducts, loadUserProducts, loadUserShop,
-      saveCart, seedMarketplace, uploadUserMedia
+      saveCart, seedMarketplace, uploadUserMedia,
+      assignOrderTransit, verifyDeliveryAndReleaseEscrow, loadOrders
     };
     hydrateMarketplace();
   </script>
@@ -1299,6 +1402,92 @@
         const sw = document.getElementById("shopWelcome"); if (sw) sw.textContent = currentShop?.shopName || (signedIn ? `Welcome, ${currentUser.name.split(" ")[0]}` : "Welcome back");
         const sd = document.getElementById("shopDescription"); if (sd) sd.textContent = currentShop?.description || "Set up your shop and publish listings to start selling.";
         const ssb = document.getElementById("shopSetupButton"); if (ssb) ssb.textContent = currentShop ? "Edit shop profile" : "Create your shop →";
+
+        // Escrow financial statistics for seller
+        const allOrders = JSON.parse(localStorage.getItem("afribay_all_orders") || "[]");
+        const myShopName = currentShop?.shopName || "";
+
+        // Find orders associated with this seller's shop or products
+        const sellerOrders = allOrders.filter(ord => {
+          if (!myShopName && !signedIn) return false;
+          return (ord.items || []).some(it => {
+            const itemShop = it.shopName || it.seller || "";
+            return myShopName && itemShop.toLowerCase() === myShopName.toLowerCase();
+          });
+        });
+
+        let availablePayoutZMW = 0;
+        let escrowHeldZMW = 0;
+
+        sellerOrders.forEach(ord => {
+          const myItemsTotal = (ord.items || [])
+            .filter(it => (it.shopName || it.seller || "").toLowerCase() === myShopName.toLowerCase())
+            .reduce((sum, it) => sum + (Number(it.priceZMW || 0) * (it.quantity || 1)), 0);
+
+          if (ord.escrowStatus === 'completed' || ord.payoutStatus === 'released') {
+            availablePayoutZMW += myItemsTotal;
+          } else {
+            escrowHeldZMW += myItemsTotal;
+          }
+        });
+
+        const sap = document.getElementById("sellerAvailablePayout");
+        if (sap) sap.textContent = money(availablePayoutZMW);
+        const seh = document.getElementById("sellerEscrowHeld");
+        if (seh) seh.textContent = money(escrowHeldZMW);
+        const soc = document.getElementById("sellerOrdersCount");
+        if (soc) soc.textContent = String(sellerOrders.length);
+
+        // Render fulfillment orders list
+        const fulfillList = document.getElementById("sellerFulfillmentList");
+        if (fulfillList) {
+          if (!sellerOrders.length) {
+            fulfillList.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;">No incoming orders yet. Once buyers order your listings, fulfillment dispatch and escrow tracking will appear here.</div>';
+          } else {
+            fulfillList.innerHTML = sellerOrders.map(ord => {
+              const isHeld = (ord.escrowStatus || 'escrow_held') === 'escrow_held';
+              const isInTransit = ord.escrowStatus === 'in_transit';
+              const isCompleted = ord.escrowStatus === 'completed' || ord.payoutStatus === 'released';
+
+              let badge = '';
+              let action = '';
+
+              if (isHeld) {
+                badge = '<span class="escrow-badge escrow-held">🛡️ Escrow Held · Awaiting Dispatch</span>';
+                action = `<button type="button" class="button" style="font-size:11px;padding:6px 12px;background:#2563eb;color:white;" onclick="markOrderInTransit('${escapeHTML(ord.trackingId)}')">🚚 Handover to Courier (Mark In Transit)</button>`;
+              } else if (isInTransit) {
+                badge = '<span class="escrow-badge escrow-transit">🚚 In Transit · Delivery Pending</span>';
+                action = `<small style="color:var(--muted);font-size:11px;">Rider assigned. Payout will release automatically upon drop-off PIN entry.</small>`;
+              } else {
+                badge = '<span class="escrow-badge escrow-completed">✓ Completed · Payout Released</span>';
+                action = `<span style="color:var(--green-deep);font-weight:700;font-size:11px;">💰 Funds Credited to Your Available Balance</span>`;
+              }
+
+              return `
+                <div class="auth-card" style="padding:12px;border:1px solid var(--line);background:#fafcfa;">
+                  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                    <div>
+                      ${badge}
+                      <strong style="display:block;margin-top:6px;font-size:13px;">${escapeHTML(ord.trackingId || 'AFB-ORDER')}</strong>
+                      <small style="color:var(--muted)">Customer: ${escapeHTML(ord.customer?.name || 'Shopper')} · ${escapeHTML(ord.customer?.phone || ord.paymentPhone || 'No phone')}</small>
+                    </div>
+                    <div style="text-align:right">
+                      <span class="price" style="font-size:14px;color:var(--green-deep);">${money(ord.totalZMW)}</span>
+                      <small style="display:block;color:var(--muted);font-size:11px;">Destination: ${escapeHTML(ord.deliveryAddress || 'Lusaka, Zambia')}</small>
+                    </div>
+                  </div>
+                  <div style="font-size:12px;margin:8px 0;border-top:1px dashed var(--line);padding-top:6px;">
+                    ${(ord.items || []).filter(it => (it.shopName || it.seller || '').toLowerCase() === myShopName.toLowerCase()).map(it => `<div>• ${escapeHTML(it.title)} × ${it.quantity} (${money(it.priceZMW)})</div>`).join('')}
+                  </div>
+                  <div style="margin-top:8px;display:flex;justify-content:flex-end;">
+                    ${action}
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+
         container.innerHTML = listed.length ? listed.map(product => `
           <div class="feature-row"><div class="feature-icon">${product.art || "✦"}</div><div><strong>${escapeHTML(product.title)}</strong><small>${money(product.price)} · ${product.condition || "condition not set"} · ${product.viewCount || 0} views</small></div><button type="button" class="link-btn" onclick="openProduct('${escapeHTML(String(product.id))}')">View</button></div>`).join("") : '<div class="empty" style="padding:24px">Your listings will appear here. Create your first product to get started.</div>';
       } catch (err) {
@@ -1888,6 +2077,151 @@
         console.error("closeOnBackdrop error:", err);
       }
     }
+    let currentOrdersTab = "buyer";
+
+    function switchOrdersTab(tab) {
+      currentOrdersTab = tab;
+      const btnBuyer = document.getElementById("tabBuyerOrders");
+      const btnRider = document.getElementById("tabRiderOrders");
+      if (btnBuyer && btnRider) {
+        btnBuyer.style.border = tab === "buyer" ? "2px solid var(--green)" : "1px solid var(--line)";
+        btnRider.style.border = tab === "rider" ? "2px solid var(--green)" : "1px solid var(--line)";
+        btnBuyer.classList.toggle("selected", tab === "buyer");
+        btnRider.classList.toggle("selected", tab === "rider");
+      }
+      renderOrdersView();
+    }
+
+    function renderOrdersView() {
+      const list = document.getElementById("ordersList");
+      if (!list) return;
+
+      if (currentOrdersTab === "buyer") {
+        const key = currentUser ? (currentUser.firebaseUid || currentUser.email) : "guest";
+        const orders = JSON.parse(localStorage.getItem(`afribay_orders_${key}`) || "[]");
+
+        list.innerHTML = orders.length ? orders.map(ord => {
+          const isHeld = (ord.escrowStatus || "escrow_held") === "escrow_held";
+          const isInTransit = ord.escrowStatus === "in_transit";
+          const isCompleted = ord.escrowStatus === "completed" || ord.payoutStatus === "released";
+
+          let badgeHtml = '';
+          if (isHeld) {
+            badgeHtml = '<span class="escrow-badge escrow-held">🛡️ Escrow Held / Processing</span>';
+          } else if (isInTransit) {
+            badgeHtml = '<span class="escrow-badge escrow-transit">🚚 In Transit (With Courier)</span>';
+          } else {
+            badgeHtml = '<span class="escrow-badge escrow-completed">✓ Delivered & Escrow Released</span>';
+          }
+
+          let pinSectionHtml = '';
+          if (!isCompleted) {
+            pinSectionHtml = `
+              <div class="escrow-pin-box" style="margin:10px 0 6px;text-align:left;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <div>
+                  <small style="color:var(--green-deep);font-weight:800;text-transform:uppercase;font-size:10px;display:block;">Drop-off Confirmation PIN</small>
+                  <span class="escrow-pin-code" style="font-size:20px;">${escapeHTML(ord.deliveryPin || '------')}</span>
+                  <small style="display:block;color:var(--muted);font-size:10px;margin-top:2px;">Hand to courier only upon receiving package.</small>
+                </div>
+                <div style="display:flex;gap:6px;">
+                  <button type="button" class="button ghost" style="padding:5px 10px;font-size:11px;" onclick="copyDeliveryPin('${escapeHTML(ord.deliveryPin || '')}')">📋 Copy</button>
+                  <button type="button" class="button" style="padding:5px 10px;font-size:11px;" onclick="promptVerifyDeliveryPin('${escapeHTML(ord.trackingId)}')">✓ Confirm Received</button>
+                </div>
+              </div>
+            `;
+          } else {
+            pinSectionHtml = `
+              <div style="margin:8px 0 4px;font-size:12px;color:var(--green-deep);font-weight:700;display:flex;align-items:center;gap:6px;">
+                <span>✓ Drop-off confirmed</span> · <small style="color:var(--muted);font-weight:400;">Vendor payout unlocked</small>
+              </div>
+            `;
+          }
+
+          return `
+            <div class="auth-card" style="padding:14px;border:1px solid var(--line);">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                <div>
+                  ${badgeHtml}
+                  <strong style="display:block;margin-top:6px;font-size:14px">${escapeHTML(ord.trackingId || 'AFB-ORDER')}</strong>
+                </div>
+                <div style="text-align:right">
+                  <span class="price" style="font-size:15px;color:var(--green-deep)">${money(ord.totalZMW)}</span>
+                  <small style="display:block;color:var(--muted);font-size:11px;margin-top:2px">${new Date(ord.createdAt || Date.now()).toLocaleDateString()}</small>
+                </div>
+              </div>
+              <p style="font-size:12px;color:var(--muted);margin:0 0 6px;">Delivery Destination: ${escapeHTML(ord.deliveryAddress || 'Lusaka, Zambia')}</p>
+              ${pinSectionHtml}
+              <div style="font-size:12px;border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px;">
+                ${(ord.items || []).map(it => `<div>• ${escapeHTML(it.title)} × ${it.quantity} (${money(it.priceZMW)}) <span style="color:var(--muted);font-size:11px;">[${escapeHTML(it.shopName || 'Shop')}]</span></div>`).join('')}
+              </div>
+            </div>
+          `;
+        }).join('') : '<div class="empty" style="padding:24px">No orders placed yet.<br /><button class="button ghost" type="button" style="margin-top:12px" onclick="closeModal(\'ordersModal\');showPanel(\'home\')">Shop finds now →</button></div>';
+
+      } else {
+        // Logistics & Delivery Rider tab
+        const allOrders = JSON.parse(localStorage.getItem("afribay_all_orders") || "[]");
+
+        list.innerHTML = allOrders.length ? `
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 12px;font-size:12px;color:#1e40af;margin-bottom:10px;">
+            <strong>🚚 Courier Dispatch & Drop-off Management</strong><br />
+            Verify the customer's 6-digit drop-off PIN upon physical package delivery to unlock the vendor escrow payout.
+          </div>
+          ${allOrders.map(ord => {
+            const isHeld = (ord.escrowStatus || "escrow_held") === "escrow_held";
+            const isInTransit = ord.escrowStatus === "in_transit";
+            const isCompleted = ord.escrowStatus === "completed" || ord.payoutStatus === "released";
+
+            let actionRow = '';
+            if (isHeld) {
+              actionRow = `
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);">
+                  <span style="font-size:11px;color:var(--muted);">Ready for courier pickup</span>
+                  <button type="button" class="button" style="font-size:11px;padding:6px 14px;background:#2563eb;color:white;" onclick="markOrderInTransit('${escapeHTML(ord.trackingId)}')">🚚 Accept & Mark In Transit</button>
+                </div>
+              `;
+            } else if (isInTransit) {
+              actionRow = `
+                <div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);">
+                  <small style="color:var(--muted);display:block;margin-bottom:6px;font-weight:700;">Drop-off Handover Verification:</small>
+                  <div style="display:flex;gap:6px;align-items:center;">
+                    <input type="text" id="riderPinInput_${escapeHTML(ord.trackingId)}" placeholder="Enter 6-digit Buyer PIN" maxlength="6" style="flex:1;padding:7px 10px;font-size:13px;letter-spacing:3px;font-weight:800;border:1px solid var(--line);border-radius:8px;" />
+                    <button type="button" class="button" style="padding:7px 14px;font-size:12px;white-space:nowrap;" onclick="submitRiderVerification('${escapeHTML(ord.trackingId)}')">🔑 Confirm Drop-off</button>
+                  </div>
+                </div>
+              `;
+            } else {
+              actionRow = `
+                <div style="margin-top:8px;padding-top:6px;border-top:1px dashed var(--line);font-size:11px;color:var(--green-deep);font-weight:800;">
+                  ✅ Drop-off confirmed & Escrow Released to Vendor (${money(ord.vendorPayoutZMW || (ord.totalZMW - 35))})
+                </div>
+              `;
+            }
+
+            return `
+              <div class="auth-card" style="padding:13px;border:1px solid var(--line);">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                  <div>
+                    <span class="escrow-badge ${isHeld ? 'escrow-held' : (isInTransit ? 'escrow-transit' : 'escrow-completed')}">${isHeld ? '🛡️ Awaiting Transit' : (isInTransit ? '🚚 In Transit' : '✓ Completed')}</span>
+                    <strong style="display:block;margin-top:5px;font-size:13px;">${escapeHTML(ord.trackingId)}</strong>
+                    <small style="color:var(--muted)">Recipient: ${escapeHTML(ord.customer?.name || 'Customer')} · ${escapeHTML(ord.customer?.phone || ord.paymentPhone || 'No contact')}</small>
+                  </div>
+                  <div style="text-align:right">
+                    <span class="price" style="font-size:14px;color:var(--green-deep);">${money(ord.totalZMW)}</span>
+                    <small style="display:block;color:var(--muted);font-size:11px;">PAYS: ${money(ord.vendorPayoutZMW || (ord.totalZMW - 35))}</small>
+                  </div>
+                </div>
+                <div style="margin-top:6px;font-size:12px;color:var(--ink);">
+                  📍 <strong>Deliver To:</strong> ${escapeHTML(ord.deliveryAddress || 'Lusaka')}
+                </div>
+                ${actionRow}
+              </div>
+            `;
+          }).join('')}
+        ` : '<div class="empty" style="padding:24px">No orders in the logistics queue yet. Place a test order to simulate courier transit.</div>';
+      }
+    }
+
     function openOrdersModal() {
       try {
         if (!currentUser) {
@@ -1896,32 +2230,166 @@
           showToast("Please sign in to view your orders");
           return;
         }
-        const key = currentUser.firebaseUid || currentUser.email;
-        const orders = JSON.parse(localStorage.getItem(`afribay_orders_${key}`) || "[]");
-        const list = document.getElementById("ordersList");
-        if (list) {
-          list.innerHTML = orders.length ? orders.map(ord => `
-            <div class="auth-card" style="padding:14px;">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-                <div>
-                  <div class="member-badge" style="background:#e7f2ec;color:#1c6b4d">✓ ${escapeHTML(ord.paymentStatus || 'Completed')}</div>
-                  <strong style="display:block;margin-top:6px;font-size:14px">${escapeHTML(ord.trackingId || 'AFB-ORDER')}</strong>
-                </div>
-                <div style="text-align:right">
-                  <span class="price" style="font-size:15px;color:var(--green-deep)">${money(ord.totalZMW)}</span>
-                  <small style="display:block;color:var(--muted);font-size:11px;margin-top:2px">${new Date(ord.createdAt || Date.now()).toLocaleDateString()}</small>
-                </div>
-              </div>
-              <p style="font-size:12px;color:var(--muted);margin:0 0 6px;">Delivery: ${escapeHTML(ord.deliveryAddress || 'Lusaka, Zambia')}</p>
-              <div style="font-size:12px;border-top:1px solid var(--border);padding-top:6px;display:flex;flex-direction:column;gap:4px;">
-                ${(ord.items || []).map(it => `<div>• ${escapeHTML(it.title)} × ${it.quantity} (${money(it.priceZMW)})</div>`).join('')}
-              </div>
-            </div>
-          `).join('') : '<div class="empty" style="padding:24px">No orders placed yet.<br /><button class="button ghost" type="button" style="margin-top:12px" onclick="closeModal(\'ordersModal\');showPanel(\'home\')">Shop finds now →</button></div>';
-        }
+        renderOrdersView();
         openModal("ordersModal");
       } catch (err) {
         console.error("openOrdersModal error:", err);
+      }
+    }
+
+    async function markOrderInTransit(trackingId) {
+      try {
+        const key = currentUser ? (currentUser.firebaseUid || currentUser.email) : "guest";
+        const allOrders = JSON.parse(localStorage.getItem("afribay_all_orders") || "[]");
+        const userOrders = JSON.parse(localStorage.getItem(`afribay_orders_${key}`) || "[]");
+
+        let targetOrder = allOrders.find(o => o.trackingId === trackingId);
+        if (targetOrder) {
+          targetOrder.escrowStatus = "in_transit";
+          targetOrder.deliveryStatus = "in_transit";
+          targetOrder.riderAssigned = "AfriBay Express Courier";
+          targetOrder.dispatchedAt = new Date().toISOString();
+        }
+
+        userOrders.forEach(o => {
+          if (o.trackingId === trackingId) {
+            o.escrowStatus = "in_transit";
+            o.deliveryStatus = "in_transit";
+            o.riderAssigned = "AfriBay Express Courier";
+          }
+        });
+
+        localStorage.setItem("afribay_all_orders", JSON.stringify(allOrders));
+        localStorage.setItem(`afribay_orders_${key}`, JSON.stringify(userOrders));
+
+        // Call backend server transit endpoint
+        try {
+          fetch("http://localhost:5000/api/escrow/assign-transit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ trackingId, riderName: "AfriBay Express Courier" })
+          }).then(r => r.json()).then(res => {
+            console.log("[AfriBay Transit API] Response:", res);
+          }).catch(e => console.warn("Transit API fetch note:", e));
+        } catch (_) {}
+
+        renderOrdersView();
+        renderSellerDashboard();
+        showToast(`🚚 Order ${trackingId} is now In Transit with courier!`);
+      } catch (err) {
+        console.error("markOrderInTransit error:", err);
+        showToast("Error updating order transit status");
+      }
+    }
+
+    async function verifyDeliveryPin(trackingId, pinInput, verifiedBy = "Delivery Rider") {
+      try {
+        const key = currentUser ? (currentUser.firebaseUid || currentUser.email) : "guest";
+        const allOrders = JSON.parse(localStorage.getItem("afribay_all_orders") || "[]");
+        const userOrders = JSON.parse(localStorage.getItem(`afribay_orders_${key}`) || "[]");
+
+        let order = allOrders.find(o => o.trackingId === trackingId);
+        if (!order) {
+          order = userOrders.find(o => o.trackingId === trackingId);
+        }
+
+        const cleanPin = String(pinInput || "").trim();
+        if (!cleanPin) {
+          showToast("Please enter the 6-digit confirmation PIN");
+          return false;
+        }
+
+        const expectedPin = String(order?.deliveryPin || "").trim();
+
+        // Check PIN validity
+        if (expectedPin && expectedPin !== cleanPin) {
+          showToast("❌ Invalid delivery PIN! Escrow funds remain held.");
+          return false;
+        }
+
+        // PIN is valid: update lifecycle state
+        if (order) {
+          order.escrowStatus = "completed";
+          order.deliveryStatus = "delivered";
+          order.payoutStatus = "released";
+          order.completedAt = new Date().toISOString();
+          order.releasedAt = new Date().toISOString();
+          order.verifiedBy = verifiedBy;
+        }
+
+        userOrders.forEach(o => {
+          if (o.trackingId === trackingId) {
+            o.escrowStatus = "completed";
+            o.deliveryStatus = "delivered";
+            o.payoutStatus = "released";
+            o.completedAt = new Date().toISOString();
+            o.releasedAt = new Date().toISOString();
+          }
+        });
+
+        localStorage.setItem("afribay_all_orders", JSON.stringify(allOrders));
+        localStorage.setItem(`afribay_orders_${key}`, JSON.stringify(userOrders));
+
+        // Call backend server verification endpoint
+        try {
+          fetch("http://localhost:5000/api/escrow/verify-delivery", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              trackingId,
+              deliveryPin: cleanPin,
+              verifiedBy,
+              orderData: order
+            })
+          }).then(r => r.json()).then(res => {
+            console.log("[AfriBay Escrow Verification API]:", res);
+          }).catch(e => console.warn("Escrow release API note:", e));
+        } catch (_) {}
+
+        renderOrdersView();
+        renderSellerDashboard();
+        showToast("🎉 Delivery confirmed! Escrow funds released to vendor balance.");
+        return true;
+      } catch (err) {
+        console.error("verifyDeliveryPin error:", err);
+        showToast("Error verifying delivery PIN");
+        return false;
+      }
+    }
+
+    function submitRiderVerification(trackingId) {
+      const input = document.getElementById(`riderPinInput_${trackingId}`);
+      if (!input || !input.value.trim()) {
+        showToast("Please enter the buyer's 6-digit PIN");
+        return;
+      }
+      verifyDeliveryPin(trackingId, input.value.trim(), "Delivery Rider");
+    }
+
+    function promptVerifyDeliveryPin(trackingId) {
+      const pin = prompt("Enter your 6-digit Delivery Confirmation PIN to release escrow to seller:");
+      if (pin) {
+        verifyDeliveryPin(trackingId, pin, "Buyer Direct Confirmation");
+      }
+    }
+
+    function copyDeliveryPin(pin) {
+      if (!pin) return;
+      try {
+        navigator.clipboard.writeText(pin);
+        showToast(`📋 PIN ${pin} copied to clipboard!`);
+      } catch (_) {
+        showToast(`PIN: ${pin}`);
+      }
+    }
+
+    function requestVendorPayout() {
+      const sap = document.getElementById("sellerAvailablePayout");
+      const val = sap ? sap.textContent : "ZMW 0.00";
+      if (!val || val === "ZMW 0.00") {
+        showToast("No available released funds to withdraw. Funds are released once delivery PIN is verified.");
+      } else {
+        showToast(`💸 Payout request for ${val} sent to your registered Mobile Money number!`);
       }
     }
     function openCheckout() {
@@ -2009,21 +2477,29 @@
             };
           });
 
+          const deliveryPin = String(Math.floor(100000 + Math.random() * 900000));
           const order = {
             trackingId,
             flutterwaveTransactionId: flwResponse.transaction_id || flwResponse.id || null,
             flutterwaveRef: flwResponse.flw_ref || null,
             items: detailedItems,
             totalZMW,
+            vendorPayoutZMW: Math.max(0, totalZMW - 35),
             paymentMethod: selectedPayment === "mobile_money" ? `mobile_money_${selectedMomoNetwork}` : "card",
             paymentPhone: selectedPayment === "mobile_money" ? cleanPhone : "",
-            paymentStatus: "completed",
+            paymentStatus: "escrow_held",
+            escrowStatus: "escrow_held",
+            deliveryStatus: "processing",
+            payoutStatus: "held_in_escrow",
+            deliveryPin,
             deliveryAddress,
             customer: {
               email: currentUser.email || "shopper@afribay.com",
-              name: currentUser.name || "AfriBay Shopper"
+              name: currentUser.name || "AfriBay Shopper",
+              phone: cleanPhone
             },
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           };
 
           // Send email alert to luyandokandisha@gmail.com via local server or email endpoint
@@ -2049,12 +2525,19 @@
           priorOrders.unshift(order);
           localStorage.setItem(`afribay_orders_${key}`, JSON.stringify(priorOrders));
 
+          // Also register in platform-wide orders for logistics and vendor fulfillment
+          const allOrders = JSON.parse(localStorage.getItem("afribay_all_orders") || "[]");
+          allOrders.unshift(order);
+          localStorage.setItem("afribay_all_orders", JSON.stringify(allOrders));
+
           cart = [];
           updateCart();
           await persistCart();
+          renderSellerDashboard();
           closeModal("checkoutModal");
           const recTrack = document.getElementById("receiptTracking"); if (recTrack) recTrack.textContent = trackingId;
-          const recAmt = document.getElementById("receiptAmount"); if (recAmt) recAmt.textContent = `Order total: ${money(totalZMW)}`;
+          const recAmt = document.getElementById("receiptAmount"); if (recAmt) recAmt.textContent = money(totalZMW);
+          const recPin = document.getElementById("receiptPin"); if (recPin) recPin.textContent = deliveryPin;
           openModal("receiptModal");
           if (event && event.target && event.target.reset) event.target.reset();
         };
@@ -2204,6 +2687,13 @@
     window.selectPay           = selectPay;
     window.selectMomoProvider  = selectMomoProvider;
     window.openOrdersModal     = openOrdersModal;
+    window.switchOrdersTab     = switchOrdersTab;
+    window.markOrderInTransit  = markOrderInTransit;
+    window.verifyDeliveryPin   = verifyDeliveryPin;
+    window.promptVerifyDeliveryPin = promptVerifyDeliveryPin;
+    window.submitRiderVerification = submitRiderVerification;
+    window.copyDeliveryPin     = copyDeliveryPin;
+    window.requestVendorPayout = requestVendorPayout;
     window.openProduct         = openProduct;
     window.prevProductSlide    = prevProductSlide;
     window.nextProductSlide    = nextProductSlide;

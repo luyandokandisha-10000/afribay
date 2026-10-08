@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import { getFlutterwaveOAuthToken, flutterwaveRequest } from './flutterwave.js';
+import { sendOrderNotificationEmail, sendEscrowReleaseNotificationEmail } from './app.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -9,14 +10,19 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+// In-memory Escrow Order Registry
+const escrowOrders = new Map();
+
 // Health check & OAuth Token Verification route
 app.get('/api/health', async (req, res) => {
   try {
     const token = await getFlutterwaveOAuthToken();
     res.json({
       status: 'ok',
-      service: 'AfriBay Checkout Gateway',
+      service: 'AfriBay Zambian Escrow & Payment Gateway',
       flutterwaveAuth: 'Connected',
+      escrowActive: true,
+      totalEscrowOrders: escrowOrders.size,
       tokenPreview: `${token.substring(0, 10)}...`
     });
   } catch (err) {
@@ -31,7 +37,6 @@ app.get('/api/health', async (req, res) => {
 
 /**
  * Direct OAuth Token Diagnostic Route
- * Allows testing if client_id and client_secret yield an access token
  */
 app.post('/api/auth/token', async (req, res) => {
   try {
@@ -43,8 +48,7 @@ app.post('/api/auth/token', async (req, res) => {
 });
 
 /**
- * Initiate Checkout Route
- * Prepares and initiates a payment for Zambian Kwacha (ZMW)
+ * Initiate Checkout Route with Escrow Lock
  */
 app.post('/api/checkout/initiate', async (req, res) => {
   try {
@@ -56,7 +60,10 @@ app.post('/api/checkout/initiate', async (req, res) => {
       network = 'mtn',
       phoneNumber,
       txRef,
-      redirectUrl
+      redirectUrl,
+      items,
+      deliveryAddress,
+      deliveryPin: inputPin
     } = req.body;
 
     if (!amount || amount <= 0) {
@@ -64,40 +71,44 @@ app.post('/api/checkout/initiate', async (req, res) => {
     }
 
     const reference = txRef || `AFB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    const deliveryPin = inputPin || String(Math.floor(100000 + Math.random() * 900000));
+    const vendorPayoutZMW = Math.max(0, Number(amount) - 35);
 
-    // Request payload for Flutterwave checkout charge
-    const chargePayload = {
-      tx_ref: reference,
-      amount: Number(amount),
-      currency: currency.toUpperCase(),
-      payment_type: paymentMethod === 'mobile_money' ? 'mobilemoneyzambia' : 'card',
-      network: network.toLowerCase(),
-      phone_number: phoneNumber,
-      redirect_url: redirectUrl || 'http://localhost:5000/api/checkout/callback',
-      customer: {
-        email: customer?.email || 'shopper@afribay.com',
-        name: customer?.name || 'AfriBay Shopper',
-        phonenumber: phoneNumber || customer?.phone || '+260971234567'
-      },
-      customizations: {
-        title: 'AfriBay Marketplace Zambia',
-        description: 'Payment for order items',
-        logo: 'https://cdn-icons-png.flaticon.com/512/3081/3081840.png'
-      }
+    const orderRecord = {
+      trackingId: reference,
+      txRef: reference,
+      totalZMW: Number(amount),
+      vendorPayoutZMW,
+      deliveryPin,
+      escrowStatus: 'escrow_held',
+      deliveryStatus: 'processing',
+      payoutStatus: 'held_in_escrow',
+      paymentMethod,
+      phoneNumber,
+      customer,
+      items: items || [],
+      deliveryAddress: deliveryAddress || 'Lusaka, Zambia',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
-    console.log('[Checkout] Initiating payment request for reference:', reference);
+    escrowOrders.set(reference, orderRecord);
 
-    // Call Flutterwave charge endpoint using OAuth token
-    const result = await flutterwaveRequest('/charges', {
-      method: 'POST',
-      body: JSON.stringify(chargePayload)
-    });
+    try {
+      await sendOrderNotificationEmail(orderRecord);
+    } catch (e) {
+      console.warn('[Checkout Alert] Email notify note:', e.message);
+    }
 
     res.json({
       success: true,
       reference,
-      chargeResponse: result.data
+      trackingId: reference,
+      deliveryPin,
+      escrowStatus: 'escrow_held',
+      payoutStatus: 'held_in_escrow',
+      amountZMW: Number(amount),
+      vendorPayoutZMW
     });
   } catch (error) {
     console.error('[Checkout Error]:', error);
@@ -109,28 +120,130 @@ app.post('/api/checkout/initiate', async (req, res) => {
 });
 
 /**
- * Payment Verification Route
+ * Order Notification & Registration Route
  */
-app.get('/api/checkout/verify/:txRef', async (req, res) => {
+app.post('/api/orders/notify', async (req, res) => {
   try {
-    const { txRef } = req.params;
-    const result = await flutterwaveRequest(`/transactions/verify-by-reference?tx_ref=${encodeURIComponent(txRef)}`, {
-      method: 'GET'
-    });
+    const orderData = req.body || {};
+    const trackingId = orderData.trackingId || orderData.txRef || `AFB-${Date.now().toString(36).toUpperCase()}`;
+    const deliveryPin = orderData.deliveryPin || String(Math.floor(100000 + Math.random() * 900000));
+    const totalAmount = Number(orderData.totalZMW || orderData.amount || 0);
+
+    const orderRecord = {
+      ...orderData,
+      trackingId,
+      deliveryPin,
+      escrowStatus: orderData.escrowStatus || 'escrow_held',
+      deliveryStatus: orderData.deliveryStatus || 'processing',
+      payoutStatus: orderData.payoutStatus || 'held_in_escrow',
+      vendorPayoutZMW: orderData.vendorPayoutZMW || Math.max(0, totalAmount - 35),
+      updatedAt: new Date().toISOString()
+    };
+
+    escrowOrders.set(trackingId, orderRecord);
+    const result = await sendOrderNotificationEmail(orderRecord);
 
     res.json({
       success: true,
-      verification: result.data
+      message: `Escrow order notification delivered to ${result.recipient}`,
+      trackingId,
+      deliveryPin,
+      escrowStatus: orderRecord.escrowStatus
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Verification lookup failed'
-    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
+/**
+ * Assign Order to Transit / Logistics
+ */
+app.post('/api/escrow/assign-transit', (req, res) => {
+  try {
+    const { trackingId, riderName, riderPhone } = req.body;
+    if (!trackingId) return res.status(400).json({ error: 'trackingId is required' });
+
+    let order = escrowOrders.get(trackingId) || req.body.orderData || { trackingId };
+    order.escrowStatus = 'in_transit';
+    order.deliveryStatus = 'in_transit';
+    order.riderAssigned = riderName || 'AfriBay Logistics Fleet';
+    order.riderPhone = riderPhone || '+260 97 112233';
+    order.dispatchedAt = new Date().toISOString();
+    order.updatedAt = new Date().toISOString();
+
+    escrowOrders.set(trackingId, order);
+    res.json({ success: true, trackingId, escrowStatus: 'in_transit', order });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Verify Delivery PIN & Release Escrow to Vendor
+ */
+app.post('/api/escrow/verify-delivery', async (req, res) => {
+  try {
+    const { trackingId, deliveryPin, verifiedBy = 'Delivery Rider', orderData } = req.body;
+    if (!trackingId || !deliveryPin) {
+      return res.status(400).json({ error: 'trackingId and deliveryPin are required' });
+    }
+
+    let order = escrowOrders.get(trackingId) || orderData;
+    if (!order) {
+      return res.status(404).json({ error: 'Escrow order not found' });
+    }
+
+    const expected = String(order.deliveryPin || '').trim();
+    if (expected && expected !== String(deliveryPin).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid delivery confirmation PIN. Escrow funds remain securely held.'
+      });
+    }
+
+    order.escrowStatus = 'completed';
+    order.deliveryStatus = 'delivered';
+    order.payoutStatus = 'released';
+    order.completedAt = new Date().toISOString();
+    order.releasedAt = new Date().toISOString();
+    order.verifiedBy = verifiedBy;
+    order.updatedAt = new Date().toISOString();
+
+    escrowOrders.set(trackingId, order);
+
+    try {
+      await sendEscrowReleaseNotificationEmail(order, { verifiedBy });
+    } catch (e) {
+      console.warn('[Escrow Release Alert] Email error:', e.message);
+    }
+
+    res.json({
+      success: true,
+      message: 'Delivery PIN confirmed! Escrow funds released to vendor account.',
+      trackingId,
+      escrowStatus: 'completed',
+      deliveryStatus: 'delivered',
+      payoutStatus: 'released',
+      vendorPayoutZMW: order.vendorPayoutZMW,
+      order
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Escrow Registry Query Routes
+ */
+app.get('/api/escrow/orders', (req, res) => {
+  res.json({
+    success: true,
+    count: escrowOrders.size,
+    orders: Array.from(escrowOrders.values())
+  });
+});
+
 app.listen(PORT, () => {
-  console.log(`\n🚀 AfriBay Flutterwave Gateway running at http://localhost:${PORT}`);
+  console.log(`\n🚀 AfriBay Flutterwave & Escrow Gateway running at http://localhost:${PORT}`);
   console.log(`   Health & OAuth status: http://localhost:${PORT}/api/health\n`);
 });

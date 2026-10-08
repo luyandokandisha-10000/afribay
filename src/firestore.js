@@ -2,7 +2,7 @@
 // AfriBay — Firestore & Storage helpers
 // ─────────────────────────────────────────────────────────────
 import {
-  collection, doc, addDoc, setDoc, getDocs,
+  collection, doc, addDoc, setDoc, getDocs, getDoc, updateDoc,
   query, where, orderBy, limit, serverTimestamp,
   writeBatch, getCountFromServer
 } from "firebase/firestore";
@@ -146,13 +146,81 @@ export async function saveCart(uid, items) {
   }
 }
 
-// ── Orders ────────────────────────────────────────────────────
+// ── Orders & Escrow ──────────────────────────────────────────
 export async function createOrder(uid, order) {
   const firestore = requireDb();
-  return addDoc(collection(firestore, "orders", uid, "history"), {
+  const deliveryPin = order.deliveryPin || String(Math.floor(100000 + Math.random() * 900000));
+  const escrowStatus = order.escrowStatus || "escrow_held";
+  const payoutStatus = order.payoutStatus || "held_in_escrow";
+  const deliveryStatus = order.deliveryStatus || "processing";
+
+  const orderRecord = {
     ...order,
+    deliveryPin,
+    escrowStatus,
+    payoutStatus,
+    deliveryStatus,
     createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+
+  const docRef = await addDoc(collection(firestore, "orders", uid, "history"), orderRecord);
+
+  // Also maintain top-level escrow tracking index if trackingId exists
+  if (order.trackingId) {
+    try {
+      await setDoc(doc(firestore, "escrow_registry", order.trackingId), {
+        ...orderRecord,
+        buyerUid: uid,
+        orderDocId: docRef.id
+      });
+    } catch (_) {}
+  }
+
+  return { id: docRef.id, ...orderRecord };
+}
+
+export async function assignOrderTransit(uid, orderDocId, riderInfo = {}) {
+  const firestore = requireDb();
+  const orderRef = doc(firestore, "orders", uid, "history", orderDocId);
+  await updateDoc(orderRef, {
+    escrowStatus: "in_transit",
+    deliveryStatus: "in_transit",
+    riderAssigned: riderInfo.riderName || "AfriBay Courier",
+    riderPhone: riderInfo.riderPhone || "+260 97 000000",
+    dispatchedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
   });
+}
+
+export async function verifyDeliveryAndReleaseEscrow(uid, orderDocId, inputPin, verifiedBy = "rider") {
+  const firestore = requireDb();
+  const orderRef = doc(firestore, "orders", uid, "history", orderDocId);
+  const snap = await getDoc(orderRef);
+  if (!snap.exists()) {
+    throw new Error("Order not found");
+  }
+  const data = snap.data();
+  if (String(data.deliveryPin || "").trim() !== String(inputPin || "").trim()) {
+    throw new Error("Invalid delivery confirmation PIN. Escrow remains held.");
+  }
+  await updateDoc(orderRef, {
+    escrowStatus: "completed",
+    deliveryStatus: "delivered",
+    payoutStatus: "released",
+    verifiedBy,
+    releasedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return { success: true, released: true };
+}
+
+export async function loadOrders(uid) {
+  const firestore = requireDb();
+  const snap = await getDocs(
+    query(collection(firestore, "orders", uid, "history"), orderBy("createdAt", "desc"), limit(50))
+  );
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 // ── Seed ─────────────────────────────────────────────────────

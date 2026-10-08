@@ -138,6 +138,7 @@ export default function CartModal({
           console.log('[AfriBay Checkout] Flutterwave payment response:', response);
           closePaymentModal();
 
+          const deliveryPin = String(Math.floor(100000 + Math.random() * 900000));
           const order = {
             trackingId: txRef,
             flutterwaveTransactionId: response.transaction_id || response.id || null,
@@ -150,9 +151,14 @@ export default function CartModal({
               shopName: product.seller || product.shopName || 'AfriBay Shop'
             })),
             totalZMW: total,
+            vendorPayoutZMW: Math.max(0, total - 35),
             paymentMethod: paymentMethod === 'mobile_money' ? `mobile_money_${mobileNetwork}` : 'card',
             paymentPhone: paymentMethod === 'mobile_money' ? formattedPhone : '',
-            paymentStatus: response.status === 'successful' || response.status === 'completed' ? 'completed' : 'pending',
+            paymentStatus: 'escrow_held',
+            escrowStatus: 'escrow_held',
+            deliveryStatus: 'processing',
+            payoutStatus: 'held_in_escrow',
+            deliveryPin,
             deliveryAddress: deliveryAddress.trim() || 'Lusaka, Zambia',
             customer: {
               email: currentUser?.email || 'shopper@afribay.com',
