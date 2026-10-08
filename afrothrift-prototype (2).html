@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AfriBay — Good finds, better prices</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+  <title>AfriBay — Zambian Marketplace & Escrow</title>
+  <meta name="description" content="Zambia's marketplace for pre-loved fashion, tech, cars, and new goods with mobile money escrow." />
+  <meta name="theme-color" content="#123024" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AfriBay" />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icons/icon.svg" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
   <style>
     :root {
       --ink: #17231d;
@@ -44,10 +53,10 @@
     }
     button, input, select { font: inherit; }
     button { cursor: pointer; }
-    .app-shell { min-height: 100vh; padding-bottom: 92px; }
+    .app-shell { min-height: 100vh; padding-bottom: max(96px, calc(76px + env(safe-area-inset-bottom, 0px))); }
     .topbar {
-      height: 76px; display: flex; align-items: center; justify-content: space-between;
-      gap: 24px; padding: 0 clamp(18px, 5vw, 72px); background: rgba(251,252,250,.93);
+      height: calc(76px + env(safe-area-inset-top, 0px)); display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; padding: env(safe-area-inset-top, 0px) clamp(18px, 5vw, 72px) 0; background: rgba(251,252,250,.93);
       border-bottom: 1px solid rgba(228,232,227,.8); position: sticky; top: 0; z-index: 10;
       backdrop-filter: blur(16px);
     }
@@ -128,7 +137,7 @@
     .location { color: var(--muted); font-size: 11px; margin-top: 7px; }
     .verified { color: var(--green); font-size: 11px; font-weight: 800; }
     .empty { padding: 45px 20px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 18px; grid-column: 1 / -1; }
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 76px; padding: 8px max(18px, calc((100vw - 580px)/2)); background: rgba(255,255,255,.94); border-top: 1px solid var(--line); display: flex; justify-content: space-around; z-index: 11; backdrop-filter: blur(18px); }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: calc(68px + env(safe-area-inset-bottom, 0px)); padding: 8px max(18px, calc((100vw - 580px)/2)) max(8px, env(safe-area-inset-bottom, 8px)); background: rgba(255,255,255,.94); border-top: 1px solid var(--line); display: flex; justify-content: space-around; z-index: 11; backdrop-filter: blur(18px); }
     .nav-item { flex: 1; max-width: 120px; border: 0; background: transparent; color: var(--muted); border-radius: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 11px; font-weight: 800; position: relative; }
     .nav-item span:first-child { font-size: 20px; line-height: 1; }
     .nav-item.active { color: var(--green); background: var(--green-soft); }
@@ -2705,6 +2714,15 @@
     window.savePrivacySetting  = savePrivacySetting;
 
     renderProducts(); renderSponsoredFeed(); updateCart(); renderAuthUI();
+
+    // Register Progressive Web App Service Worker for offline capability & Google Play TWA
+    if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('[AfriBay PWA] Service Worker registered:', reg.scope))
+          .catch(err => console.log('[AfriBay PWA] Service Worker note:', err.message));
+      });
+    }
   </script>
 </body>
 </html>

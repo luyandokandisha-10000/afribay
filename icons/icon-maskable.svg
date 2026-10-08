@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="maskBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1c6b4d" />
+      <stop offset="100%" stop-color="#0f2b20" />
+    </linearGradient>
+    <linearGradient id="starGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffd56b" />
+      <stop offset="50%" stop-color="#ed7a45" />
+      <stop offset="100%" stop-color="#f8d477" />
+    </linearGradient>
+  </defs>
+
+  <!-- Full bleed background for maskable safe-zone -->
+  <rect width="512" height="512" fill="url(#maskBg)" />
+
+  <!-- Center icon within safe zone (center 66%) -->
+  <g transform="translate(64, 64) scale(0.75)">
+    <circle cx="256" cy="256" r="170" fill="none" stroke="#2a8260" stroke-width="6" opacity="0.4" />
+    <path d="M 256,96 
+             C 256,192 288,224 384,256 
+             C 288,288 256,320 256,416 
+             C 256,320 224,288 128,256 
+             C 224,224 256,192 256,96 Z" 
+          fill="url(#starGrad)" />
+    <circle cx="256" cy="256" r="28" fill="#ffffff" opacity="0.9" />
+  </g>
+</svg>

@@ -1,0 +1,16 @@
+{
+  "appId": "com.afribay.app",
+  "appName": "AfriBay",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "android": {
+    "buildOptions": {
+      "keystorePath": "afribay-release-key.keystore",
+      "keystoreAlias": "afribay"
+    }
+  }
+}

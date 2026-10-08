@@ -1,0 +1,65 @@
+{
+  "name": "AfriBay — Zambian Marketplace & Escrow",
+  "short_name": "AfriBay",
+  "description": "Zambia's marketplace for pre-loved fashion, tech, cars, and new goods with mobile money escrow and video ads.",
+  "start_url": "./index.html",
+  "id": "/?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fbfcfa",
+  "theme_color": "#123024",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["shopping", "lifestyle", "business"],
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Marketplace",
+      "short_name": "Shop",
+      "description": "Explore marketplace finds and listings",
+      "url": "./index.html#home",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Watch Video Ads",
+      "short_name": "Ads",
+      "description": "Watch video promotions from verified shops",
+      "url": "./index.html#ads",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Seller Dashboard",
+      "short_name": "My Shop",
+      "description": "Manage products, escrow orders, and payouts",
+      "url": "./index.html#shop",
+      "icons": [{ "src": "./icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}

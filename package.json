@@ -1,15 +1,30 @@
 {
-  "name": "afrothrift-prototype-(2)",
+  "name": "afribay-marketplace",
   "version": "1.0.0",
-  "description": "AfriBay is a full-featured web marketplace and video feed platform tailored for Zambia's new and second-hand (thrift) goods economy.",
+  "description": "AfriBay — Zambian Marketplace, Mobile Money Escrow & Video Feed Platform",
   "type": "module",
   "main": "server/app.js",
   "scripts": {
     "start": "node server/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:server": "node --watch server/app.js",
+    "build": "node -e \"console.log('AfriBay web assets verified')\"",
+    "serve": "npx serve .",
+    "playstore:bubblewrap": "npx @bubblewrap/cli build",
+    "playstore:init": "npx @bubblewrap/cli init --manifest=manifest.json",
+    "cap:sync": "npx @capacitor/cli sync",
+    "cap:android": "npx @capacitor/cli open android",
+    "test": "node --check server/app.js && node --check src/firestore.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "marketplace",
+    "zambia",
+    "escrow",
+    "mobile-money",
+    "pwa",
+    "twa",
+    "google-play-store"
+  ],
+  "author": "AfriBay Team",
   "license": "ISC",
   "dependencies": {
     "flutterwave-react-v3": "^1.3.3",

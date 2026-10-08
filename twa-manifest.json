@@ -1,0 +1,33 @@
+{
+  "packageId": "com.afribay.app",
+  "host": "afribay.com",
+  "name": "AfriBay",
+  "launcherName": "AfriBay",
+  "themeColor": "#123024",
+  "navigationColor": "#123024",
+  "navigationColorDark": "#101a15",
+  "navigationDividerColor": "#00000000",
+  "navigationDividerColorDark": "#00000000",
+  "backgroundColor": "#fbfcfa",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://afribay.com/icons/icon-512.png",
+  "maskableIconUrl": "https://afribay.com/icons/icon-maskable-512.png",
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "signing": {
+    "file": "./afribay-release-key.keystore",
+    "alias": "afribay"
+  },
+  "splashScreenFadeOutDuration": 300,
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "features": {
+    "playBilling": {
+      "enabled": false
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  }
+}
