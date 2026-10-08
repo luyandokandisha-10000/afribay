@@ -1997,26 +1997,46 @@
         const deliveryAddress = deliveryAddressEl ? deliveryAddressEl.value.trim() : "Lusaka, Zambia";
 
         const finalizeOrder = async (flwResponse = {}) => {
+          const detailedItems = cart.map(item => {
+            const product = findProduct(item.id);
+            return {
+              productId: String(item.id),
+              title: product?.title || "Marketplace item",
+              quantity: item.qty,
+              priceZMW: Number(product?.price || 0),
+              shopName: product?.seller || product?.shopName || "AfriBay Shop",
+              category: product?.category || ""
+            };
+          });
+
           const order = {
             trackingId,
             flutterwaveTransactionId: flwResponse.transaction_id || flwResponse.id || null,
             flutterwaveRef: flwResponse.flw_ref || null,
-            items: cart.map(item => {
-              const product = findProduct(item.id);
-              return {
-                productId: String(item.id),
-                title: product?.title || "Marketplace item",
-                quantity: item.qty,
-                priceZMW: Number(product?.price || 0)
-              };
-            }),
+            items: detailedItems,
             totalZMW,
             paymentMethod: selectedPayment === "mobile_money" ? `mobile_money_${selectedMomoNetwork}` : "card",
-            paymentPhone: selectedPayment === "mobile_money" ? paymentPhone : "",
+            paymentPhone: selectedPayment === "mobile_money" ? cleanPhone : "",
             paymentStatus: "completed",
             deliveryAddress,
+            customer: {
+              email: currentUser.email || "shopper@afribay.com",
+              name: currentUser.name || "AfriBay Shopper"
+            },
             createdAt: new Date().toISOString()
           };
+
+          // Send email alert to luyandokandisha@gmail.com via local server or email endpoint
+          try {
+            fetch("http://localhost:5000/api/orders/notify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(order)
+            }).then(r => r.json()).then(res => {
+              console.log("[AfriBay Email Alert] Notification response:", res);
+            }).catch(e => console.warn("Email alert fetch note:", e));
+          } catch (_) {}
+
           try {
             if (currentUser.firebaseUid && window.afriBayBackend?.createOrder) {
               await window.afriBayBackend.createOrder(currentUser.firebaseUid, order);
@@ -2049,8 +2069,19 @@
           cleanPhone = "+260" + cleanPhone;
         }
 
-        // If AfriBay backend OAuth server is reachable, initiate server session
+        // If AfriBay backend OAuth server is reachable, initiate server session with full shop & product info
         try {
+          const payloadItems = cart.map(item => {
+            const product = findProduct(item.id);
+            return {
+              productId: String(item.id),
+              title: product?.title || "Marketplace item",
+              quantity: item.qty,
+              priceZMW: Number(product?.price || 0),
+              shopName: product?.seller || product?.shopName || "AfriBay Shop"
+            };
+          });
+
           fetch("http://localhost:5000/api/checkout/initiate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2060,6 +2091,8 @@
               phoneNumber: cleanPhone,
               paymentMethod: selectedPayment,
               network: selectedMomoNetwork,
+              deliveryAddress,
+              items: payloadItems,
               customer: {
                 email: currentUser.email || "shopper@afribay.com",
                 name: currentUser.name || "AfriBay Shopper"

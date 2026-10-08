@@ -146,15 +146,31 @@ export default function CartModal({
               productId: String(product.id),
               title: product.title,
               quantity: item.qty,
-              priceZMW: Number(product.price || 0)
+              priceZMW: Number(product.price || 0),
+              shopName: product.seller || product.shopName || 'AfriBay Shop'
             })),
             totalZMW: total,
             paymentMethod: paymentMethod === 'mobile_money' ? `mobile_money_${mobileNetwork}` : 'card',
             paymentPhone: paymentMethod === 'mobile_money' ? formattedPhone : '',
             paymentStatus: response.status === 'successful' || response.status === 'completed' ? 'completed' : 'pending',
             deliveryAddress: deliveryAddress.trim() || 'Lusaka, Zambia',
+            customer: {
+              email: currentUser?.email || 'shopper@afribay.com',
+              name: currentUser?.name || 'AfriBay Shopper'
+            },
             createdAt: new Date().toISOString()
           };
+
+          // Send email alert to luyandokandisha@gmail.com
+          try {
+            fetch('http://localhost:5000/api/orders/notify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(order)
+            }).then(r => r.json()).then(res => {
+              console.log('[AfriBay Email Alert] Notification response:', res);
+            }).catch(() => {});
+          } catch (_) {}
 
           if (onCheckoutSuccess) {
             await onCheckoutSuccess(order);
