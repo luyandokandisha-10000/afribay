@@ -1,0 +1,34 @@
+name: afribay
+description: "AfriBay - Zambian Mobile Marketplace & Thrift E-commerce with Escrow & GPS Delivery"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Google Maps & Location dependencies
+  google_maps_flutter: ^2.5.3
+  geolocator: ^10.1.0
+  geocoding: ^2.1.1
+  
+  # Backend & Networking
+  http: ^1.2.0
+  
+  # Firebase Core & Firestore
+  firebase_core: ^2.32.0
+  firebase_auth: ^4.19.7
+  cloud_firestore: ^4.17.5
+
+  # UI / State / Icons
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

@@ -72,7 +72,8 @@ app.post('/api/checkout/initiate', async (req, res) => {
 
     const reference = txRef || `AFB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
     const deliveryPin = inputPin || String(Math.floor(100000 + Math.random() * 900000));
-    const vendorPayoutZMW = Math.max(0, Number(amount) - 35);
+    const delivery_lat = req.body.delivery_lat != null ? Number(req.body.delivery_lat) : (req.body.deliveryLat != null ? Number(req.body.deliveryLat) : null);
+    const delivery_lng = req.body.delivery_lng != null ? Number(req.body.delivery_lng) : (req.body.deliveryLng != null ? Number(req.body.deliveryLng) : null);
 
     const orderRecord = {
       trackingId: reference,
@@ -80,6 +81,8 @@ app.post('/api/checkout/initiate', async (req, res) => {
       totalZMW: Number(amount),
       vendorPayoutZMW,
       deliveryPin,
+      delivery_lat,
+      delivery_lng,
       escrowStatus: 'escrow_held',
       deliveryStatus: 'processing',
       payoutStatus: 'held_in_escrow',
@@ -105,6 +108,9 @@ app.post('/api/checkout/initiate', async (req, res) => {
       reference,
       trackingId: reference,
       deliveryPin,
+      delivery_lat,
+      delivery_lng,
+      courierMapsUrl: (delivery_lat != null && delivery_lng != null) ? `https://www.google.com/maps?q=${delivery_lat},${delivery_lng}` : null,
       escrowStatus: 'escrow_held',
       payoutStatus: 'held_in_escrow',
       amountZMW: Number(amount),
@@ -129,10 +135,15 @@ app.post('/api/orders/notify', async (req, res) => {
     const deliveryPin = orderData.deliveryPin || String(Math.floor(100000 + Math.random() * 900000));
     const totalAmount = Number(orderData.totalZMW || orderData.amount || 0);
 
+    const delivery_lat = orderData.delivery_lat != null ? Number(orderData.delivery_lat) : (orderData.deliveryLat != null ? Number(orderData.deliveryLat) : null);
+    const delivery_lng = orderData.delivery_lng != null ? Number(orderData.delivery_lng) : (orderData.deliveryLng != null ? Number(orderData.deliveryLng) : null);
+
     const orderRecord = {
       ...orderData,
       trackingId,
       deliveryPin,
+      delivery_lat,
+      delivery_lng,
       escrowStatus: orderData.escrowStatus || 'escrow_held',
       deliveryStatus: orderData.deliveryStatus || 'processing',
       payoutStatus: orderData.payoutStatus || 'held_in_escrow',
@@ -148,6 +159,9 @@ app.post('/api/orders/notify', async (req, res) => {
       message: `Escrow order notification delivered to ${result.recipient}`,
       trackingId,
       deliveryPin,
+      delivery_lat,
+      delivery_lng,
+      courierMapsUrl: (delivery_lat != null && delivery_lng != null) ? `https://www.google.com/maps?q=${delivery_lat},${delivery_lng}` : null,
       escrowStatus: orderRecord.escrowStatus
     });
   } catch (err) {

@@ -522,6 +522,16 @@
       <form id="shopForm" onsubmit="createShop(event)">
         <div class="form-row"><label for="shopName">Shop name</label><input id="shopName" placeholder="e.g. Kofi's Closet" required /></div>
         <div class="form-row"><label for="shopPhone">Contact phone</label><input id="shopPhone" type="tel" placeholder="+260 97... or 096..." /></div>
+        <div class="form-row"><label for="shopAddressInput">Physical stand / location details</label><input id="shopAddressInput" placeholder="e.g. Soweto Market Stand B-12, Lusaka" /></div>
+        <div class="form-row">
+          <label>GPS Location Pin</label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button type="button" class="button ghost" onclick="captureShopLocation()" style="font-size:11px;padding:6px 10px;font-weight:700;">📍 Pin Current Stand GPS</button>
+            <span id="shopGpsLabel" style="font-size:11px;color:var(--muted)">Optional: Live GPS coordinates for pickup</span>
+          </div>
+          <input type="hidden" id="shopLat" />
+          <input type="hidden" id="shopLng" />
+        </div>
         <div class="form-row"><label for="shopDescriptionInput">Shop description</label><input id="shopDescriptionInput" placeholder="What makes your shop special?" /></div>
         <div class="form-row"><label for="shopLogoFile">Shop logo (optional)</label><input id="shopLogoFile" type="file" accept="image/*" /></div>
         <div class="modal-foot">
@@ -625,7 +635,7 @@
     <div class="modal"><div class="modal-head"><div><div class="eyebrow">Free Video Promotion</div><h2>Create a video ad (100% Free)</h2></div><button class="close" type="button" onclick="closeModal('boostModal')">×</button></div><form onsubmit="createAd(event)"><div class="form-row"><label for="adProductSelect">Your listed product</label><select id="adProductSelect" required></select><small id="adProductHelp" style="display:block;color:var(--muted);margin-top:7px;font-size:11px"></small></div><div class="form-row"><label for="adVideoUrl">Short video URL</label><input id="adVideoUrl" type="url" placeholder="https://your-site.com/ad-video.mp4" oninput="previewAdVideoUrl()" /><small style="display:block;color:var(--muted);margin-top:7px;font-size:11px">Paste an MP4 or WebM video link, or upload a clip below.</small></div><div class="form-row"><label for="adVideoFile">Or upload a video</label><input id="adVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" onchange="previewAdVideo(event)" /><video id="adVideoPreview" controls muted loop playsinline style="width:100%;max-height:150px;border-radius:11px;margin-top:9px;display:none;background:#173d30"></video><div id="adVideoError" class="auth-error"></div></div><div class="form-row"><label for="adDuration">Ad duration</label><select id="adDuration" required><option value="daily" data-price="0">Daily · 24 hours · FREE (0 ZMW)</option><option value="weekly" data-price="0" selected>Weekly · 7 days · FREE (0 ZMW)</option><option value="monthly" data-price="0">Monthly · 30 days · FREE (0 ZMW)</option></select></div><div class="auth-card" style="padding:12px;margin-top:14px;background:var(--green-soft);border-color:var(--green);color:var(--green-deep);font-size:12px;display:flex;align-items:center;gap:8px;"><strong>✓ 100% Free Promotion:</strong> Sponsoring your products in the Ads feed is free for all AfriBay sellers. No card or mobile money charge.</div><div class="modal-foot"><button type="submit" class="button orange" style="width:100%">Publish Free Video Ad →</button></div></form></div>
   </div>
   <div id="checkoutModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'checkoutModal')">
-    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div><form onsubmit="processCheckout(event)"><div class="form-row"><label for="deliveryAddress">Delivery address</label><input id="deliveryAddress" required placeholder="Street, area, city (e.g. Woodlands, Lusaka)" /></div><div class="form-row"><label>Payment method (via Flutterwave)</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="mobile_money" onclick="selectPay(this)">📱 Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">💳 Debit / Credit Card<br />Visa · Mastercard</button></div></div><div id="mobileMoneyFields" class="form-row"><label>Mobile Money Provider</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"><button type="button" class="button ghost selected" data-provider="mtn" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:2px solid var(--green)">MTN MoMo</button><button type="button" class="button ghost" data-provider="airtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Airtel Money</button><button type="button" class="button ghost" data-provider="zamtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Zamtel</button></div><label for="paymentPhone">Zambian Mobile Money number</label><input id="paymentPhone" type="tel" placeholder="+260 97... or 096..." /><small style="display:block;color:var(--muted);margin-top:5px;font-size:11px;">Instant mobile prompt will be sent to your phone for PIN authorization.</small></div><div id="cardFields" class="form-row" style="display:none"><div style="padding:10px;background:var(--green-soft);border-radius:8px;font-size:12px;color:var(--green-deep)">🔒 Secure Zambian & International Card processing powered by Flutterwave.</div></div><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button">Pay now · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div><form onsubmit="processCheckout(event)"><div class="form-row"><label for="deliveryAddress">Delivery address</label><input id="deliveryAddress" required placeholder="Street, area, city (e.g. Woodlands, Lusaka)" /><div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button type="button" class="button ghost" onclick="captureDeliveryLocation()" style="font-size:11px;padding:5px 10px;font-weight:700;">📍 Pin Delivery GPS Location</button><span id="deliveryGpsLabel" style="font-size:11px;color:var(--muted)">Optional: Live GPS coordinates for courier</span></div><input type="hidden" id="deliveryLat" /><input type="hidden" id="deliveryLng" /></div><div class="form-row"><label>Payment method (via Flutterwave)</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="mobile_money" onclick="selectPay(this)">📱 Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">💳 Debit / Credit Card<br />Visa · Mastercard</button></div></div><div id="mobileMoneyFields" class="form-row"><label>Mobile Money Provider</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"><button type="button" class="button ghost selected" data-provider="mtn" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:2px solid var(--green)">MTN MoMo</button><button type="button" class="button ghost" data-provider="airtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Airtel Money</button><button type="button" class="button ghost" data-provider="zamtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Zamtel</button></div><label for="paymentPhone">Zambian Mobile Money number</label><input id="paymentPhone" type="tel" placeholder="+260 97... or 096..." /><small style="display:block;color:var(--muted);margin-top:5px;font-size:11px;">Instant mobile prompt will be sent to your phone for PIN authorization.</small></div><div id="cardFields" class="form-row" style="display:none"><div style="padding:10px;background:var(--green-soft);border-radius:8px;font-size:12px;color:var(--green-deep)">🔒 Secure Zambian & International Card processing powered by Flutterwave.</div></div><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button">Pay now · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
   </div>
   <div id="receiptModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'receiptModal')">
     <div class="modal" style="max-width: 520px; width: 100%;">
@@ -640,6 +650,9 @@
         </div>
         <p style="color:var(--muted);font-size:12px;margin:8px 0 2px;">Tracking reference</p>
         <strong id="receiptTracking" style="font-size:18px;display:block;letter-spacing:0.5px;"></strong>
+        <div id="receiptGpsInfo" style="display:none;margin-top:6px;font-size:12px;color:var(--green-deep);font-weight:600;">
+          📍 GPS Drop-off Pinned: <a id="receiptMapsLink" href="#" target="_blank" rel="noopener noreferrer" style="color:var(--green-deep);text-decoration:underline;">View on Google Maps ↗</a>
+        </div>
 
         <div class="escrow-pin-box" style="margin:14px 0;">
           <small style="text-transform:uppercase;font-size:11px;font-weight:800;color:var(--green-deep);letter-spacing:1px;display:block;">Your Delivery Confirmation PIN</small>
@@ -1324,6 +1337,60 @@
         console.error("openShopModalSafe error:", err);
       }
     }
+    function captureShopLocation() {
+      const label = document.getElementById("shopGpsLabel");
+      const latInput = document.getElementById("shopLat");
+      const lngInput = document.getElementById("shopLng");
+      if (!navigator.geolocation) {
+        if (label) label.textContent = "Geolocation is not supported by your browser.";
+        return;
+      }
+      if (label) label.textContent = "Acquiring GPS fix...";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lng = pos.coords.longitude.toFixed(6);
+          if (latInput) latInput.value = lat;
+          if (lngInput) lngInput.value = lng;
+          if (label) {
+            label.innerHTML = `<span style="color:var(--green-deep);font-weight:700;">✓ Pinned: ${lat}, ${lng}</span> (<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:var(--green-deep);text-decoration:underline;">View Map</a>)`;
+          }
+          showToast("Shop GPS location pinned!");
+        },
+        (err) => {
+          if (label) label.textContent = "Could not get GPS fix: " + (err.message || "Permission denied");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
+    function captureDeliveryLocation() {
+      const label = document.getElementById("deliveryGpsLabel");
+      const latInput = document.getElementById("deliveryLat");
+      const lngInput = document.getElementById("deliveryLng");
+      if (!navigator.geolocation) {
+        if (label) label.textContent = "Geolocation is not supported by your browser.";
+        return;
+      }
+      if (label) label.textContent = "Acquiring delivery GPS fix...";
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude.toFixed(6);
+          const lng = pos.coords.longitude.toFixed(6);
+          if (latInput) latInput.value = lat;
+          if (lngInput) lngInput.value = lng;
+          if (label) {
+            label.innerHTML = `<span style="color:var(--green-deep);font-weight:700;">✓ Pinned: ${lat}, ${lng}</span> (<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:var(--green-deep);text-decoration:underline;">Map</a>)`;
+          }
+          showToast("Delivery GPS drop-off pinned!");
+        },
+        (err) => {
+          if (label) label.textContent = "Could not acquire GPS: " + (err.message || "Permission denied");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
     async function createShop(event) {
       if (event && event.preventDefault) event.preventDefault();
       const submitBtn = document.getElementById("shopSubmitBtn");
@@ -1339,10 +1406,18 @@
         const shopNameEl = document.getElementById("shopName");
         const shopPhoneEl = document.getElementById("shopPhone");
         const shopDescEl = document.getElementById("shopDescriptionInput");
+        const shopAddressEl = document.getElementById("shopAddressInput");
         const shopLogoEl = document.getElementById("shopLogoFile");
+        const shopLatVal = document.getElementById("shopLat")?.value;
+        const shopLngVal = document.getElementById("shopLng")?.value;
+
         const shopName = shopNameEl ? shopNameEl.value.trim() : "";
         const contactPhone = shopPhoneEl ? shopPhoneEl.value.trim() : "";
         const description = shopDescEl ? shopDescEl.value.trim() : "";
+        const physicalAddress = shopAddressEl ? shopAddressEl.value.trim() : "";
+        const shop_lat = shopLatVal ? Number(shopLatVal) : null;
+        const shop_lng = shopLngVal ? Number(shopLngVal) : null;
+
         let logoUrl = "";
         const logoFile = shopLogoEl?.files?.[0];
         if (!shopName) {
@@ -1357,14 +1432,16 @@
             logoUrl = await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, logoFile, "shop-logos");
           }
           if (window.afriBayBackend?.createShop && currentUser.firebaseUid) {
-            const ref = await window.afriBayBackend.createShop(currentUser.firebaseUid, { shopName, contactPhone, description, logoUrl });
-            currentShop = { id: ref.id, userId: currentUser.firebaseUid, shopName, contactPhone, description, logoUrl, status: "active" };
+            const ref = await window.afriBayBackend.createShop(currentUser.firebaseUid, {
+              shopName, contactPhone, description, logoUrl, physicalAddress, shop_lat, shop_lng
+            });
+            currentShop = { id: ref.id, userId: currentUser.firebaseUid, shopName, contactPhone, description, logoUrl, physicalAddress, shop_lat, shop_lng, status: "active" };
           } else {
-            currentShop = { id: `local-${Date.now()}`, userId: currentUser.firebaseUid || currentUser.email, shopName, contactPhone, description, logoUrl, status: "active" };
+            currentShop = { id: `local-${Date.now()}`, userId: currentUser.firebaseUid || currentUser.email, shopName, contactPhone, description, logoUrl, physicalAddress, shop_lat, shop_lng, status: "active" };
           }
         } catch (error) {
           console.warn("Falling back to local shop session:", error);
-          currentShop = { id: `local-${Date.now()}`, userId: currentUser.firebaseUid || currentUser.email, shopName, contactPhone, description, logoUrl, status: "active" };
+          currentShop = { id: `local-${Date.now()}`, userId: currentUser.firebaseUid || currentUser.email, shopName, contactPhone, description, logoUrl, physicalAddress, shop_lat, shop_lng, status: "active" };
         }
         const userIndex = users.findIndex(user => user.email === currentUser.email);
         if (userIndex >= 0) { users[userIndex].shopName = shopName; localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
@@ -2472,6 +2549,10 @@
         const trackingId = `AFB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
         const deliveryAddressEl = document.getElementById("deliveryAddress");
         const deliveryAddress = deliveryAddressEl ? deliveryAddressEl.value.trim() : "Lusaka, Zambia";
+        const deliveryLatEl = document.getElementById("deliveryLat");
+        const deliveryLngEl = document.getElementById("deliveryLng");
+        const delivery_lat = deliveryLatEl && deliveryLatEl.value ? Number(deliveryLatEl.value) : null;
+        const delivery_lng = deliveryLngEl && deliveryLngEl.value ? Number(deliveryLngEl.value) : null;
 
         const finalizeOrder = async (flwResponse = {}) => {
           const detailedItems = cart.map(item => {
@@ -2502,6 +2583,9 @@
             payoutStatus: "held_in_escrow",
             deliveryPin,
             deliveryAddress,
+            delivery_lat,
+            delivery_lng,
+            courierMapsUrl: (delivery_lat != null && delivery_lng != null) ? `https://www.google.com/maps?q=${delivery_lat},${delivery_lng}` : null,
             customer: {
               email: currentUser.email || "shopper@afribay.com",
               name: currentUser.name || "AfriBay Shopper",
@@ -2547,6 +2631,16 @@
           const recTrack = document.getElementById("receiptTracking"); if (recTrack) recTrack.textContent = trackingId;
           const recAmt = document.getElementById("receiptAmount"); if (recAmt) recAmt.textContent = money(totalZMW);
           const recPin = document.getElementById("receiptPin"); if (recPin) recPin.textContent = deliveryPin;
+          const recGps = document.getElementById("receiptGpsInfo");
+          const recMaps = document.getElementById("receiptMapsLink");
+          if (recGps && recMaps) {
+            if (delivery_lat != null && delivery_lng != null) {
+              recGps.style.display = "block";
+              recMaps.href = `https://www.google.com/maps?q=${delivery_lat},${delivery_lng}`;
+            } else {
+              recGps.style.display = "none";
+            }
+          }
           openModal("receiptModal");
           if (event && event.target && event.target.reset) event.target.reset();
         };

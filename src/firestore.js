@@ -36,16 +36,20 @@ export async function upsertUserProfile(user) {
 }
 
 // ── Shops ─────────────────────────────────────────────────────
-export async function createShop(uid, { shopName, contactPhone, description, logoUrl }) {
+export async function createShop(uid, { shopName, contactPhone, description, logoUrl, shop_lat, shop_lng, physicalAddress }) {
   const firestore = requireDb();
   return addDoc(collection(firestore, "shops"), {
-    userId:       uid,
-    shopName:     shopName     || "",
-    contactPhone: contactPhone || "",
-    description:  description  || "",
-    logoUrl:      logoUrl      || "",
-    status:       "active",
-    createdAt:    serverTimestamp(),
+    userId:          uid,
+    shopName:        shopName        || "",
+    contactPhone:    contactPhone    || "",
+    description:     description     || "",
+    logoUrl:         logoUrl         || "",
+    shop_lat:        shop_lat != null ? Number(shop_lat) : null,
+    shop_lng:        shop_lng != null ? Number(shop_lng) : null,
+    physicalAddress: physicalAddress || "",
+    status:          "active",
+    createdAt:       serverTimestamp(),
+    updatedAt:       serverTimestamp(),
   });
 }
 
@@ -153,10 +157,14 @@ export async function createOrder(uid, order) {
   const escrowStatus = order.escrowStatus || "escrow_held";
   const payoutStatus = order.payoutStatus || "held_in_escrow";
   const deliveryStatus = order.deliveryStatus || "processing";
+  const delivery_lat = order.delivery_lat != null ? Number(order.delivery_lat) : (order.deliveryLat != null ? Number(order.deliveryLat) : null);
+  const delivery_lng = order.delivery_lng != null ? Number(order.delivery_lng) : (order.deliveryLng != null ? Number(order.deliveryLng) : null);
 
   const orderRecord = {
     ...order,
     deliveryPin,
+    delivery_lat,
+    delivery_lng,
     escrowStatus,
     payoutStatus,
     deliveryStatus,

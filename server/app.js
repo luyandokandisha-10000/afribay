@@ -68,6 +68,12 @@ export async function sendOrderNotificationEmail(orderData) {
     return `  ${idx + 1}. Shop: ${shop}\n     Product: ${title}\n     Quantity: ${qty}\n     Price each: ZMW ${price}`;
   }).join('\n\n') : '  No item details provided';
 
+  const deliveryLat = orderData.delivery_lat ?? orderData.deliveryLat ?? null;
+  const deliveryLng = orderData.delivery_lng ?? orderData.deliveryLng ?? null;
+  const gpsInfo = (deliveryLat != null && deliveryLng != null)
+    ? `\nGPS Coordinates:          ${deliveryLat}, ${deliveryLng}\nCourier Google Maps Pin:  https://www.google.com/maps?q=${deliveryLat},${deliveryLng}`
+    : '\nGPS Coordinates:          Not pinned (Text address only)';
+
   const emailSubject = `[AfriBay Escrow Alert] New Order ${trackingId} - ZMW ${totalZMW} (Escrow Held)`;
   const emailBody = `
 ======================================================
@@ -90,7 +96,7 @@ Customer Name:            ${customerName} (${customerEmail})
 
 DELIVERY DESTINATION:
 ------------------------------------------------------
-Address:                  ${deliveryAddress}
+Address:                  ${deliveryAddress}${gpsInfo}
 
 PRODUCTS & SHOPS:
 ------------------------------------------------------
@@ -312,6 +318,9 @@ const server = http.createServer(async (req, res) => {
         const totalAmount = Number(payload.amount || payload.totalZMW || 0);
         const vendorPayoutAmount = Math.max(0, totalAmount - 35); // 35 ZMW logistics delivery fee
 
+        const delivery_lat = payload.delivery_lat != null ? Number(payload.delivery_lat) : (payload.deliveryLat != null ? Number(payload.deliveryLat) : null);
+        const delivery_lng = payload.delivery_lng != null ? Number(payload.delivery_lng) : (payload.deliveryLng != null ? Number(payload.deliveryLng) : null);
+
         const orderRecord = {
           ...payload,
           trackingId: txRef,
@@ -319,6 +328,8 @@ const server = http.createServer(async (req, res) => {
           totalZMW: totalAmount,
           vendorPayoutZMW: vendorPayoutAmount,
           deliveryPin,
+          delivery_lat,
+          delivery_lng,
           escrowStatus: 'escrow_held',
           deliveryStatus: 'processing',
           payoutStatus: 'held_in_escrow',
@@ -342,6 +353,9 @@ const server = http.createServer(async (req, res) => {
           txRef,
           trackingId: txRef,
           deliveryPin,
+          delivery_lat,
+          delivery_lng,
+          courierMapsUrl: (delivery_lat != null && delivery_lng != null) ? `https://www.google.com/maps?q=${delivery_lat},${delivery_lng}` : null,
           escrowStatus: 'escrow_held',
           payoutStatus: 'held_in_escrow',
           amountZMW: totalAmount,
@@ -369,10 +383,15 @@ const server = http.createServer(async (req, res) => {
         const deliveryPin = orderData.deliveryPin || String(Math.floor(100000 + Math.random() * 900000));
         const totalAmount = Number(orderData.totalZMW || orderData.amount || 0);
 
+        const delivery_lat = orderData.delivery_lat != null ? Number(orderData.delivery_lat) : (orderData.deliveryLat != null ? Number(orderData.deliveryLat) : null);
+        const delivery_lng = orderData.delivery_lng != null ? Number(orderData.delivery_lng) : (orderData.deliveryLng != null ? Number(orderData.deliveryLng) : null);
+
         const orderRecord = {
           ...orderData,
           trackingId,
           deliveryPin,
+          delivery_lat,
+          delivery_lng,
           escrowStatus: orderData.escrowStatus || 'escrow_held',
           deliveryStatus: orderData.deliveryStatus || 'processing',
           payoutStatus: orderData.payoutStatus || 'held_in_escrow',
@@ -389,6 +408,9 @@ const server = http.createServer(async (req, res) => {
           message: `Escrow order notification delivered to ${result.recipient}`,
           trackingId,
           deliveryPin,
+          delivery_lat,
+          delivery_lng,
+          courierMapsUrl: (delivery_lat != null && delivery_lng != null) ? `https://www.google.com/maps?q=${delivery_lat},${delivery_lng}` : null,
           escrowStatus: orderRecord.escrowStatus,
           emailSubject: result.emailSubject
         }));
