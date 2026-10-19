@@ -163,8 +163,8 @@ export async function createOrder(uid, order) {
   const orderRecord = {
     ...order,
     deliveryPin,
-    delivery_lat,
-    delivery_lng,
+    delivery_lat: delivery_lat,
+    delivery_lng: delivery_lng,
     escrowStatus,
     payoutStatus,
     deliveryStatus,

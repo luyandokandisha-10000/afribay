@@ -13,7 +13,7 @@
     "playstore:init": "npx @bubblewrap/cli init --manifest=manifest.json",
     "cap:sync": "npx @capacitor/cli sync",
     "cap:android": "npx @capacitor/cli open android",
-    "test": "node --check server/app.js && node --check src/firestore.js"
+    "test": "node test-suite.mjs"
   },
   "keywords": [
     "marketplace",

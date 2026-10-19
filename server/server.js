@@ -156,6 +156,7 @@ app.post('/api/orders/notify', async (req, res) => {
 
     res.json({
       success: true,
+      recipient: result.recipient,
       message: `Escrow order notification delivered to ${result.recipient}`,
       trackingId,
       deliveryPin,
@@ -172,7 +173,7 @@ app.post('/api/orders/notify', async (req, res) => {
 /**
  * Assign Order to Transit / Logistics
  */
-app.post('/api/escrow/assign-transit', (req, res) => {
+app.post(['/api/escrow/assign-transit', '/api/escrow/in-transit'], (req, res) => {
   try {
     const { trackingId, riderName, riderPhone } = req.body;
     if (!trackingId) return res.status(400).json({ error: 'trackingId is required' });
@@ -195,7 +196,7 @@ app.post('/api/escrow/assign-transit', (req, res) => {
 /**
  * Verify Delivery PIN & Release Escrow to Vendor
  */
-app.post('/api/escrow/verify-delivery', async (req, res) => {
+app.post(['/api/escrow/verify-delivery', '/api/escrow/release'], async (req, res) => {
   try {
     const { trackingId, deliveryPin, verifiedBy = 'Delivery Rider', orderData } = req.body;
     if (!trackingId || !deliveryPin) {
@@ -254,6 +255,17 @@ app.get('/api/escrow/orders', (req, res) => {
     success: true,
     count: escrowOrders.size,
     orders: Array.from(escrowOrders.values())
+  });
+});
+
+app.get(['/api/escrow/order', '/api/escrow/order/:trackingId', '/api/escrow/status/:trackingId'], (req, res) => {
+  const trackingId = req.params.trackingId || req.query.trackingId;
+  if (!trackingId || !escrowOrders.has(trackingId)) {
+    return res.status(404).json({ success: false, message: 'Order not found in escrow registry' });
+  }
+  res.json({
+    success: true,
+    order: escrowOrders.get(trackingId)
   });
 });
 

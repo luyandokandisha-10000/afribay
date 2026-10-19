@@ -271,14 +271,16 @@ const server = http.createServer(async (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     const tokenResult = await getFlutterwaveOAuthToken();
 
-    res.writeHead(tokenResult.success ? 200 : 502);
+    res.writeHead(200);
     res.end(JSON.stringify({
+      status: 'ok',
       service: 'AfriBay Zambian Escrow & Payment Gateway',
       environment: 'Sandbox / Test Mode',
       escrowActive: true,
       totalEscrowOrders: escrowOrders.size,
       clientId: `${CLIENT_ID.substring(0, 10)}...`,
       encryptionKeyConfigured: Boolean(ENCRYPTION_KEY),
+      oauthConnected: Boolean(tokenResult?.success),
       oauthResult: tokenResult
     }, null, 2));
     return;
@@ -405,6 +407,7 @@ const server = http.createServer(async (req, res) => {
         res.writeHead(200);
         res.end(JSON.stringify({
           success: true,
+          recipient: result.recipient,
           message: `Escrow order notification delivered to ${result.recipient}`,
           trackingId,
           deliveryPin,
@@ -423,7 +426,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Endpoint: Transition Order to Logistics Transit
-  if (url.pathname === '/api/escrow/assign-transit' && req.method === 'POST') {
+  if ((url.pathname === '/api/escrow/assign-transit' || url.pathname === '/api/escrow/in-transit') && req.method === 'POST') {
     let bodyData = '';
     req.on('data', chunk => { bodyData += chunk; });
     req.on('end', async () => {
@@ -468,7 +471,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // Endpoint: Verify Delivery Drop-off PIN & Trigger Payout Release
-  if (url.pathname === '/api/escrow/verify-delivery' && req.method === 'POST') {
+  if ((url.pathname === '/api/escrow/verify-delivery' || url.pathname === '/api/escrow/release') && req.method === 'POST') {
     let bodyData = '';
     req.on('data', chunk => { bodyData += chunk; });
     req.on('end', async () => {
@@ -555,10 +558,14 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Endpoint: Query Single Order Status
-  if (url.pathname === '/api/escrow/order' && req.method === 'GET') {
+  // Endpoint: Query Single Order Status (Supports query param or path param e.g. /api/escrow/status/:id)
+  if ((url.pathname === '/api/escrow/order' || url.pathname.startsWith('/api/escrow/status/') || url.pathname.startsWith('/api/escrow/order/')) && req.method === 'GET') {
     res.setHeader('Content-Type', 'application/json');
-    const trackingId = url.searchParams.get('trackingId');
+    let trackingId = url.searchParams.get('trackingId');
+    if (!trackingId) {
+      const parts = url.pathname.split('/');
+      trackingId = parts[parts.length - 1];
+    }
     if (!trackingId || !escrowOrders.has(trackingId)) {
       res.writeHead(404);
       res.end(JSON.stringify({ success: false, message: 'Order not found in escrow registry' }));
