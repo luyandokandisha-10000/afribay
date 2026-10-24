@@ -69,6 +69,7 @@ async function runTestSuite() {
 
   const requiredElementIds = [
     'shopName', 'shopPhone', 'shopAddressInput', 'shopLat', 'shopLng', 'shopGpsLabel', 'shopSubmitBtn', 'shopError',
+    'deliveryTabGps', 'deliveryTabAddress', 'deliveryGpsSection', 'deliveryAddressSection',
     'deliveryAddress', 'deliveryLat', 'deliveryLng', 'deliveryGpsLabel', 'checkoutTotal', 'checkoutError',
     'receiptTracking', 'receiptAmount', 'receiptPin', 'receiptGpsInfo', 'receiptMapsLink', 'receiptEscrowBadge',
     'cartList', 'subtotal', 'delivery', 'total',
@@ -172,6 +173,36 @@ async function runTestSuite() {
     assert(checkoutRes.json?.delivery_lat === -15.387521, 'Preserves delivery_lat in response');
     assert(checkoutRes.json?.delivery_lng === 28.322814, 'Preserves delivery_lng in response');
     assert(checkoutRes.json?.courierMapsUrl?.includes('google.com/maps?q=-15.387521,28.322814'), 'Generates driver navigation link courierMapsUrl');
+
+    // 4.2b: Checkout with GPS Pin alone (no written address required)
+    const gpsOnlyOrder = {
+      customer: { name: 'Mutale Mwila', email: 'mutale@afribay.test' },
+      items: [{ title: 'African Print Shirt', quantity: 1, priceZMW: 380, shopName: 'Naya Collective' }],
+      amount: 415,
+      delivery_lat: -15.4200,
+      delivery_lng: 28.3100,
+    };
+    const gpsOnlyRes = await request(`${testBaseUrl}/api/checkout/initiate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: gpsOnlyOrder,
+    });
+    assert(gpsOnlyRes.statusCode === 200, 'POST /api/checkout/initiate succeeds with GPS Pin alone (no written address)');
+    assert(gpsOnlyRes.json?.courierMapsUrl?.includes('-15.42,28.31'), 'GPS-only checkout produces valid courierMapsUrl');
+
+    // 4.2c: Checkout with Written Address alone (no GPS pin required)
+    const addressOnlyOrder = {
+      customer: { name: 'Kabwe Tembo', email: 'kabwe@afribay.test' },
+      items: [{ title: 'iPhone Case', quantity: 1, priceZMW: 120, shopName: 'SmartHub' }],
+      amount: 155,
+      deliveryAddress: 'House 12, Rhodes Park, Lusaka',
+    };
+    const addressOnlyRes = await request(`${testBaseUrl}/api/checkout/initiate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: addressOnlyOrder,
+    });
+    assert(addressOnlyRes.statusCode === 200, 'POST /api/checkout/initiate succeeds with Written Address alone (no GPS pin)');
 
     const trackingId = checkoutRes.json.trackingId;
     const deliveryPin = checkoutRes.json.deliveryPin;

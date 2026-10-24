@@ -106,7 +106,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   Future<void> _processCheckout() async {
-    if (!_formKey.currentState!.validate()) return;
+    final hasGps = _pickedLocation != null;
+    final hasAddress = _addressController.text.trim().isNotEmpty;
+
+    if (!hasGps && !hasAddress) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please provide a delivery destination: either pin on Google Maps or enter your address.'),
+          backgroundColor: Color(0xFFB91C1C),
+        ),
+      );
+      return;
+    }
 
     if (_selectedPaymentMethod == 'mobile_money' && _phoneController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -124,6 +135,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final String trackingId = 'AFB-${DateTime.now().millisecondsSinceEpoch.toRadixString(36).toUpperCase()}';
       final String deliveryPin = (100000 + (DateTime.now().microsecond % 900000)).toString();
 
+      final effectiveDeliveryAddress = hasAddress
+          ? _addressController.text.trim()
+          : 'GPS Drop-off Point (${_pickedLocation!.latitude.toStringAsFixed(5)}, ${_pickedLocation!.longitude.toStringAsFixed(5)})';
+
       // Order payload with GPS coordinates and escrow lifecycle
       final orderPayload = {
         'trackingId': trackingId,
@@ -136,8 +151,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'totalZMW': _totalZMW,
         'deliveryFeeZMW': _deliveryFee,
         'vendorPayoutZMW': _subtotal,
-        // Delivery coordinates for logistics dispatch
-        'deliveryAddress': _addressController.text.trim(),
+        // Delivery destination: written address or GPS location note
+        'deliveryAddress': effectiveDeliveryAddress,
         'delivery_lat': _pickedLocation?.latitude,
         'delivery_lng': _pickedLocation?.longitude,
         // Escrow mobile money lifecycle
@@ -348,25 +363,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: const [
                           Text('Delivery Destination', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          Text('Required', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                          Text('Map Pin OR Address', style: TextStyle(fontSize: 12, color: Color(0xFF165B33), fontWeight: FontWeight.bold)),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        controller: _addressController,
-                        decoration: const InputDecoration(
-                          labelText: 'Street Address & Landmarks',
-                          hintText: 'e.g. Plot 42, Woodlands Extension, Lusaka',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.home_outlined),
-                        ),
-                        validator: (value) => (value == null || value.trim().isEmpty)
-                            ? 'Please provide delivery address details'
-                            : null,
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Provide your location using either a Google Maps pin or written address below:',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 14),
 
-                      // GPS Pin Picker Widget Trigger
+                      // Option 1: GPS Pin Picker Widget Trigger
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -392,7 +399,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                     children: [
                                       Text(
                                         _pickedLocation == null
-                                            ? 'Precise GPS Pin Location'
+                                            ? 'Option 1: Pin Exact Google Maps GPS'
                                             : 'GPS Coordinates Attached',
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
@@ -402,7 +409,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       ),
                                       Text(
                                         _pickedLocation == null
-                                            ? 'Pin your exact gate/doorstep on Google Maps for faster delivery.'
+                                            ? 'Pin your exact gate/doorstep on Google Maps (No typing needed).'
                                             : 'Lat: ${_pickedLocation!.latitude.toStringAsFixed(5)}, Lng: ${_pickedLocation!.longitude.toStringAsFixed(5)}',
                                         style: const TextStyle(fontSize: 11, color: Colors.grey),
                                       ),
@@ -425,6 +432,38 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      Row(
+                        children: const [
+                          Expanded(child: Divider()),
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Text('OR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey)),
+                          ),
+                          Expanded(child: Divider()),
+                        ],
+                      ),
+
+                      const SizedBox(height: 14),
+
+                      // Option 2: Written Street Address
+                      TextFormField(
+                        controller: _addressController,
+                        decoration: InputDecoration(
+                          labelText: 'Option 2: Street Address & Landmarks (Optional if pinned)',
+                          hintText: 'e.g. Plot 42, Woodlands Extension, Lusaka',
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.home_outlined),
+                          suffixIcon: _addressController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () => setState(() => _addressController.clear()),
+                                )
+                              : null,
                         ),
                       ),
                     ],

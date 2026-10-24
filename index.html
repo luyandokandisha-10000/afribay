@@ -635,7 +635,7 @@
     <div class="modal"><div class="modal-head"><div><div class="eyebrow">Free Video Promotion</div><h2>Create a video ad (100% Free)</h2></div><button class="close" type="button" onclick="closeModal('boostModal')">×</button></div><form onsubmit="createAd(event)"><div class="form-row"><label for="adProductSelect">Your listed product</label><select id="adProductSelect" required></select><small id="adProductHelp" style="display:block;color:var(--muted);margin-top:7px;font-size:11px"></small></div><div class="form-row"><label for="adVideoUrl">Short video URL</label><input id="adVideoUrl" type="url" placeholder="https://your-site.com/ad-video.mp4" oninput="previewAdVideoUrl()" /><small style="display:block;color:var(--muted);margin-top:7px;font-size:11px">Paste an MP4 or WebM video link, or upload a clip below.</small></div><div class="form-row"><label for="adVideoFile">Or upload a video</label><input id="adVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" onchange="previewAdVideo(event)" /><video id="adVideoPreview" controls muted loop playsinline style="width:100%;max-height:150px;border-radius:11px;margin-top:9px;display:none;background:#173d30"></video><div id="adVideoError" class="auth-error"></div></div><div class="form-row"><label for="adDuration">Ad duration</label><select id="adDuration" required><option value="daily" data-price="0">Daily · 24 hours · FREE (0 ZMW)</option><option value="weekly" data-price="0" selected>Weekly · 7 days · FREE (0 ZMW)</option><option value="monthly" data-price="0">Monthly · 30 days · FREE (0 ZMW)</option></select></div><div class="auth-card" style="padding:12px;margin-top:14px;background:var(--green-soft);border-color:var(--green);color:var(--green-deep);font-size:12px;display:flex;align-items:center;gap:8px;"><strong>✓ 100% Free Promotion:</strong> Sponsoring your products in the Ads feed is free for all AfriBay sellers. No card or mobile money charge.</div><div class="modal-foot"><button type="submit" class="button orange" style="width:100%">Publish Free Video Ad →</button></div></form></div>
   </div>
   <div id="checkoutModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'checkoutModal')">
-    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div><form onsubmit="processCheckout(event)"><div class="form-row"><label for="deliveryAddress">Delivery address</label><input id="deliveryAddress" required placeholder="Street, area, city (e.g. Woodlands, Lusaka)" /><div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button type="button" class="button ghost" onclick="captureDeliveryLocation()" style="font-size:11px;padding:5px 10px;font-weight:700;">📍 Pin Delivery GPS Location</button><span id="deliveryGpsLabel" style="font-size:11px;color:var(--muted)">Optional: Live GPS coordinates for courier</span></div><input type="hidden" id="deliveryLat" /><input type="hidden" id="deliveryLng" /></div><div class="form-row"><label>Payment method (via Flutterwave)</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="mobile_money" onclick="selectPay(this)">📱 Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">💳 Debit / Credit Card<br />Visa · Mastercard</button></div></div><div id="mobileMoneyFields" class="form-row"><label>Mobile Money Provider</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"><button type="button" class="button ghost selected" data-provider="mtn" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:2px solid var(--green)">MTN MoMo</button><button type="button" class="button ghost" data-provider="airtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Airtel Money</button><button type="button" class="button ghost" data-provider="zamtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Zamtel</button></div><label for="paymentPhone">Zambian Mobile Money number</label><input id="paymentPhone" type="tel" placeholder="+260 97... or 096..." /><small style="display:block;color:var(--muted);margin-top:5px;font-size:11px;">Instant mobile prompt will be sent to your phone for PIN authorization.</small></div><div id="cardFields" class="form-row" style="display:none"><div style="padding:10px;background:var(--green-soft);border-radius:8px;font-size:12px;color:var(--green-deep)">🔒 Secure Zambian & International Card processing powered by Flutterwave.</div></div><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button">Pay now · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div><form onsubmit="processCheckout(event)"><div class="form-row" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><label style="margin:0;font-weight:700;">Delivery Destination</label><span style="font-size:11px;color:var(--muted)">Option: Map Pin or Address</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;"><button type="button" id="deliveryTabGps" class="button ghost selected" onclick="toggleDeliveryMode('gps')" style="font-size:11px;padding:7px 4px;font-weight:800;border:2px solid var(--green);">📍 Google Maps Pin</button><button type="button" id="deliveryTabAddress" class="button ghost" onclick="toggleDeliveryMode('address')" style="font-size:11px;padding:7px 4px;font-weight:800;border:1px solid var(--border);">✍️ Written Address</button></div><div id="deliveryGpsSection" style="padding:10px;background:#f4f9f5;border-radius:8px;border:1px dashed var(--green);"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button type="button" class="button" onclick="captureDeliveryLocation()" style="font-size:11px;padding:6px 12px;background:var(--green);color:white;font-weight:700;">📍 Pin Current GPS Coordinates</button><span id="deliveryGpsLabel" style="font-size:11px;color:var(--muted)">Pin live location for courier navigation</span></div><small style="display:block;color:var(--muted);margin-top:6px;font-size:11px;">The courier will navigate directly to your GPS coordinates on Google Maps.</small></div><div id="deliveryAddressSection" style="display:none;margin-top:6px;"><input id="deliveryAddress" placeholder="Street, area, city (e.g. Plot 42, Woodlands, Lusaka)" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">Include nearby landmarks or gate color for easy finding.</small></div><input type="hidden" id="deliveryLat" /><input type="hidden" id="deliveryLng" /></div><div class="form-row"><label>Payment method (via Flutterwave)</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="mobile_money" onclick="selectPay(this)">📱 Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">💳 Debit / Credit Card<br />Visa · Mastercard</button></div></div><div id="mobileMoneyFields" class="form-row"><label>Mobile Money Provider</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"><button type="button" class="button ghost selected" data-provider="mtn" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:2px solid var(--green)">MTN MoMo</button><button type="button" class="button ghost" data-provider="airtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Airtel Money</button><button type="button" class="button ghost" data-provider="zamtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Zamtel</button></div><label for="paymentPhone">Zambian Mobile Money number</label><input id="paymentPhone" type="tel" placeholder="+260 97... or 096..." /><small style="display:block;color:var(--muted);margin-top:5px;font-size:11px;">Instant mobile prompt will be sent to your phone for PIN authorization.</small></div><div id="cardFields" class="form-row" style="display:none"><div style="padding:10px;background:var(--green-soft);border-radius:8px;font-size:12px;color:var(--green-deep)">🔒 Secure Zambian & International Card processing powered by Flutterwave.</div></div><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button">Pay now · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
   </div>
   <div id="receiptModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'receiptModal')">
     <div class="modal" style="max-width: 520px; width: 100%;">
@@ -1389,6 +1389,26 @@
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
+    }
+
+    function toggleDeliveryMode(mode) {
+      const gpsTab = document.getElementById("deliveryTabGps");
+      const addrTab = document.getElementById("deliveryTabAddress");
+      const gpsSection = document.getElementById("deliveryGpsSection");
+      const addrSection = document.getElementById("deliveryAddressSection");
+      if (mode === "gps") {
+        if (gpsTab) { gpsTab.className = "button ghost selected"; gpsTab.style.border = "2px solid var(--green)"; }
+        if (addrTab) { addrTab.className = "button ghost"; addrTab.style.border = "1px solid var(--border)"; }
+        if (gpsSection) gpsSection.style.display = "block";
+        if (addrSection) addrSection.style.display = "none";
+      } else {
+        if (addrTab) { addrTab.className = "button ghost selected"; addrTab.style.border = "2px solid var(--green)"; }
+        if (gpsTab) { gpsTab.className = "button ghost"; gpsTab.style.border = "1px solid var(--border)"; }
+        if (addrSection) addrSection.style.display = "block";
+        if (gpsSection) gpsSection.style.display = "none";
+        const addrInput = document.getElementById("deliveryAddress");
+        if (addrInput) addrInput.focus();
+      }
     }
 
     async function createShop(event) {
@@ -2548,11 +2568,24 @@
         const totalZMW = subtotal + 35;
         const trackingId = `AFB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
         const deliveryAddressEl = document.getElementById("deliveryAddress");
-        const deliveryAddress = deliveryAddressEl ? deliveryAddressEl.value.trim() : "Lusaka, Zambia";
+        let deliveryAddress = deliveryAddressEl ? deliveryAddressEl.value.trim() : "";
         const deliveryLatEl = document.getElementById("deliveryLat");
         const deliveryLngEl = document.getElementById("deliveryLng");
         const delivery_lat = deliveryLatEl && deliveryLatEl.value ? Number(deliveryLatEl.value) : null;
         const delivery_lng = deliveryLngEl && deliveryLngEl.value ? Number(deliveryLngEl.value) : null;
+
+        const hasGps = (delivery_lat !== null && !isNaN(delivery_lat) && delivery_lng !== null && !isNaN(delivery_lng));
+        const hasAddress = deliveryAddress.length > 0;
+
+        if (!hasGps && !hasAddress) {
+          setAuthError("checkoutError", "Please provide a delivery destination: either pin your location on the map or type an address.");
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Pay now · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
+          return;
+        }
+
+        if (!hasAddress && hasGps) {
+          deliveryAddress = `GPS Drop-off Pin (${delivery_lat.toFixed(5)}, ${delivery_lng.toFixed(5)})`;
+        }
 
         const finalizeOrder = async (flwResponse = {}) => {
           const detailedItems = cart.map(item => {
