@@ -3,6 +3,7 @@ import https from 'node:https';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { processPawaPayWebhook } from './routes/webhooks.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -292,6 +293,26 @@ const server = http.createServer(async (req, res) => {
     const result = await getFlutterwaveOAuthToken();
     res.writeHead(result.success ? 200 : 400);
     res.end(JSON.stringify(result, null, 2));
+    return;
+  }
+
+  // Endpoint: PawaPay Webhook Handler
+  if (url.pathname === '/api/webhooks/pawapay' && req.method === 'POST') {
+    let bodyData = '';
+    req.on('data', chunk => { bodyData += chunk; });
+    req.on('end', async () => {
+      res.setHeader('Content-Type', 'application/json');
+      try {
+        const webhookData = JSON.parse(bodyData || '{}');
+        const result = await processPawaPayWebhook(webhookData, { escrowOrders });
+        res.writeHead(result.status);
+        res.end(JSON.stringify(result.json));
+      } catch (error) {
+        console.error("Error processing PawaPay webhook:", error);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: "Internal Server Error" }));
+      }
+    });
     return;
   }
 

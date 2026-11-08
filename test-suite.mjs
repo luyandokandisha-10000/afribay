@@ -254,6 +254,57 @@ async function runTestSuite() {
     assert(notifyRes.json?.recipient === 'luyandokandisha@gmail.com', 'Recipient is configured to luyandokandisha@gmail.com');
     assert(notifyRes.json?.courierMapsUrl?.includes('-15.4123,28.3456'), 'Notification payload includes Google Maps courier link');
 
+    // 4.8 PawaPay Webhook Tests (POST /api/webhooks/pawapay)
+    // 4.8a: Reject invalid payload missing depositId or status
+    const invalidWebhookRes = await request(`${testBaseUrl}/api/webhooks/pawapay`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: { depositId: '' },
+    });
+    assert(invalidWebhookRes.statusCode === 400, 'POST /api/webhooks/pawapay rejects missing depositId/status with 400');
+
+    // 4.8b: Valid COMPLETED status updates existing order to Processing / Paid
+    const validWebhookRes = await request(`${testBaseUrl}/api/webhooks/pawapay`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        depositId: 'DEP-PAWAPAY-12345',
+        status: 'COMPLETED',
+        reference: trackingId,
+        currency: 'ZMW',
+        amount: '485.00'
+      },
+    });
+    assert(validWebhookRes.statusCode === 200, 'POST /api/webhooks/pawapay responds 200 OK for COMPLETED deposit');
+    assert(validWebhookRes.json?.status === 'Processing', 'Order status mapped to Processing on COMPLETED');
+    assert(validWebhookRes.json?.paymentStatus === 'Paid', 'Payment status mapped to Paid on COMPLETED');
+
+    // 4.8c: FAILED/REJECTED status updates order to Payment_Failed / Failed
+    const failedWebhookRes = await request(`${testBaseUrl}/api/webhooks/pawapay`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        depositId: 'DEP-PAWAPAY-67890',
+        status: 'FAILED',
+        reference: trackingId,
+      },
+    });
+    assert(failedWebhookRes.statusCode === 200, 'POST /api/webhooks/pawapay responds 200 OK for FAILED deposit');
+    assert(failedWebhookRes.json?.status === 'Payment_Failed', 'Order status mapped to Payment_Failed on FAILED');
+    assert(failedWebhookRes.json?.paymentStatus === 'Failed', 'Payment status mapped to Failed on FAILED');
+
+    // 4.8d: Orphaned reference responds 200 with warning so PawaPay does not retry endlessly
+    const orphanWebhookRes = await request(`${testBaseUrl}/api/webhooks/pawapay`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        depositId: 'DEP-PAWAPAY-99999',
+        status: 'COMPLETED',
+        reference: 'NON-EXISTENT-ORDER-ID',
+      },
+    });
+    assert(orphanWebhookRes.statusCode === 200 && orphanWebhookRes.json?.warning === 'Order not found', 'POST /api/webhooks/pawapay returns 200 with warning for non-existent reference');
+
   } catch (err) {
     console.error('API Test Error:', err);
     assert(false, `API tests threw exception: ${err.message}`);

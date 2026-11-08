@@ -3,6 +3,7 @@ import cors from 'cors';
 import 'dotenv/config';
 import { getFlutterwaveOAuthToken, flutterwaveRequest } from './flutterwave.js';
 import { sendOrderNotificationEmail, sendEscrowReleaseNotificationEmail } from './app.js';
+import { router as webhookRouter, processPawaPayWebhook } from './routes/webhooks.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -12,6 +13,21 @@ app.use(express.json());
 
 // In-memory Escrow Order Registry
 const escrowOrders = new Map();
+
+// PawaPay Webhook Handler
+if (webhookRouter) {
+  app.use('/api/webhooks', webhookRouter);
+} else {
+  app.post('/api/webhooks/pawapay', async (req, res) => {
+    try {
+      const result = await processPawaPayWebhook(req.body, { escrowOrders });
+      return res.status(result.status).json(result.json);
+    } catch (error) {
+      console.error("Error processing PawaPay webhook:", error);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+  });
+}
 
 // Health check & OAuth Token Verification route
 app.get('/api/health', async (req, res) => {
