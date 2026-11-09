@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { processPawaPayWebhook } from './routes/webhooks.js';
+import { processPawaPayCheckout } from './routes/checkout.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -311,6 +312,26 @@ const server = http.createServer(async (req, res) => {
         console.error("Error processing PawaPay webhook:", error);
         res.writeHead(500);
         res.end(JSON.stringify({ error: "Internal Server Error" }));
+      }
+    });
+    return;
+  }
+
+  // Endpoint: PawaPay Checkout Deposit Initiation
+  if (url.pathname === '/api/checkout' && req.method === 'POST') {
+    let bodyData = '';
+    req.on('data', chunk => { bodyData += chunk; });
+    req.on('end', async () => {
+      res.setHeader('Content-Type', 'application/json');
+      try {
+        const payload = JSON.parse(bodyData || '{}');
+        const result = await processPawaPayCheckout(payload, { escrowOrders });
+        res.writeHead(result.status);
+        res.end(JSON.stringify(result.json));
+      } catch (error) {
+        console.error("Error initiating PawaPay deposit:", error);
+        res.writeHead(500);
+        res.end(JSON.stringify({ error: "Internal server error" }));
       }
     });
     return;

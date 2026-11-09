@@ -4,6 +4,7 @@ import 'dotenv/config';
 import { getFlutterwaveOAuthToken, flutterwaveRequest } from './flutterwave.js';
 import { sendOrderNotificationEmail, sendEscrowReleaseNotificationEmail } from './app.js';
 import { router as webhookRouter, processPawaPayWebhook } from './routes/webhooks.js';
+import { router as checkoutRouter, processPawaPayCheckout } from './routes/checkout.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -13,6 +14,21 @@ app.use(express.json());
 
 // In-memory Escrow Order Registry
 const escrowOrders = new Map();
+
+// PawaPay Checkout Deposit Initiation Handler
+if (checkoutRouter) {
+  app.use('/api', checkoutRouter);
+} else {
+  app.post('/api/checkout', async (req, res) => {
+    try {
+      const result = await processPawaPayCheckout(req.body, { escrowOrders });
+      return res.status(result.status).json(result.json);
+    } catch (error) {
+      console.error("Error initiating PawaPay checkout:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+  });
+}
 
 // PawaPay Webhook Handler
 if (webhookRouter) {

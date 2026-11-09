@@ -305,6 +305,32 @@ async function runTestSuite() {
     });
     assert(orphanWebhookRes.statusCode === 200 && orphanWebhookRes.json?.warning === 'Order not found', 'POST /api/webhooks/pawapay returns 200 with warning for non-existent reference');
 
+    // 4.9 PawaPay Checkout Deposit Initiation Tests (POST /api/checkout)
+    // 4.9a: Parameter validation
+    const invalidCheckoutRes = await request(`${testBaseUrl}/api/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: { amount: 100 },
+    });
+    assert(invalidCheckoutRes.statusCode === 400, 'POST /api/checkout rejects missing parameters with 400');
+
+    // 4.9b: Live PawaPay sandbox deposit initiation
+    const liveDepositRes = await request(`${testBaseUrl}/api/checkout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        phoneNumber: '0971234567',
+        amount: '15.50',
+        orderId: trackingId,
+        network: 'mtn'
+      },
+    });
+    assert(liveDepositRes.statusCode === 200, 'POST /api/checkout responds 200 OK');
+    assert(liveDepositRes.json?.success === true, 'PawaPay checkout returns success: true');
+    assert(liveDepositRes.json?.depositId?.length === 36, 'PawaPay returns valid 36-character UUID depositId');
+    assert(liveDepositRes.json?.status === 'ACCEPTED', `PawaPay sandbox deposit status is ACCEPTED (received: ${liveDepositRes.json?.status})`);
+
+
   } catch (err) {
     console.error('API Test Error:', err);
     assert(false, `API tests threw exception: ${err.message}`);
