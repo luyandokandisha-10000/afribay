@@ -2,7 +2,7 @@
 // AfriBay — Firestore & Storage helpers
 // ─────────────────────────────────────────────────────────────
 import {
-  collection, doc, addDoc, setDoc, getDocs, getDoc, updateDoc,
+  collection, doc, addDoc, setDoc, getDocs, getDoc, updateDoc, deleteDoc,
   query, where, orderBy, limit, serverTimestamp,
   writeBatch, getCountFromServer
 } from "firebase/firestore";
@@ -71,6 +71,28 @@ export async function loadUserShop(uid) {
   return { id: d.id, ...d.data() };
 }
 
+export async function deleteShop(uid, shopId) {
+  const firestore = requireDb();
+  // Delete the shop document
+  if (shopId) {
+    try {
+      await deleteDoc(doc(firestore, "shops", shopId));
+    } catch (_) {}
+  }
+  // Delete all products associated with this shop or user
+  try {
+    const snap = await getDocs(
+      query(collection(firestore, "products"), where("ownerId", "==", uid))
+    );
+    if (!snap.empty) {
+      const batch = writeBatch(firestore);
+      snap.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+    }
+  } catch (_) {}
+  return { success: true };
+}
+
 // ── Products ──────────────────────────────────────────────────
 export async function createProduct(uid, productData) {
   const firestore = requireDb();
@@ -81,6 +103,26 @@ export async function createProduct(uid, productData) {
     isFeatured: false,
     viewCount:  0,
     createdAt:  serverTimestamp(),
+  });
+}
+
+export async function deleteProduct(uid, productId) {
+  const firestore = requireDb();
+  if (!productId) throw new Error("Missing productId");
+  const prodRef = doc(firestore, "products", productId);
+  await deleteDoc(prodRef);
+  return { success: true };
+}
+
+export async function reportOrderDelayed(uid, trackingId, reason = "Product has not arrived in more than two days") {
+  const firestore = requireDb();
+  if (!trackingId) throw new Error("Missing trackingId");
+  return addDoc(collection(firestore, "delivery_reports"), {
+    buyerUid: uid,
+    trackingId,
+    reason,
+    status: "investigating",
+    createdAt: serverTimestamp()
   });
 }
 

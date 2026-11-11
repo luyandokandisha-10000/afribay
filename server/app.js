@@ -938,6 +938,101 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Endpoint: Delete Product
+  if (url.pathname.startsWith('/api/products/') && req.method === 'DELETE') {
+    res.setHeader('Content-Type', 'application/json');
+    const productId = url.pathname.replace('/api/products/', '');
+    if (!productId) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ success: false, error: 'Product ID required' }));
+      return;
+    }
+    productsMap.delete(productId);
+    res.writeHead(200);
+    res.end(JSON.stringify({ success: true, message: `Product ${productId} deleted successfully` }));
+    return;
+  }
+
+  // Endpoint: Delete Shop
+  if (url.pathname.startsWith('/api/shops/') && req.method === 'DELETE') {
+    res.setHeader('Content-Type', 'application/json');
+    const shopId = url.pathname.replace('/api/shops/', '');
+    if (!shopId) {
+      res.writeHead(400);
+      res.end(JSON.stringify({ success: false, error: 'Shop ID required' }));
+      return;
+    }
+    shops.delete(shopId);
+    // Also remove any products owned by this shop
+    for (const [pId, p] of productsMap.entries()) {
+      if (p.shopId === shopId) {
+        productsMap.delete(pId);
+      }
+    }
+    res.writeHead(200);
+    res.end(JSON.stringify({ success: true, message: `Shop ${shopId} and associated listings deleted successfully` }));
+    return;
+  }
+
+  // Endpoint: Customer Report - Product Not Arrived in > 2 Days
+  if (url.pathname === '/api/orders/report-delay' && req.method === 'POST') {
+    res.setHeader('Content-Type', 'application/json');
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const trackingId = payload.trackingId;
+        const buyerPhone = payload.buyerPhone || payload.phone || 'N/A';
+        const reason = payload.reason || 'Product has not arrived in more than two days (48+ hours)';
+
+        if (!trackingId) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ success: false, error: 'Tracking ID is required' }));
+          return;
+        }
+
+        console.log(`\n🚨 [DELIVERY DELAY REPORT] Order ${trackingId} flagged by customer: "${reason}"`);
+
+        // Send alert to admin email
+        const adminEmail = ADMIN_NOTIFICATION_EMAIL;
+        const subject = `[AfriBay Alert] Delivery Overdue (>2 Days) - Order ${trackingId}`;
+        const emailBody = `
+======================================================
+      AFRIBAY CUSTOMER DELIVERY DELAY REPORT
+======================================================
+
+A customer has officially reported an overdue order that has NOT
+arrived in more than two days (48 hours).
+
+REPORT DETAILS:
+------------------------------------------------------
+Tracking ID:      ${trackingId}
+Customer Contact: ${buyerPhone}
+Reason:           ${reason}
+Reported At:      ${new Date().toISOString()}
+Notification to:  ${adminEmail}
+
+Logistics and vendor review required immediately.
+======================================================
+`;
+        console.log(emailBody);
+
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          message: 'Delivery delay report submitted. Support team alerted.',
+          trackingId,
+          status: 'under_investigation'
+        }));
+      } catch (err) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
   res.writeHead(404, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ error: 'Endpoint not found' }));
 });

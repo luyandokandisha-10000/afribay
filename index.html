@@ -616,9 +616,12 @@
         </div>
         <div class="form-row"><label for="shopDescriptionInput">Shop description</label><input id="shopDescriptionInput" placeholder="What makes your shop special?" /></div>
         <div class="form-row"><label for="shopLogoFile">Shop logo (optional)</label><input id="shopLogoFile" type="file" accept="image/*" /></div>
-        <div class="modal-foot">
-          <button type="button" class="button ghost" onclick="closeModal('shopModal')">Cancel</button>
-          <button id="shopSubmitBtn" type="submit" class="button">Create shop →</button>
+        <div class="modal-foot" style="display:flex;justify-content:space-between;align-items:center;">
+          <button id="shopDeleteBtn" type="button" class="button ghost" style="color:#b23b3b;border-color:#fca5a5;display:none;" onclick="confirmDeleteShop()">🗑 Delete Shop</button>
+          <div style="display:flex;gap:8px;margin-left:auto;">
+            <button type="button" class="button ghost" onclick="closeModal('shopModal')">Cancel</button>
+            <button id="shopSubmitBtn" type="submit" class="button">Create shop →</button>
+          </div>
         </div>
       </form>
     </div>
@@ -748,7 +751,8 @@
         </div>
       </div>
 
-      <div class="modal-foot">
+      <div class="modal-foot" style="display:flex;justify-content:space-between;align-items:center;">
+        <button id="detailDeleteProductBtn" class="button ghost" type="button" style="color:#b23b3b;border-color:#fca5a5;display:none;" onclick="confirmDeleteCurrentProduct()">🗑 Delete Listing</button>
         <button id="detailAddToCart" class="button" type="button" onclick="addCurrentProductToCart(this)">Add to cart →</button>
       </div>
     </div>
@@ -897,6 +901,9 @@
       saveCart,
       seedMarketplace,
       wipeDummyDataFromFirestore,
+      deleteShop,
+      deleteProduct,
+      reportOrderDelayed,
       upsertUserProfile,
       uploadUserMedia,
       assignOrderTransit,
@@ -995,6 +1002,7 @@
     window.afriBayBackend = {
       createOrder, createProduct, createShop, createVideoAd, hydrateMarketplace,
       loadActiveAds, loadCart, loadProducts, loadUserProducts, loadUserShop,
+      deleteShop, deleteProduct, reportOrderDelayed,
       saveCart, seedMarketplace, wipeDummyDataFromFirestore, uploadUserMedia,
       assignOrderTransit, verifyDeliveryAndReleaseEscrow, loadOrders
     };
@@ -1478,6 +1486,37 @@
           showToast("Please sign in to create a shop");
           return;
         }
+        const delBtn = document.getElementById("shopDeleteBtn");
+        const submitBtn = document.getElementById("shopSubmitBtn");
+        const nameInput = document.getElementById("shopName");
+        const mtnInput = document.getElementById("shopMtnPhone");
+        const airtelInput = document.getElementById("shopAirtelPhone");
+        const payoutSelect = document.getElementById("shopPayoutPreference");
+        const phoneInput = document.getElementById("shopPhone");
+        const descInput = document.getElementById("shopDescriptionInput");
+        const addressInput = document.getElementById("shopAddressInput");
+
+        if (currentShop) {
+          if (delBtn) delBtn.style.display = "inline-flex";
+          if (submitBtn) submitBtn.textContent = "Save Changes →";
+          if (nameInput) nameInput.value = currentShop.shopName || "";
+          if (mtnInput) mtnInput.value = currentShop.mtnPhone || "";
+          if (airtelInput) airtelInput.value = currentShop.airtelPhone || "";
+          if (payoutSelect) payoutSelect.value = currentShop.payoutPreference || "mobile_money";
+          if (phoneInput) phoneInput.value = currentShop.contactPhone || "";
+          if (descInput) descInput.value = currentShop.description || "";
+          if (addressInput) addressInput.value = currentShop.physicalAddress || "";
+        } else {
+          if (delBtn) delBtn.style.display = "none";
+          if (submitBtn) submitBtn.textContent = "Create shop →";
+          if (nameInput) nameInput.value = "";
+          if (mtnInput) mtnInput.value = "";
+          if (airtelInput) airtelInput.value = "";
+          if (payoutSelect) payoutSelect.value = "mobile_money";
+          if (phoneInput) phoneInput.value = "";
+          if (descInput) descInput.value = "";
+          if (addressInput) addressInput.value = "";
+        }
         openModal("shopModal");
       } catch (err) {
         console.error("openShopModalSafe error:", err);
@@ -1752,7 +1791,61 @@
         console.error("createShop error:", err);
         setAuthError("shopError", err.message || "Error creating shop. Please try again.");
       } finally {
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Create shop →"; }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = currentShop ? "Save Changes →" : "Create shop →"; }
+      }
+    }
+
+    async function confirmDeleteShop() {
+      if (!currentShop) return;
+      const confirmed = window.confirm(`Are you sure you want to delete "${currentShop.shopName}" and all of its product listings? This cannot be undone.`);
+      if (!confirmed) return;
+
+      const shopId = currentShop.id;
+      const shopName = currentShop.shopName;
+      try {
+        if (currentUser?.firebaseUid && window.afriBayBackend?.deleteShop) {
+          try {
+            await window.afriBayBackend.deleteShop(currentUser.firebaseUid, shopId);
+          } catch (e) {
+            console.warn("Firestore deleteShop warning:", e);
+          }
+        }
+
+        // Call backend server DELETE /api/shops/:id
+        try {
+          const apiBase = getApiBase();
+          if (apiBase || window.location.protocol.startsWith("http")) {
+            fetch(`${apiBase}/api/shops/${encodeURIComponent(shopId)}`, {
+              method: "DELETE"
+            }).catch(() => {});
+          }
+        } catch (_) {}
+
+        // Remove shop & its products from client state
+        products.splice(0, products.length, ...products.filter(p => p.shopId !== shopId && p.seller !== shopName));
+        ownProducts = [];
+        currentShop = null;
+
+        if (currentUser) {
+          currentUser.shopName = "";
+          localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+          const uIdx = users.findIndex(u => u.email === currentUser.email);
+          if (uIdx >= 0) {
+            users[uIdx].shopName = "";
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+          }
+          const key = currentUser.firebaseUid || currentUser.email;
+          localStorage.removeItem(`afribay_shop_${key}`);
+          localStorage.removeItem(`afribay_products_${key}`);
+        }
+
+        closeModal("shopModal");
+        renderProducts();
+        renderSellerDashboard();
+        showToast(`Shop "${shopName}" and listings deleted successfully.`);
+      } catch (err) {
+        console.error("confirmDeleteShop error:", err);
+        showToast("Error deleting shop: " + err.message);
       }
     }
     function getOwnedProducts() {
@@ -1886,9 +1979,70 @@
         }
 
         container.innerHTML = listed.length ? listed.map(product => `
-          <div class="feature-row"><div class="feature-icon">${product.art || "✦"}</div><div><strong>${escapeHTML(product.title)}</strong><small>${money(product.price)} · ${product.condition || "condition not set"} · ${product.viewCount || 0} views</small></div><button type="button" class="link-btn" onclick="openProduct('${escapeHTML(String(product.id))}')">View</button></div>`).join("") : '<div class="empty" style="padding:24px">Your listings will appear here. Create your first product to get started.</div>';
+          <div class="feature-row">
+            <div class="feature-icon">${product.art || "✦"}</div>
+            <div>
+              <strong>${escapeHTML(product.title)}</strong>
+              <small>${money(product.price)} · ${product.condition || "condition not set"} · ${product.viewCount || 0} views</small>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button type="button" class="link-btn" onclick="openProduct('${escapeHTML(String(product.id))}')">View</button>
+              <button type="button" class="link-btn" style="color:#b23b3b;font-weight:700;" onclick="confirmDeleteProduct('${escapeHTML(String(product.id))}')">🗑 Delete</button>
+            </div>
+          </div>`).join("") : '<div class="empty" style="padding:24px">Your listings will appear here. Create your first product to get started.</div>';
       } catch (err) {
         console.error("renderSellerDashboard error:", err);
+      }
+    }
+
+    async function confirmDeleteProduct(productId) {
+      if (!productId) return;
+      const target = findProduct(productId);
+      const title = target ? target.title : "this product";
+      const confirmed = window.confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`);
+      if (!confirmed) return;
+
+      try {
+        if (currentUser?.firebaseUid && window.afriBayBackend?.deleteProduct) {
+          try {
+            await window.afriBayBackend.deleteProduct(currentUser.firebaseUid, productId);
+          } catch (e) {
+            console.warn("Firestore deleteProduct warning:", e);
+          }
+        }
+
+        // Call backend server DELETE /api/products/:id
+        try {
+          const apiBase = getApiBase();
+          if (apiBase || window.location.protocol.startsWith("http")) {
+            fetch(`${apiBase}/api/products/${encodeURIComponent(productId)}`, {
+              method: "DELETE"
+            }).catch(() => {});
+          }
+        } catch (_) {}
+
+        // Remove from client collections
+        const pIdx = products.findIndex(p => String(p.id) === String(productId));
+        if (pIdx >= 0) products.splice(pIdx, 1);
+        ownProducts = ownProducts.filter(p => String(p.id) !== String(productId));
+        cart = cart.filter(item => String(item.id) !== String(productId));
+
+        persistLocalAccountData();
+        updateCart();
+        renderProducts();
+        renderSellerDashboard();
+        populateAdProductSelect();
+        closeModal("productModal");
+        showToast(`Listing "${title}" deleted.`);
+      } catch (err) {
+        console.error("confirmDeleteProduct error:", err);
+        showToast("Error deleting product: " + err.message);
+      }
+    }
+
+    function confirmDeleteCurrentProduct() {
+      if (selectedProductId != null) {
+        confirmDeleteProduct(selectedProductId);
       }
     }
 
@@ -2367,6 +2521,21 @@
           addBtn.textContent = `Add to cart · ${money(product.price)} →`;
           addBtn.disabled = false;
         }
+
+        // Show delete button only if current user owns this product
+        const isOwner = Boolean(
+          currentUser && (
+            (product.ownerId && currentUser.firebaseUid && product.ownerId === currentUser.firebaseUid) ||
+            (product.ownerEmail && currentUser.email && product.ownerEmail === currentUser.email) ||
+            (currentShop && product.shopId && currentShop.id === product.shopId) ||
+            (currentShop && product.seller && currentShop.shopName.toLowerCase() === product.seller.toLowerCase())
+          )
+        );
+        const delProdBtn = document.getElementById("detailDeleteProductBtn");
+        if (delProdBtn) {
+          delProdBtn.style.display = isOwner ? "inline-flex" : "none";
+        }
+
         openModal("productModal");
       } catch (err) {
         console.error("viewProduct error:", err);
@@ -2707,6 +2876,16 @@
                 </div>
               ` : ''}
               ${pinSectionHtml}
+              ${(!isCompleted) ? `
+                <div style="margin-top:8px;padding-top:6px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+                  <span style="font-size:11px;color:var(--muted)">
+                    ${ord.deliveryReported ? '<span style="color:#b23b3b;font-weight:700;">⚠️ Delivery Delay Reported (&gt;2 Days) · Under Investigation</span>' : 'Delivery typically takes 24–48 hours in Lusaka.'}
+                  </span>
+                  ${(!ord.deliveryReported) ? `
+                    <button type="button" class="link-btn" style="color:#b23b3b;font-size:11px;padding:2px 0;font-weight:700;" onclick="reportDelayedOrder('${escapeHTML(ord.trackingId)}')">⚠️ Report: Not Arrived (&gt;2 Days)</button>
+                  ` : ''}
+                </div>
+              ` : ''}
               <div style="font-size:12px;border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px;">
                 ${(ord.items || []).map(it => `<div>• ${escapeHTML(it.title)} × ${it.quantity} (${money(it.priceZMW)}) <span style="color:var(--muted);font-size:11px;">[${escapeHTML(it.shopName || 'Shop')}]</span></div>`).join('')}
               </div>
@@ -2943,6 +3122,66 @@
       } catch (_) {
         showToast(`PIN: ${pin}`);
       }
+    }
+
+    async function reportDelayedOrder(trackingId) {
+      if (!trackingId) return;
+      const confirmed = window.confirm(`Report Order ${trackingId} as NOT arrived in more than 2 days (48 hours)?\n\nThis flags the order for priority admin investigation and notifies the AfriBay logistics team.`);
+      if (!confirmed) return;
+
+      const reason = window.prompt("Optional details regarding this delay (e.g., rider contacted, wrong destination, etc.):", "Product has not arrived in more than two days");
+      if (reason === null) return; // user cancelled prompt
+
+      const key = currentUser ? (currentUser.firebaseUid || currentUser.email) : "guest";
+      const userOrders = JSON.parse(localStorage.getItem(`afribay_orders_${key}`) || "[]");
+      const allOrders = JSON.parse(localStorage.getItem("afribay_all_orders") || "[]");
+
+      const markReported = (o) => {
+        if (o.trackingId === trackingId) {
+          o.deliveryReported = true;
+          o.delayReportedAt = new Date().toISOString();
+          o.delayReason = reason || "Product has not arrived in more than two days";
+          o.deliveryStatus = "investigating_delay";
+        }
+      };
+
+      userOrders.forEach(markReported);
+      allOrders.forEach(markReported);
+
+      localStorage.setItem(`afribay_orders_${key}`, JSON.stringify(userOrders));
+      localStorage.setItem("afribay_all_orders", JSON.stringify(allOrders));
+
+      // Report to Firestore if available
+      try {
+        if (currentUser?.firebaseUid && window.afriBayBackend?.reportOrderDelayed) {
+          try {
+            await window.afriBayBackend.reportOrderDelayed(currentUser.firebaseUid, trackingId, reason);
+          } catch (e) {
+            console.warn("Firestore reportOrderDelayed warning:", e);
+          }
+        }
+      } catch (_) {}
+
+      // Report to backend server
+      try {
+        const apiBase = getApiBase();
+        if (apiBase || window.location.protocol.startsWith("http")) {
+          fetch(`${apiBase}/api/orders/report-delay`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              trackingId,
+              buyerPhone: currentUser?.phone || "",
+              reason: reason || "Product has not arrived in more than two days"
+            })
+          }).then(r => r.json()).then(res => {
+            console.log("[AfriBay Delay Report API]:", res);
+          }).catch(e => console.warn("Delay report fetch note:", e));
+        }
+      } catch (_) {}
+
+      renderOrdersView();
+      showToast(`🚨 Report submitted for Order ${trackingId}. Support team has been alerted.`);
     }
 
     function requestVendorPayout() {

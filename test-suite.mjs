@@ -458,6 +458,36 @@ async function runTestSuite() {
       }
     });
     assert(unblockedProdRes.statusCode === 201, 'POST /api/products succeeds once subscription is activated');
+
+    // 4.11: Test Delete Product feature
+    const createdProductId = unblockedProdRes.json?.product?.id;
+    assert(Boolean(createdProductId), 'Unblocked product has valid ID');
+    const deleteProdRes = await request(`${testBaseUrl}/api/products/${encodeURIComponent(createdProductId)}`, {
+      method: 'DELETE'
+    });
+    assert(deleteProdRes.statusCode === 200, 'DELETE /api/products/:id succeeds with 200 OK');
+    assert(deleteProdRes.json?.success === true, 'DELETE /api/products returns success: true');
+
+    // 4.12: Test Delete Shop feature (and associated products)
+    const deleteShopRes = await request(`${testBaseUrl}/api/shops/${encodeURIComponent(expiredShopId)}`, {
+      method: 'DELETE'
+    });
+    assert(deleteShopRes.statusCode === 200, 'DELETE /api/shops/:id succeeds with 200 OK');
+    assert(deleteShopRes.json?.success === true, 'DELETE /api/shops returns success: true');
+
+    // 4.13: Test Customer Report: Product not arrived in > 2 days
+    const reportDelayRes = await request(`${testBaseUrl}/api/orders/report-delay`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        trackingId: 'AFB-TEST-DELAY-01',
+        buyerPhone: '0971234567',
+        reason: 'Product has not arrived in more than two days'
+      }
+    });
+    assert(reportDelayRes.statusCode === 200, 'POST /api/orders/report-delay responds 200 OK');
+    assert(reportDelayRes.json?.success === true, 'POST /api/orders/report-delay returns success: true');
+    assert(reportDelayRes.json?.status === 'under_investigation', 'Reported order status is under_investigation');
   } catch (err) {
     console.error('API Test Error:', err);
     assert(false, `API tests threw exception: ${err.message}`);

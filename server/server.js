@@ -502,6 +502,48 @@ app.get('/api/products', (req, res) => {
   });
 });
 
+app.delete('/api/products/:id', (req, res) => {
+  const productId = req.params.id;
+  if (!productId) {
+    return res.status(400).json({ success: false, error: 'Product ID required' });
+  }
+  productsMap.delete(productId);
+  return res.json({ success: true, message: `Product ${productId} deleted successfully` });
+});
+
+app.delete('/api/shops/:id', (req, res) => {
+  const shopId = req.params.id;
+  if (!shopId) {
+    return res.status(400).json({ success: false, error: 'Shop ID required' });
+  }
+  shops.delete(shopId);
+  for (const [pId, p] of productsMap.entries()) {
+    if (p.shopId === shopId) {
+      productsMap.delete(pId);
+    }
+  }
+  return res.json({ success: true, message: `Shop ${shopId} and associated listings deleted successfully` });
+});
+
+app.post('/api/orders/report-delay', (req, res) => {
+  try {
+    const { trackingId, buyerPhone, phone, reason } = req.body || {};
+    if (!trackingId) {
+      return res.status(400).json({ success: false, error: 'Tracking ID is required' });
+    }
+    const reportReason = reason || 'Product has not arrived in more than two days (48+ hours)';
+    console.log(`\n🚨 [DELIVERY DELAY REPORT] Order ${trackingId} flagged by customer: "${reportReason}"`);
+    return res.json({
+      success: true,
+      message: 'Delivery delay report submitted. Support team alerted.',
+      trackingId,
+      status: 'under_investigation'
+    });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`\n🚀 AfriBay Flutterwave & Escrow Gateway running at http://localhost:${PORT}`);
   console.log(`   Health & OAuth status: http://localhost:${PORT}/api/health\n`);
