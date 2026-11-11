@@ -3,7 +3,7 @@
 // Offline resiliency, shell caching, and instant startup
 // ─────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'afribay-cache-v1.1';
+const CACHE_NAME = 'afribay-cache-v2.0';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -16,26 +16,27 @@ const STATIC_ASSETS = [
   './src/firestore.js'
 ];
 
-// Install: Cache static application shell
+// Install: Cache static application shell & skip waiting
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('[AfriBay SW] Pre-caching application shell');
+      console.log('[AfriBay SW] Pre-caching application shell v2.0');
       return cache.addAll(STATIC_ASSETS).catch(err => {
         console.warn('[AfriBay SW] Note: Pre-cache item skipped:', err);
       });
-    }).then(() => self.skipWaiting())
+    })
   );
 });
 
-// Activate: Clean up old version caches
+// Activate: Clean up old version caches immediately
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
         keys.map(key => {
           if (key !== CACHE_NAME) {
-            console.log('[AfriBay SW] Removing outdated cache:', key);
+            console.log('[AfriBay SW] Purging outdated cache:', key);
             return caches.delete(key);
           }
         })
@@ -44,29 +45,42 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch: Stale-While-Revalidate for app assets, Network-First for API/OAuth calls
+// Fetch: Network-First for HTML navigation and API calls, Cache-First for static assets
 self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
 
-  // Skip POST, PUT, DELETE requests (only GET is cacheable)
-  if (request.method !== 'GET') {
+  // Skip non-GET
+  if (request.method !== 'GET') return;
+
+  // Network-First for HTML page navigation so users ALWAYS get the freshest app update
+  if (request.mode === 'navigate' || request.destination === 'document') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match('./index.html') || caches.match('./'))
+    );
     return;
   }
 
-  // Network-First for dynamic API endpoints & Flutterwave
-  if (url.pathname.startsWith('/api/') || url.hostname.includes('flutterwave') || url.hostname.includes('googleapis')) {
+  // Network-First for dynamic API endpoints & external providers
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('flutterwave') || url.hostname.includes('googleapis') || url.hostname.includes('pawapay')) {
     event.respondWith(
       fetch(request).catch(() => caches.match(request))
     );
     return;
   }
 
-  // Cache-first / Stale-While-Revalidate for local shell and static media
+  // Cache with background revalidation for static icons & scripts
   event.respondWith(
     caches.match(request).then(cachedResponse => {
       if (cachedResponse) {
-        // Fetch in background to update cache for next time
         fetch(request).then(networkResponse => {
           if (networkResponse && networkResponse.status === 200) {
             caches.open(CACHE_NAME).then(cache => cache.put(request, networkResponse));
@@ -75,7 +89,6 @@ self.addEventListener('fetch', event => {
         return cachedResponse;
       }
 
-      // Not in cache: fetch from network
       return fetch(request).then(response => {
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
@@ -85,11 +98,6 @@ self.addEventListener('fetch', event => {
           cache.put(request, responseToCache);
         });
         return response;
-      }).catch(() => {
-        // Fallback to cached index.html for navigation requests
-        if (request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
       });
     })
   );
