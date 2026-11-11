@@ -243,11 +243,57 @@ export async function loadOrders(uid) {
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// ── Seed ─────────────────────────────────────────────────────
 export async function seedMarketplace() {
   // Database Cleanup: No fake/dummy products or shops are seeded.
   // Marketplace starts completely clean for genuine registered sellers and real products.
   return;
+}
+
+export async function wipeDummyDataFromFirestore() {
+  try {
+    if (!db) return;
+    const dummyOwners = ["demo", "demo@afribay.com"];
+    const dummyShops = ["Lusaka Motors", "Mimi's Closet", "SmartHub Zambia", "Second Lap", "Home Tech ZA", "Naya Collective"];
+    
+    // Purge demo products
+    const prodSnap = await getDocs(collection(db, "products"));
+    const deleteBatch = writeBatch(db);
+    let count = 0;
+    prodSnap.docs.forEach(docSnap => {
+      const data = docSnap.data();
+      if (dummyOwners.includes(data.ownerId) || dummyOwners.includes(data.ownerEmail) || dummyShops.includes(data.shopName)) {
+        deleteBatch.delete(docSnap.ref);
+        count++;
+      }
+    });
+
+    // Purge demo video ads
+    const adsSnap = await getDocs(collection(db, "video_ads"));
+    adsSnap.docs.forEach(docSnap => {
+      const data = docSnap.data();
+      if (dummyOwners.includes(data.createdBy)) {
+        deleteBatch.delete(docSnap.ref);
+        count++;
+      }
+    });
+
+    // Purge demo shops
+    const shopSnap = await getDocs(collection(db, "shops"));
+    shopSnap.docs.forEach(docSnap => {
+      const data = docSnap.data();
+      if (dummyShops.includes(data.shopName) || dummyOwners.includes(data.userId)) {
+        deleteBatch.delete(docSnap.ref);
+        count++;
+      }
+    });
+
+    if (count > 0) {
+      await deleteBatch.commit();
+      console.log(`[AfriBay] Successfully purged ${count} legacy demo documents from Cloud Firestore.`);
+    }
+  } catch (err) {
+    console.warn("[AfriBay] Firestore cleanup notice:", err.message);
+  }
 }
 
 // ── Storage ───────────────────────────────────────────────────

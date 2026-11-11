@@ -599,8 +599,8 @@
         <div class="form-row">
           <label for="shopPayoutPreference">Vendor Payout Preference *</label>
           <select id="shopPayoutPreference">
-            <option value="mobile_money">Send Money (Direct Mobile Money upon Delivery)</option>
-            <option value="cash_collection">Cash Collection on Delivery</option>
+            <option value="mobile_money">Send Money (Mobile Money)</option>
+            <option value="cash_collection">Cash on Delivery</option>
           </select>
         </div>
         <div class="form-row"><label for="shopPhone">Alternative contact phone (optional)</label><input id="shopPhone" type="tel" placeholder="+260 97... or 096..." /></div>
@@ -896,6 +896,7 @@
       loadUserShop,
       saveCart,
       seedMarketplace,
+      wipeDummyDataFromFirestore,
       upsertUserProfile,
       uploadUserMedia,
       assignOrderTransit,
@@ -984,6 +985,7 @@
 
     async function hydrateMarketplace() {
       try {
+        try { await wipeDummyDataFromFirestore(); } catch (_) {}
         const [remoteProducts, remoteAds] = await Promise.all([loadProducts(), loadActiveAds()]);
         if (window.applyRemoteMarketplace) window.applyRemoteMarketplace(remoteProducts, remoteAds);
       } catch (error) {
@@ -993,7 +995,7 @@
     window.afriBayBackend = {
       createOrder, createProduct, createShop, createVideoAd, hydrateMarketplace,
       loadActiveAds, loadCart, loadProducts, loadUserProducts, loadUserShop,
-      saveCart, seedMarketplace, uploadUserMedia,
+      saveCart, seedMarketplace, wipeDummyDataFromFirestore, uploadUserMedia,
       assignOrderTransit, verifyDeliveryAndReleaseEscrow, loadOrders
     };
     hydrateMarketplace();
@@ -1009,6 +1011,35 @@
     let pendingPanel = null;
     let pendingSellerAction = null;
     let pendingCheckout = false;
+
+    // Purge any legacy demo data from localStorage
+    (function cleanupLocalDummyData() {
+      try {
+        const dummyShops = ["Lusaka Motors", "Mimi's Closet", "SmartHub Zambia", "Second Lap", "Home Tech ZA", "Naya Collective"];
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith("afribay_shop_") || k.startsWith("afribay_products_") || k.startsWith("afribay_cart_")) {
+            const val = localStorage.getItem(k);
+            if (val && (val.includes("Toyota Vitz") || val.includes("Mimi's Closet") || val.includes("Lusaka Motors") || val.includes("demo@afribay.com"))) {
+              localStorage.removeItem(k);
+            }
+          }
+        });
+        const allOrders = JSON.parse(localStorage.getItem("afribay_all_orders") || "[]");
+        const cleanOrders = allOrders.filter(o => !dummyShops.some(ds => JSON.stringify(o).includes(ds)));
+        localStorage.setItem("afribay_all_orders", JSON.stringify(cleanOrders));
+      } catch (_) {}
+    })();
+
+    function getApiBase() {
+      if (typeof window !== "undefined" && window.location) {
+        const host = window.location.hostname;
+        if (host === "localhost" || host === "127.0.0.1") {
+          return "http://localhost:5000";
+        }
+      }
+      return "";
+    }
+
     let users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
 
     /**
@@ -1694,11 +1725,14 @@
 
         // Also sync with backend server
         try {
-          fetch("http://localhost:5000/api/shops", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...shopPayload, userId: currentUser.firebaseUid || currentUser.email })
-          }).catch(() => {});
+          const apiBase = getApiBase();
+          if (apiBase || window.location.protocol.startsWith("http")) {
+            fetch(`${apiBase}/api/shops`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ...shopPayload, userId: currentUser.firebaseUid || currentUser.email })
+            }).catch(() => {});
+          }
         } catch (_) {}
 
         const userIndex = users.findIndex(user => user.email === currentUser.email);
@@ -1917,11 +1951,14 @@
 
         // Also notify backend server
         try {
-          fetch("http://localhost:5000/api/vendor/subscription/activate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ shopId: currentShop.id, shopName: currentShop.shopName, tier, txRef, paymentLine })
-          }).catch(() => {});
+          const apiBase = getApiBase();
+          if (apiBase || window.location.protocol.startsWith("http")) {
+            fetch(`${apiBase}/api/vendor/subscription/activate`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ shopId: currentShop.id, shopName: currentShop.shopName, tier, txRef, paymentLine })
+            }).catch(() => {});
+          }
         } catch (_) {}
 
         closeModal("subscriptionModal");
@@ -2025,11 +2062,14 @@
 
         // Also sync with backend server API
         try {
-          fetch("http://localhost:5000/api/products", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(fullPayload)
-          }).catch(() => {});
+          const apiBase = getApiBase();
+          if (apiBase || window.location.protocol.startsWith("http")) {
+            fetch(`${apiBase}/api/products`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(fullPayload)
+            }).catch(() => {});
+          }
         } catch (_) {}
 
         ownProducts.unshift(product);
@@ -2780,13 +2820,16 @@
 
         // Call backend server transit endpoint
         try {
-          fetch("http://localhost:5000/api/escrow/assign-transit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ trackingId, riderName: "AfriBay Express Courier" })
-          }).then(r => r.json()).then(res => {
-            console.log("[AfriBay Transit API] Response:", res);
-          }).catch(e => console.warn("Transit API fetch note:", e));
+          const apiBase = getApiBase();
+          if (apiBase || window.location.protocol.startsWith("http")) {
+            fetch(`${apiBase}/api/escrow/assign-transit`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ trackingId, riderName: "AfriBay Express Courier" })
+            }).then(r => r.json()).then(res => {
+              console.log("[AfriBay Transit API] Response:", res);
+            }).catch(e => console.warn("Transit API fetch note:", e));
+          }
         } catch (_) {}
 
         renderOrdersView();
@@ -2848,18 +2891,21 @@
 
         // Call backend server verification endpoint
         try {
-          fetch("http://localhost:5000/api/escrow/verify-delivery", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              trackingId,
-              deliveryPin: cleanPin,
-              verifiedBy,
-              orderData: order
-            })
-          }).then(r => r.json()).then(res => {
-            console.log("[AfriBay Escrow Verification API]:", res);
-          }).catch(e => console.warn("Escrow release API note:", e));
+          const apiBase = getApiBase();
+          if (apiBase || window.location.protocol.startsWith("http")) {
+            fetch(`${apiBase}/api/escrow/verify-delivery`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                trackingId,
+                deliveryPin: cleanPin,
+                verifiedBy,
+                orderData: order
+              })
+            }).then(r => r.json()).then(res => {
+              console.log("[AfriBay Escrow Verification API]:", res);
+            }).catch(e => console.warn("Escrow release API note:", e));
+          }
         } catch (_) {}
 
         renderOrdersView();
@@ -3112,13 +3158,16 @@
 
           // Send email alert to admin notification email
           try {
-            fetch("http://localhost:5000/api/orders/notify", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(order)
-            }).then(r => r.json()).then(res => {
-              console.log("[AfriBay Email Alert] Notification response:", res);
-            }).catch(e => console.warn("Email alert fetch note:", e));
+            const apiBase = getApiBase();
+            if (apiBase || window.location.protocol.startsWith("http")) {
+              fetch(`${apiBase}/api/orders/notify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(order)
+              }).then(r => r.json()).then(res => {
+                console.log("[AfriBay Email Alert] Notification response:", res);
+              }).catch(e => console.warn("Email alert fetch note:", e));
+            }
           } catch (_) {}
 
           try {
