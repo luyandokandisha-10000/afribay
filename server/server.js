@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import { getFlutterwaveOAuthToken, flutterwaveRequest } from './flutterwave.js';
-import { sendOrderNotificationEmail, sendEscrowReleaseNotificationEmail } from './app.js';
+import { sendOrderNotificationEmail, sendEscrowReleaseNotificationEmail, checkVendorSubscription } from './app.js';
 import { router as webhookRouter, processPawaPayWebhook } from './routes/webhooks.js';
 import { router as checkoutRouter, processPawaPayCheckout } from './routes/checkout.js';
 
@@ -12,8 +12,10 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// In-memory Escrow Order Registry
+// In-memory Registries
 const escrowOrders = new Map();
+const shops = new Map();
+const productsMap = new Map();
 
 // PawaPay Checkout Deposit Initiation Handler
 if (checkoutRouter) {
@@ -298,6 +300,205 @@ app.get(['/api/escrow/order', '/api/escrow/order/:trackingId', '/api/escrow/stat
   res.json({
     success: true,
     order: escrowOrders.get(trackingId)
+  });
+});
+
+/**
+ * Shop Management Endpoints
+ */
+app.post('/api/shops', (req, res) => {
+  try {
+    const { shopName, mtnPhone, airtelPhone, payoutPreference, contactPhone, description, physicalAddress, shop_lat, shop_lng, userId } = req.body;
+
+    if (!shopName || !shopName.trim()) {
+      return res.status(400).json({ success: false, error: 'Shop name is required' });
+    }
+    if (!mtnPhone || !mtnPhone.trim()) {
+      return res.status(400).json({ success: false, error: 'MTN Mobile Money phone number is required' });
+    }
+    if (!airtelPhone || !airtelPhone.trim()) {
+      return res.status(400).json({ success: false, error: 'Airtel Mobile Money phone number is required' });
+    }
+
+    const shopId = req.body.shopId || req.body.id || `shop_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const now = Date.now();
+    const trialEndsAt = req.body.trialEndsAt ? Number(req.body.trialEndsAt) : (now + (5 * 24 * 60 * 60 * 1000));
+
+    const shopRecord = {
+      id: shopId,
+      shopId,
+      userId: userId || 'anonymous_vendor',
+      shopName: shopName.trim(),
+      mtnPhone: mtnPhone.trim(),
+      airtelPhone: airtelPhone.trim(),
+      contactPhone: contactPhone ? contactPhone.trim() : mtnPhone.trim(),
+      payoutPreference: payoutPreference === 'cash_collection' ? 'cash_collection' : 'mobile_money',
+      description: description ? description.trim() : '',
+      physicalAddress: physicalAddress ? physicalAddress.trim() : '',
+      shop_lat: shop_lat != null ? Number(shop_lat) : null,
+      shop_lng: shop_lng != null ? Number(shop_lng) : null,
+      createdAt: new Date().toISOString(),
+      trialEndsAt: new Date(trialEndsAt).toISOString(),
+      subscriptionStatus: 'trial',
+      subscriptionTier: null,
+      subscriptionEndsAt: null,
+      status: 'active'
+    };
+
+    shops.set(shopId, shopRecord);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Shop successfully created with 5-day free trial',
+      id: shopId,
+      shopId,
+      ...shopRecord,
+      shop: shopRecord,
+      subscription: checkVendorSubscription(shopRecord),
+      ...checkVendorSubscription(shopRecord)
+    });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/shops', (req, res) => {
+  const { shopId, userId } = req.query;
+  if (shopId && shops.has(shopId)) {
+    const shop = shops.get(shopId);
+    return res.json({ success: true, shop, subscription: checkVendorSubscription(shop) });
+  }
+  if (userId) {
+    const userShop = Array.from(shops.values()).find(s => s.userId === userId);
+    if (userShop) {
+      return res.json({ success: true, shop: userShop, subscription: checkVendorSubscription(userShop) });
+    }
+  }
+  const all = Array.from(shops.values());
+  return res.json({ success: true, count: all.length, shops: all });
+});
+
+/**
+ * Vendor Subscription Status & Activation Endpoints
+ */
+app.get('/api/vendor/subscription/status', (req, res) => {
+  const { shopId } = req.query;
+  const shop = shopId ? shops.get(shopId) : Array.from(shops.values())[0];
+  if (!shop) {
+    return res.status(404).json({ success: false, error: 'Shop not found' });
+  }
+  return res.json({
+    success: true,
+    shopId: shop.id,
+    shopName: shop.shopName,
+    subscription: checkVendorSubscription(shop),
+    ...checkVendorSubscription(shop)
+  });
+});
+
+app.post('/api/vendor/subscription/activate', (req, res) => {
+  try {
+    const { shopId, tier, txRef, paymentLine } = req.body;
+    const shop = shops.get(shopId) || Array.from(shops.values()).find(s => s.id === shopId || s.shopName === req.body.shopName);
+    if (!shop) {
+      return res.status(404).json({ success: false, error: 'Shop not found to activate subscription' });
+    }
+
+    const now = Date.now();
+    const days = (tier === 'monthly') ? 30 : 7;
+    const currentEndsAt = (shop.subscriptionEndsAt && new Date(shop.subscriptionEndsAt).getTime() > now)
+      ? new Date(shop.subscriptionEndsAt).getTime()
+      : now;
+    const newEndsAt = currentEndsAt + (days * 24 * 60 * 60 * 1000);
+
+    shop.subscriptionStatus = 'active';
+    shop.subscriptionTier = (tier === 'monthly') ? 'monthly' : 'weekly';
+    shop.subscriptionEndsAt = new Date(newEndsAt).toISOString();
+    shop.lastPaymentTxRef = txRef || `SUB-${Date.now().toString(36).toUpperCase()}`;
+    shop.paymentDestination = paymentLine || 'MTN: 0760312951 / Airtel: 0778085670';
+    shop.updatedAt = new Date().toISOString();
+
+    shops.set(shop.id, shop);
+
+    return res.json({
+      success: true,
+      message: `Subscription successfully activated for ${days} days (${shop.subscriptionTier})`,
+      shop,
+      subscription: checkVendorSubscription(shop),
+      ...checkVendorSubscription(shop)
+    });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+/**
+ * Product Listings Endpoints (With Subscription Check Middleware)
+ */
+app.post('/api/products', (req, res) => {
+  try {
+    const { title, priceZMW, category, condition, shopId, description, imageUrls } = req.body;
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({ success: false, error: 'Product title is required' });
+    }
+    if (!priceZMW || Number(priceZMW) <= 0) {
+      return res.status(400).json({ success: false, error: 'Valid product price is required' });
+    }
+
+    // Middleware: Check vendor subscription
+    const shop = shopId ? shops.get(shopId) : null;
+    if (shop) {
+      const subCheck = checkVendorSubscription(shop);
+      if (!subCheck.canList) {
+        return res.status(403).json({
+          success: false,
+          locked: true,
+          error: 'Vendor 5-day free trial has expired. Active subscription required to list products.',
+          subscriptionCheck: subCheck,
+          paymentLines: { mtn: '0760312951', airtel: '0778085670' },
+          pricingTiers: { weekly: 'K20/week', monthly: 'K100/month' },
+          instructions: 'Please send K20 (weekly) or K100 (monthly) to official accounts: MTN: 0760312951 or Airtel: 0778085670.'
+        });
+      }
+    }
+
+    const productId = req.body.productId || req.body.id || `prod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const productRecord = {
+      id: productId,
+      productId,
+      title: title.trim(),
+      description: description ? description.trim() : '',
+      priceZMW: Number(priceZMW),
+      category: category || 'clothes',
+      condition: condition || 'used_good',
+      shopId: shopId || (shop ? shop.id : ''),
+      shopName: shop ? shop.shopName : (req.body.shopName || 'AfriBay Seller'),
+      mtnPhone: shop ? shop.mtnPhone : (req.body.mtnPhone || ''),
+      airtelPhone: shop ? shop.airtelPhone : (req.body.airtelPhone || ''),
+      payoutPreference: shop ? shop.payoutPreference : (req.body.payoutPreference || 'mobile_money'),
+      imageUrls: Array.isArray(imageUrls) ? imageUrls : [],
+      createdAt: new Date().toISOString()
+    };
+
+    productsMap.set(productId, productRecord);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Product listing published cleanly',
+      product: productRecord
+    });
+  } catch (err) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/products', (req, res) => {
+  const allProducts = Array.from(productsMap.values());
+  return res.json({
+    success: true,
+    count: allProducts.length,
+    products: allProducts
   });
 });
 

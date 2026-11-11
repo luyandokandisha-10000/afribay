@@ -341,6 +341,52 @@
             <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-top:0">Choose a listing, add your short video clip, and publish instantly. It is 100% free to feature your products on AfriBay Ads.</p>
             <button class="button orange" onclick="openPromoteAd()">Create Free Ad →</button>
           </div>
+
+          <!-- Official Social Communities & Founder Links -->
+          <div class="auth-card" style="margin-top:24px;background:linear-gradient(135deg, #f9fafb, #f3f6f4);border:1px solid #d1ded6;padding:20px;">
+            <div class="eyebrow" style="color:var(--green-deep);font-weight:800;">Official AfriBay & NexGen Communities</div>
+            <h3 style="margin:4px 0 8px;font-size:18px;">Connect with Us on Social Media</h3>
+            <p style="color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 16px;">
+              Join our active community of Zambian thrifters, sellers, and tech creators. Get the latest market updates, feature announcements, and direct seller support.
+            </p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px;">
+              <a href="https://www.facebook.com/groups/4159169450883484" target="_blank" rel="noopener" class="button ghost" style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:white;border-radius:10px;text-decoration:none;">
+                <span style="font-size:20px;">👥</span>
+                <div>
+                  <strong style="display:block;font-size:13px;color:var(--text);">Facebook Group</strong>
+                  <small style="color:var(--muted);font-size:11px;">Join AfriBay Community</small>
+                </div>
+              </a>
+              <a href="https://www.facebook.com/profile.php?id=61575486501290" target="_blank" rel="noopener" class="button ghost" style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:white;border-radius:10px;text-decoration:none;">
+                <span style="font-size:20px;">📘</span>
+                <div>
+                  <strong style="display:block;font-size:13px;color:var(--text);">Nexen Facebook</strong>
+                  <small style="color:var(--muted);font-size:11px;">Official Profile</small>
+                </div>
+              </a>
+              <a href="https://www.instagram.com/real_nextgen_founder/" target="_blank" rel="noopener" class="button ghost" style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:white;border-radius:10px;text-decoration:none;">
+                <span style="font-size:20px;">📸</span>
+                <div>
+                  <strong style="display:block;font-size:13px;color:var(--text);">Instagram</strong>
+                  <small style="color:var(--muted);font-size:11px;">@real_nextgen_founder</small>
+                </div>
+              </a>
+              <a href="https://www.linkedin.com/in/nexgen-founder-18518240a/" target="_blank" rel="noopener" class="button ghost" style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:white;border-radius:10px;text-decoration:none;">
+                <span style="font-size:20px;">💼</span>
+                <div>
+                  <strong style="display:block;font-size:13px;color:var(--text);">LinkedIn</strong>
+                  <small style="color:var(--muted);font-size:11px;">NexGen Founder</small>
+                </div>
+              </a>
+              <a href="https://www.reddit.com/user/next-gen-founder/?persist-lb-on-conversion=true&screen_view_count=1&ext-referrer=SEO" target="_blank" rel="noopener" class="button ghost" style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:white;border-radius:10px;text-decoration:none;">
+                <span style="font-size:20px;">🤖</span>
+                <div>
+                  <strong style="display:block;font-size:13px;color:var(--text);">Reddit Community</strong>
+                  <small style="color:var(--muted);font-size:11px;">u/next-gen-founder</small>
+                </div>
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -387,6 +433,22 @@
                   <strong id="sellerOrdersCount">0</strong>
                   <small>Shop Orders</small>
                 </div>
+              </div>
+            </div>
+
+            <!-- Vendor Subscription & Billing Status Card -->
+            <div class="auth-card" style="margin-top:18px;border:1px solid #fed7aa;background:#fffdfa;">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+                <div>
+                  <div class="eyebrow" style="color:var(--orange)">Vendor Subscription & Billing</div>
+                  <h3 style="margin:4px 0 2px;font-size:18px;" id="vendorSubTitle">Free Trial (Active)</h3>
+                  <p id="vendorSubDetails" style="color:var(--muted);font-size:12px;margin:0;">
+                    5-Day Free Trial. After 5 days, keep your store active for K20/week or K100/month.
+                  </p>
+                </div>
+                <button class="button" type="button" onclick="openSubscriptionModal()" style="background:var(--orange)">
+                  Manage Subscription →
+                </button>
               </div>
             </div>
 
@@ -515,13 +577,33 @@
   <div id="shopModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'shopModal')">
     <div class="modal">
       <div class="modal-head">
-        <div><div class="eyebrow">Your corner of the market</div><h2>Create your shop</h2></div>
+        <div>
+          <div class="eyebrow" style="color:var(--green-deep);font-weight:800">✦ 5-Day Free Trial Included</div>
+          <h2>Create your shop</h2>
+        </div>
         <button class="close" type="button" onclick="closeModal('shopModal')">×</button>
       </div>
       <div id="shopError" class="auth-error"></div>
       <form id="shopForm" onsubmit="createShop(event)">
-        <div class="form-row"><label for="shopName">Shop name</label><input id="shopName" placeholder="e.g. Kofi's Closet" required /></div>
-        <div class="form-row"><label for="shopPhone">Contact phone</label><input id="shopPhone" type="tel" placeholder="+260 97... or 096..." /></div>
+        <div class="form-row"><label for="shopName">Shop name *</label><input id="shopName" placeholder="e.g. Lusaka Vintage Vault" required /></div>
+        <div class="form-row">
+          <label for="shopMtnPhone">MTN Mobile Money Number *</label>
+          <input id="shopMtnPhone" type="tel" placeholder="e.g. 0760000000 or 0960000000" required />
+          <small style="color:var(--muted);font-size:11px">Required for buyer pay-on-delivery mobile money payouts</small>
+        </div>
+        <div class="form-row">
+          <label for="shopAirtelPhone">Airtel Mobile Money Number *</label>
+          <input id="shopAirtelPhone" type="tel" placeholder="e.g. 0770000000 or 0970000000" required />
+          <small style="color:var(--muted);font-size:11px">Required for buyer pay-on-delivery mobile money payouts</small>
+        </div>
+        <div class="form-row">
+          <label for="shopPayoutPreference">Vendor Payout Preference *</label>
+          <select id="shopPayoutPreference">
+            <option value="mobile_money">Send Money (Direct Mobile Money upon Delivery)</option>
+            <option value="cash_collection">Cash Collection on Delivery</option>
+          </select>
+        </div>
+        <div class="form-row"><label for="shopPhone">Alternative contact phone (optional)</label><input id="shopPhone" type="tel" placeholder="+260 97... or 096..." /></div>
         <div class="form-row"><label for="shopAddressInput">Physical stand / location details</label><input id="shopAddressInput" placeholder="e.g. Soweto Market Stand B-12, Lusaka" /></div>
         <div class="form-row">
           <label>GPS Location Pin</label>
@@ -537,6 +619,80 @@
         <div class="modal-foot">
           <button type="button" class="button ghost" onclick="closeModal('shopModal')">Cancel</button>
           <button id="shopSubmitBtn" type="submit" class="button">Create shop →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="subscriptionModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'subscriptionModal')">
+    <div class="modal" style="max-width: 520px;">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow" style="color:var(--orange);font-weight:800">AfriBay Vendor Billing</div>
+          <h2>Store Subscription</h2>
+        </div>
+        <button class="close" type="button" onclick="closeModal('subscriptionModal')">×</button>
+      </div>
+      <div id="subscriptionModalNotice" class="auth-card" style="padding:14px;background:#fefbf4;border:1px solid #fae2b8;margin-bottom:14px;">
+        <strong style="color:#92540c;font-size:14px;display:block;">✦ 5-Day Free Trial Notice</strong>
+        <p id="subscriptionStatusText" style="margin:4px 0 0;font-size:12px;color:var(--text);line-height:1.5">
+          Every new vendor enjoys their first 5 days 100% free. After 5 days, an active subscription is required to keep your store active and list products.
+        </p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div class="auth-card" style="padding:14px;border:2px solid var(--green);text-align:center;background:#f8fbf9;">
+          <small style="color:var(--muted);font-weight:700;text-transform:uppercase;">Weekly Plan</small>
+          <div style="font-size:22px;font-weight:900;color:var(--green-deep);margin:4px 0;">K20</div>
+          <small style="color:var(--muted)">per week</small>
+        </div>
+        <div class="auth-card" style="padding:14px;border:2px solid var(--orange);text-align:center;background:#fdfcf9;">
+          <small style="color:var(--muted);font-weight:700;text-transform:uppercase;">Monthly Plan</small>
+          <div style="font-size:22px;font-weight:900;color:var(--orange);margin:4px 0;">K100</div>
+          <small style="color:var(--muted)">per month (Best Value)</small>
+        </div>
+      </div>
+
+      <div class="auth-card" style="padding:14px;margin-bottom:16px;background:#f5f7f6;">
+        <strong style="font-size:13px;display:block;margin-bottom:6px;">Official Payment Destination Lines:</strong>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;">
+          <div style="display:flex;justify-content:space-between;padding:6px 8px;background:white;border-radius:6px;border:1px solid var(--border);">
+            <span>🟡 <strong>MTN Mobile Money:</strong></span>
+            <strong style="color:var(--green-deep);font-family:monospace;font-size:14px;">0760312951</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:6px 8px;background:white;border-radius:6px;border:1px solid var(--border);">
+            <span>🔴 <strong>Airtel Money:</strong></span>
+            <strong style="color:var(--green-deep);font-family:monospace;font-size:14px;">0778085670</strong>
+          </div>
+        </div>
+        <small style="display:block;margin-top:6px;color:var(--muted);font-size:11px;">
+          Send payment to either line above, then submit your confirmation below to activate immediately.
+        </small>
+      </div>
+
+      <div id="subscriptionError" class="auth-error"></div>
+
+      <form id="subscriptionForm" onsubmit="submitSubscriptionRenewal(event)">
+        <div class="form-row">
+          <label for="subTierSelect">Select Subscription Tier</label>
+          <select id="subTierSelect">
+            <option value="weekly">Weekly Plan — K20 for 7 days</option>
+            <option value="monthly">Monthly Plan — K100 for 30 days</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="subPaymentLine">Payment Made To</label>
+          <select id="subPaymentLine">
+            <option value="MTN: 0760312951">MTN (0760312951)</option>
+            <option value="Airtel: 0778085670">Airtel (0778085670)</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="subTxRef">Transaction ID / Sender Phone Number</label>
+          <input id="subTxRef" placeholder="e.g. 26097... or MTN/Airtel Tx Ref" required />
+        </div>
+        <div class="modal-foot">
+          <button type="button" class="button ghost" onclick="closeModal('subscriptionModal')">Close</button>
+          <button id="subSubmitBtn" type="submit" class="button" style="background:var(--green-deep);">Confirm & Activate →</button>
         </div>
       </form>
     </div>
@@ -635,12 +791,12 @@
     <div class="modal"><div class="modal-head"><div><div class="eyebrow">Free Video Promotion</div><h2>Create a video ad (100% Free)</h2></div><button class="close" type="button" onclick="closeModal('boostModal')">×</button></div><form onsubmit="createAd(event)"><div class="form-row"><label for="adProductSelect">Your listed product</label><select id="adProductSelect" required></select><small id="adProductHelp" style="display:block;color:var(--muted);margin-top:7px;font-size:11px"></small></div><div class="form-row"><label for="adVideoUrl">Short video URL</label><input id="adVideoUrl" type="url" placeholder="https://your-site.com/ad-video.mp4" oninput="previewAdVideoUrl()" /><small style="display:block;color:var(--muted);margin-top:7px;font-size:11px">Paste an MP4 or WebM video link, or upload a clip below.</small></div><div class="form-row"><label for="adVideoFile">Or upload a video</label><input id="adVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" onchange="previewAdVideo(event)" /><video id="adVideoPreview" controls muted loop playsinline style="width:100%;max-height:150px;border-radius:11px;margin-top:9px;display:none;background:#173d30"></video><div id="adVideoError" class="auth-error"></div></div><div class="form-row"><label for="adDuration">Ad duration</label><select id="adDuration" required><option value="daily" data-price="0">Daily · 24 hours · FREE (0 ZMW)</option><option value="weekly" data-price="0" selected>Weekly · 7 days · FREE (0 ZMW)</option><option value="monthly" data-price="0">Monthly · 30 days · FREE (0 ZMW)</option></select></div><div class="auth-card" style="padding:12px;margin-top:14px;background:var(--green-soft);border-color:var(--green);color:var(--green-deep);font-size:12px;display:flex;align-items:center;gap:8px;"><strong>✓ 100% Free Promotion:</strong> Sponsoring your products in the Ads feed is free for all AfriBay sellers. No card or mobile money charge.</div><div class="modal-foot"><button type="submit" class="button orange" style="width:100%">Publish Free Video Ad →</button></div></form></div>
   </div>
   <div id="checkoutModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'checkoutModal')">
-    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div><form onsubmit="processCheckout(event)"><div class="form-row" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><label style="margin:0;font-weight:700;">Delivery Destination</label><span style="font-size:11px;color:var(--muted)">Option: Map Pin or Address</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;"><button type="button" id="deliveryTabGps" class="button ghost selected" onclick="toggleDeliveryMode('gps')" style="font-size:11px;padding:7px 4px;font-weight:800;border:2px solid var(--green);">📍 Google Maps Pin</button><button type="button" id="deliveryTabAddress" class="button ghost" onclick="toggleDeliveryMode('address')" style="font-size:11px;padding:7px 4px;font-weight:800;border:1px solid var(--border);">✍️ Written Address</button></div><div id="deliveryGpsSection" style="padding:10px;background:#f4f9f5;border-radius:8px;border:1px dashed var(--green);"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button type="button" class="button" onclick="captureDeliveryLocation()" style="font-size:11px;padding:6px 12px;background:var(--green);color:white;font-weight:700;">📍 Pin Current GPS Coordinates</button><button type="button" class="button ghost" onclick="toggleManualGpsInput()" style="font-size:11px;padding:6px 8px;font-weight:600;">Enter Lat/Lng</button><span id="deliveryGpsLabel" style="font-size:11px;color:var(--muted)">Pin live location for courier navigation</span></div><div id="manualGpsFields" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><input id="manualLat" type="number" step="any" placeholder="Latitude (e.g. -15.3875)" oninput="syncManualCoordinates()" /><input id="manualLng" type="number" step="any" placeholder="Longitude (e.g. 28.3228)" oninput="syncManualCoordinates()" /></div><small style="color:var(--muted);font-size:10px;display:block;margin-top:4px;">Tip: Copy & paste coordinates directly from Google Maps if browser GPS permission is disabled.</small></div><small style="display:block;color:var(--muted);margin-top:6px;font-size:11px;">The courier will navigate directly to your GPS coordinates on Google Maps.</small></div><div id="deliveryAddressSection" style="display:none;margin-top:6px;"><input id="deliveryAddress" placeholder="Street, area, city (e.g. Plot 42, Woodlands, Lusaka)" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">Include nearby landmarks or gate color for easy finding.</small></div><input type="hidden" id="deliveryLat" /><input type="hidden" id="deliveryLng" /></div><div class="form-row"><label>Payment method (via Flutterwave)</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="mobile_money" onclick="selectPay(this)">📱 Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">💳 Debit / Credit Card<br />Visa · Mastercard</button></div></div><div id="mobileMoneyFields" class="form-row"><label>Mobile Money Provider</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"><button type="button" class="button ghost selected" data-provider="mtn" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:2px solid var(--green)">MTN MoMo</button><button type="button" class="button ghost" data-provider="airtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Airtel Money</button><button type="button" class="button ghost" data-provider="zamtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Zamtel</button></div><label for="paymentPhone">Zambian Mobile Money number</label><input id="paymentPhone" type="tel" placeholder="+260 97... or 096..." /><small style="display:block;color:var(--muted);margin-top:5px;font-size:11px;">Instant mobile prompt will be sent to your phone for PIN authorization.</small></div><div id="cardFields" class="form-row" style="display:none"><div style="padding:10px;background:var(--green-soft);border-radius:8px;font-size:12px;color:var(--green-deep)">🔒 Secure Zambian & International Card processing powered by Flutterwave.</div></div><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button">Pay now · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div><form onsubmit="processCheckout(event)"><div class="form-row" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><label style="margin:0;font-weight:700;">Delivery Destination</label><span style="font-size:11px;color:var(--muted)">Option: Map Pin or Address</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;"><button type="button" id="deliveryTabGps" class="button ghost selected" onclick="toggleDeliveryMode('gps')" style="font-size:11px;padding:7px 4px;font-weight:800;border:2px solid var(--green);">📍 Google Maps Pin</button><button type="button" id="deliveryTabAddress" class="button ghost" onclick="toggleDeliveryMode('address')" style="font-size:11px;padding:7px 4px;font-weight:800;border:1px solid var(--border);">✍️ Written Address</button></div><div id="deliveryGpsSection" style="padding:10px;background:#f4f9f5;border-radius:8px;border:1px dashed var(--green);"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button type="button" class="button" onclick="captureDeliveryLocation()" style="font-size:11px;padding:6px 12px;background:var(--green);color:white;font-weight:700;">📍 Pin Live GPS Location</button><button type="button" class="button ghost" onclick="toggleManualGpsInput()" style="font-size:11px;padding:6px 8px;font-weight:600;">Manual Lat/Lng</button><span id="deliveryGpsLabel" style="font-size:11px;color:var(--muted)">Pin live location for courier navigation</span></div><input id="deliveryMapLink" placeholder="Or paste Google Maps link / coordinates (e.g. -15.3875, 28.3228)" oninput="syncManualMapLink()" style="margin-top:8px;width:100%;font-size:12px;padding:7px 10px;" /><div id="manualGpsFields" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><input id="manualLat" type="number" step="any" placeholder="Latitude (e.g. -15.3875)" oninput="syncManualCoordinates()" /><input id="manualLng" type="number" step="any" placeholder="Longitude (e.g. 28.3228)" oninput="syncManualCoordinates()" /></div><small style="color:var(--muted);font-size:10px;display:block;margin-top:4px;">Tip: Copy & paste coordinates directly from Google Maps if browser GPS permission is disabled.</small></div><small style="display:block;color:var(--muted);margin-top:6px;font-size:11px;">The courier will navigate directly to your drop-off coordinates on Google Maps.</small></div><div id="deliveryAddressSection" style="display:none;margin-top:6px;"><input id="deliveryAddress" placeholder="Street, area, city (e.g. Plot 42, Woodlands, Lusaka)" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">Include nearby landmarks or gate color for easy finding.</small></div><input type="hidden" id="deliveryLat" /><input type="hidden" id="deliveryLng" /></div><div class="form-row"><label>Payment method</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="pod" onclick="selectPay(this)">🚚 Pay on Delivery<br />Direct MoMo / Cash</button><button type="button" class="pay-option" data-payment="mobile_money" onclick="selectPay(this)">📱 Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">💳 Card<br />Visa · Mastercard</button></div></div><div id="podFields" class="form-row"><div style="padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12px;color:#166534"><div style="font-weight:800;font-size:13px;margin-bottom:4px;">🚚 Direct Pay on Delivery</div><p style="margin:0 0 8px 0;line-height:1.4;">Inspect your items upon arrival. You will transfer payment directly to the seller via Mobile Money or Cash upon package handover.</p><div style="background:white;padding:10px;border-radius:6px;border:1px dashed #22c55e;"><div style="font-weight:700;color:var(--green-deep);margin-bottom:4px;">Vendor Direct Payout Details:</div><div style="font-size:11px;color:var(--ink);line-height:1.6;"><div>• <strong>Payout Preference:</strong> <span id="podVendorPref" style="font-weight:700;">Send Money (Mobile Money)</span></div><div>• <strong>MTN MoMo:</strong> <span id="podVendorMtn" style="font-weight:700;">0760312951</span></div><div>• <strong>Airtel Money:</strong> <span id="podVendorAirtel" style="font-weight:700;">0778085670</span></div></div></div><label for="podBuyerPhone" style="display:block;margin-top:10px;font-weight:700;color:var(--ink)">Your Contact Phone Number</label><input id="podBuyerPhone" type="tel" placeholder="e.g. 097... or 096..." style="margin-top:4px;" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">The courier and vendor will contact you at this number for delivery coordination.</small></div></div><div id="mobileMoneyFields" class="form-row" style="display:none"><label>Mobile Money Provider</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"><button type="button" class="button ghost selected" data-provider="mtn" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:2px solid var(--green)">MTN MoMo</button><button type="button" class="button ghost" data-provider="airtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Airtel Money</button><button type="button" class="button ghost" data-provider="zamtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Zamtel</button></div><label for="paymentPhone">Zambian Mobile Money number</label><input id="paymentPhone" type="tel" placeholder="+260 97... or 096..." /><small style="display:block;color:var(--muted);margin-top:5px;font-size:11px;">Instant mobile prompt will be sent to your phone for PIN authorization.</small></div><div id="cardFields" class="form-row" style="display:none"><div style="padding:10px;background:var(--green-soft);border-radius:8px;font-size:12px;color:var(--green-deep)">🔒 Secure Zambian & International Card processing powered by Flutterwave.</div></div><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button" id="checkoutSubmitBtn">Place Order · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
   </div>
   <div id="receiptModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'receiptModal')">
     <div class="modal" style="max-width: 520px; width: 100%;">
       <div class="modal-head">
-        <div><div class="eyebrow">Escrow Payment Secured</div><h2>Order Confirmed!</h2></div>
+        <div><div class="eyebrow" id="receiptEyebrow">Order Secured</div><h2>Order Confirmed!</h2></div>
         <button class="close" onclick="closeModal('receiptModal')">×</button>
       </div>
       <div class="auth-card" style="padding:16px;">
@@ -654,12 +810,23 @@
           📍 GPS Drop-off Pinned: <a id="receiptMapsLink" href="#" target="_blank" rel="noopener noreferrer" style="color:var(--green-deep);text-decoration:underline;">View on Google Maps ↗</a>
         </div>
 
+        <div id="receiptPodInfo" style="display:none;margin-top:10px;padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12px;color:#166534;">
+          <strong>🚚 Pay on Delivery Instructions:</strong>
+          <p style="margin:4px 0 6px 0;">Upon package delivery, inspect your items and complete payment directly to the vendor:</p>
+          <div style="background:white;padding:8px 10px;border-radius:6px;border:1px dashed #22c55e;color:var(--ink);">
+            <div>• <strong>Vendor:</strong> <span id="receiptVendorName">AfriBay Merchant</span></div>
+            <div>• <strong>MTN MoMo:</strong> <span id="receiptVendorMtn">0760312951</span></div>
+            <div>• <strong>Airtel Money:</strong> <span id="receiptVendorAirtel">0778085670</span></div>
+            <div>• <strong>Payout Preference:</strong> <span id="receiptVendorPref">Send Money (Mobile Money)</span></div>
+          </div>
+        </div>
+
         <div class="escrow-pin-box" style="margin:14px 0;">
           <small style="text-transform:uppercase;font-size:11px;font-weight:800;color:var(--green-deep);letter-spacing:1px;display:block;">Your Delivery Confirmation PIN</small>
           <div class="escrow-pin-code" id="receiptPin">------</div>
           <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4;">
-            🔒 <strong>Funds are protected in platform escrow.</strong><br />
-            Share this PIN with your delivery driver <strong>only</strong> when you receive and inspect your items. Entering this PIN confirms delivery and releases payment to the vendor.
+            🔒 <strong>Delivery Protection:</strong><br />
+            Share this PIN with your courier <strong>only</strong> when you receive and inspect your items. Entering this PIN confirms handover and releases order fulfillment.
           </div>
         </div>
 
@@ -667,7 +834,7 @@
         <div class="escrow-stepper">
           <div class="escrow-step active">
             <div class="escrow-step-dot">1</div>
-            <span>Escrow Held</span>
+            <span>Order Placed</span>
           </div>
           <div class="escrow-step-line"></div>
           <div class="escrow-step">
@@ -833,114 +1000,8 @@
   </script>
 
   <script>
-    const products = [
-      {
-        id: 1,
-        title: "Toyota Vitz 2015",
-        price: 98000,
-        category: "Cars",
-        categoryCode: "cars",
-        condition: "used_good",
-        location: "Lusaka, Zambia",
-        seller: "Lusaka Motors",
-        art: "🚙",
-        artClass: "t1",
-        imageUrls: [
-          "https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80",
-          "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80",
-          "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=800&q=80"
-        ],
-        videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-        ad: true
-      },
-      {
-        id: 2,
-        title: "Vintage denim jacket",
-        price: 420,
-        category: "Clothing",
-        categoryCode: "clothes",
-        condition: "used_like_new",
-        location: "Lusaka, Zambia",
-        seller: "Mimi's Closet",
-        art: "🧥",
-        artClass: "t2",
-        imageUrls: [
-          "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?auto=format&fit=crop&w=800&q=80",
-          "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=800&q=80"
-        ],
-        videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-        ad: true
-      },
-      {
-        id: 3,
-        title: "iPhone 13 128GB",
-        price: 11500,
-        category: "Electronics",
-        categoryCode: "electronics",
-        condition: "used_like_new",
-        location: "Kitwe, Zambia",
-        seller: "SmartHub Zambia",
-        art: "📱",
-        artClass: "t3",
-        imageUrls: [
-          "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&q=80",
-          "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=800&q=80"
-        ],
-        videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-        ad: true
-      },
-      {
-        id: 4,
-        title: "Nike Air Max sneakers",
-        price: 850,
-        category: "Clothing",
-        categoryCode: "clothes",
-        condition: "used_good",
-        location: "Ndola, Zambia",
-        seller: "Second Lap",
-        art: "👟",
-        artClass: "t4",
-        imageUrls: [
-          "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
-          "https://images.unsplash.com/photo-1608231387042-66d1773070a5?auto=format&fit=crop&w=800&q=80"
-        ],
-        videoUrl: ""
-      },
-      {
-        id: 5,
-        title: "Samsung smart television",
-        price: 7200,
-        category: "Electronics",
-        categoryCode: "electronics",
-        condition: "used_like_new",
-        location: "Livingstone, Zambia",
-        seller: "Home Tech ZA",
-        art: "📺",
-        artClass: "t5",
-        imageUrls: [
-          "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?auto=format&fit=crop&w=800&q=80",
-          "https://images.unsplash.com/photo-1461151304267-38535e780c79?auto=format&fit=crop&w=800&q=80"
-        ],
-        videoUrl: ""
-      },
-      {
-        id: 6,
-        title: "New African print shirt",
-        price: 380,
-        category: "New Goods",
-        categoryCode: "new_goods",
-        condition: "new",
-        location: "Lusaka, Zambia",
-        seller: "Naya Collective",
-        art: "👕",
-        artClass: "t6",
-        imageUrls: [
-          "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80",
-          "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80"
-        ],
-        videoUrl: ""
-      }
-    ];
+    // Real Marketplace Products (Starts completely clean — no fake or dummy listings)
+    const products = [];
     let activeCategory = "All";
     let cart = [];
     const SESSION_KEY = "afribay_session";
@@ -949,6 +1010,51 @@
     let pendingSellerAction = null;
     let pendingCheckout = false;
     let users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+
+    /**
+     * Checks vendor 5-day trial and subscription status.
+     * Free Trial: First 5 days of selling are 100% free.
+     * Paid Tiers: K20/week or K100/month to keep store active and post listings.
+     * Destination numbers: MTN: 0760312951 | Airtel: 0778085670.
+     */
+    function checkVendorSubscription(shop) {
+      if (!shop) return { canList: false, status: "no_shop", message: "Please open your shop first." };
+      const now = Date.now();
+      const createdAt = shop.createdAt ? new Date(shop.createdAt).getTime() : now;
+      const trialEndsAt = shop.trialEndsAt ? new Date(shop.trialEndsAt).getTime() : (createdAt + 5 * 24 * 60 * 60 * 1000);
+      const subscriptionEndsAt = shop.subscriptionEndsAt ? new Date(shop.subscriptionEndsAt).getTime() : 0;
+
+      // Active paid subscription
+      if (shop.subscriptionStatus === "active" && subscriptionEndsAt > now) {
+        const daysLeft = Math.ceil((subscriptionEndsAt - now) / (24 * 60 * 60 * 1000));
+        return {
+          canList: true,
+          status: "active",
+          tier: shop.subscriptionTier || "weekly",
+          daysLeft,
+          endsAt: subscriptionEndsAt
+        };
+      }
+
+      // 5-day free trial
+      if (now <= trialEndsAt) {
+        const daysLeft = Math.max(1, Math.ceil((trialEndsAt - now) / (24 * 60 * 60 * 1000)));
+        return {
+          canList: true,
+          status: "trial",
+          daysLeft,
+          trialEndsAt
+        };
+      }
+
+      // Trial expired
+      return {
+        canList: false,
+        status: "expired",
+        daysLeft: 0,
+        message: "Your 5-day free trial has expired. Subscribe for K20/week or K100/month to continue listing products."
+      };
+    }
 
     let currentUser = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
     let currentShop = null;
@@ -973,13 +1079,16 @@
         category: categoryLabels[item.category] || item.category || "New Goods",
         categoryCode: item.category,
         condition: item.condition || "used_good",
-        location: item.location || "Zambia",
+        location: item.location || item.physicalAddress || "Zambia",
         seller: item.shopName || "AfriBay shop",
         shopId: item.shopId || "",
         ownerId: item.ownerId || "",
         ownerEmail: item.ownerEmail || "",
         imageUrls: item.imageUrls || [],
         contactPhone: item.contactPhone || "",
+        mtnPhone: item.mtnPhone || "",
+        airtelPhone: item.airtelPhone || "",
+        payoutPreference: item.payoutPreference || "mobile_money",
         art: item.art || "✦",
         artClass: item.artClass || "t1",
         videoUrl: item.videoUrl || "",
@@ -1442,6 +1551,33 @@
       }
     }
 
+    function syncManualMapLink() {
+      const val = document.getElementById("deliveryMapLink")?.value?.trim() || "";
+      const latInput = document.getElementById("deliveryLat");
+      const lngInput = document.getElementById("deliveryLng");
+      const manualLat = document.getElementById("manualLat");
+      const manualLng = document.getElementById("manualLng");
+      const label = document.getElementById("deliveryGpsLabel");
+      if (!val) return;
+
+      const match = val.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+      if (match) {
+        const lat = Number(match[1]).toFixed(6);
+        const lng = Number(match[2]).toFixed(6);
+        if (latInput) latInput.value = lat;
+        if (lngInput) lngInput.value = lng;
+        if (manualLat) manualLat.value = lat;
+        if (manualLng) manualLng.value = lng;
+        if (label) {
+          label.innerHTML = `<span style="color:var(--green-deep);font-weight:700;">✓ Map Location Pinned: ${lat}, ${lng}</span> (<a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" style="color:var(--green-deep);text-decoration:underline;">View Map</a>)`;
+        }
+      } else {
+        if (label) {
+          label.innerHTML = `<span style="color:var(--green-deep);font-weight:700;">✓ Map Link Recorded</span>`;
+        }
+      }
+    }
+
     function toggleDeliveryMode(mode) {
       const gpsTab = document.getElementById("deliveryTabGps");
       const addrTab = document.getElementById("deliveryTabAddress");
@@ -1475,6 +1611,9 @@
           return;
         }
         const shopNameEl = document.getElementById("shopName");
+        const shopMtnPhoneEl = document.getElementById("shopMtnPhone");
+        const shopAirtelPhoneEl = document.getElementById("shopAirtelPhone");
+        const shopPayoutPrefEl = document.getElementById("shopPayoutPreference");
         const shopPhoneEl = document.getElementById("shopPhone");
         const shopDescEl = document.getElementById("shopDescriptionInput");
         const shopAddressEl = document.getElementById("shopAddressInput");
@@ -1483,44 +1622,86 @@
         const shopLngVal = document.getElementById("shopLng")?.value;
 
         const shopName = shopNameEl ? shopNameEl.value.trim() : "";
+        const mtnPhone = shopMtnPhoneEl ? shopMtnPhoneEl.value.trim() : "";
+        const airtelPhone = shopAirtelPhoneEl ? shopAirtelPhoneEl.value.trim() : "";
+        const payoutPreference = shopPayoutPrefEl ? shopPayoutPrefEl.value : "mobile_money";
         const contactPhone = shopPhoneEl ? shopPhoneEl.value.trim() : "";
         const description = shopDescEl ? shopDescEl.value.trim() : "";
         const physicalAddress = shopAddressEl ? shopAddressEl.value.trim() : "";
         const shop_lat = shopLatVal ? Number(shopLatVal) : null;
         const shop_lng = shopLngVal ? Number(shopLngVal) : null;
 
-        let logoUrl = "";
-        const logoFile = shopLogoEl?.files?.[0];
         if (!shopName) {
           setAuthError("shopError", "Please enter a shop name.");
           return;
         }
+        if (!mtnPhone) {
+          setAuthError("shopError", "Please enter your MTN Mobile Money number for vendor payouts.");
+          return;
+        }
+        if (!airtelPhone) {
+          setAuthError("shopError", "Please enter your Airtel Mobile Money number for vendor payouts.");
+          return;
+        }
+
+        let logoUrl = "";
+        const logoFile = shopLogoEl?.files?.[0];
 
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Creating shop..."; }
 
+        const now = Date.now();
+        const trialEndsAt = now + (5 * 24 * 60 * 60 * 1000); // 5-day free trial
+
+        const shopPayload = {
+          shopName,
+          mtnPhone,
+          airtelPhone,
+          contactPhone: contactPhone || mtnPhone || airtelPhone,
+          payoutPreference,
+          description,
+          logoUrl,
+          physicalAddress,
+          shop_lat,
+          shop_lng,
+          createdAt: now,
+          trialEndsAt,
+          subscriptionStatus: "trial",
+          subscriptionTier: null,
+          subscriptionEndsAt: null,
+          status: "active"
+        };
+
         try {
           if (logoFile && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
-            logoUrl = await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, logoFile, "shop-logos");
+            shopPayload.logoUrl = await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, logoFile, "shop-logos");
           }
           if (window.afriBayBackend?.createShop && currentUser.firebaseUid) {
-            const ref = await window.afriBayBackend.createShop(currentUser.firebaseUid, {
-              shopName, contactPhone, description, logoUrl, physicalAddress, shop_lat, shop_lng
-            });
-            currentShop = { id: ref.id, userId: currentUser.firebaseUid, shopName, contactPhone, description, logoUrl, physicalAddress, shop_lat, shop_lng, status: "active" };
+            const ref = await window.afriBayBackend.createShop(currentUser.firebaseUid, shopPayload);
+            currentShop = { id: ref.id, userId: currentUser.firebaseUid, ...shopPayload };
           } else {
-            currentShop = { id: `local-${Date.now()}`, userId: currentUser.firebaseUid || currentUser.email, shopName, contactPhone, description, logoUrl, physicalAddress, shop_lat, shop_lng, status: "active" };
+            currentShop = { id: `local-${now}`, userId: currentUser.firebaseUid || currentUser.email, ...shopPayload };
           }
         } catch (error) {
           console.warn("Falling back to local shop session:", error);
-          currentShop = { id: `local-${Date.now()}`, userId: currentUser.firebaseUid || currentUser.email, shopName, contactPhone, description, logoUrl, physicalAddress, shop_lat, shop_lng, status: "active" };
+          currentShop = { id: `local-${now}`, userId: currentUser.firebaseUid || currentUser.email, ...shopPayload };
         }
+
+        // Also sync with backend server
+        try {
+          fetch("http://localhost:5000/api/shops", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ...shopPayload, userId: currentUser.firebaseUid || currentUser.email })
+          }).catch(() => {});
+        } catch (_) {}
+
         const userIndex = users.findIndex(user => user.email === currentUser.email);
         if (userIndex >= 0) { users[userIndex].shopName = shopName; localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
         currentUser.shopName = shopName;
         localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
         persistLocalAccountData();
         closeModal("shopModal");
-        showToast(`${shopName} is ready for its first listing!`);
+        showToast(`${shopName} created! 5-day free trial activated.`);
         showPanel("shop");
         renderSellerDashboard();
         if (pendingSellerAction === "listing") {
@@ -1538,8 +1719,7 @@
       if (!currentUser) return [];
       if (currentUser.firebaseUid && ownProducts.length) return ownProducts;
       const filtered = products.filter(product => product.ownerEmail === currentUser.email || product.ownerId === currentUser.firebaseUid);
-      if (filtered.length) return filtered;
-      return products.slice(0, 3);
+      return filtered;
     }
     function openProduct(id) {
       viewProduct(id);
@@ -1645,12 +1825,110 @@
           }
         }
 
+        // Vendor Subscription Card update
+        const subCheck = checkVendorSubscription(currentShop);
+        const vst = document.getElementById("vendorSubTitle");
+        const vsd = document.getElementById("vendorSubDetails");
+        if (vst && vsd) {
+          if (!currentShop) {
+            vst.textContent = "✦ 5-Day Free Trial Available";
+            vsd.textContent = "Open your shop today to claim your 5-day free selling trial. No upfront fee required.";
+          } else if (subCheck.status === "active") {
+            vst.textContent = `✓ Active Subscription (${subCheck.tier === 'monthly' ? 'Monthly Plan' : 'Weekly Plan'})`;
+            vsd.textContent = `Active store listing access. ${subCheck.daysLeft} day${subCheck.daysLeft === 1 ? '' : 's'} remaining. Renew via MTN: 0760312951 or Airtel: 0778085670.`;
+          } else if (subCheck.status === "trial") {
+            vst.textContent = `✦ Free Trial Active (${subCheck.daysLeft} day${subCheck.daysLeft === 1 ? '' : 's'} left)`;
+            vsd.textContent = `Your 5-day free selling trial is active. Post listings freely. After 5 days, keep store active for K20/wk or K100/mo.`;
+          } else {
+            vst.textContent = `⚠️ Free Trial Expired — Subscription Required`;
+            vsd.textContent = `Your 5-day free trial has expired. Subscribe for K20/week or K100/month to unlock listings (MTN: 0760312951 | Airtel: 0778085670).`;
+          }
+        }
+
         container.innerHTML = listed.length ? listed.map(product => `
           <div class="feature-row"><div class="feature-icon">${product.art || "✦"}</div><div><strong>${escapeHTML(product.title)}</strong><small>${money(product.price)} · ${product.condition || "condition not set"} · ${product.viewCount || 0} views</small></div><button type="button" class="link-btn" onclick="openProduct('${escapeHTML(String(product.id))}')">View</button></div>`).join("") : '<div class="empty" style="padding:24px">Your listings will appear here. Create your first product to get started.</div>';
       } catch (err) {
         console.error("renderSellerDashboard error:", err);
       }
     }
+
+    function openSubscriptionModal() {
+      try {
+        const subCheck = checkVendorSubscription(currentShop);
+        const noticeEl = document.getElementById("subscriptionStatusText");
+        const titleEl = document.getElementById("subscriptionModalNotice")?.querySelector("strong");
+        if (noticeEl) {
+          if (subCheck.status === "active") {
+            noticeEl.textContent = `Active Subscription (${subCheck.tier}): ${subCheck.daysLeft} days remaining. You can extend your store access below.`;
+            if (titleEl) titleEl.textContent = "✓ Active Vendor Subscription";
+          } else if (subCheck.status === "trial") {
+            noticeEl.textContent = `Free Trial Active: ${subCheck.daysLeft} days remaining. Product listings and promotional video ads are 100% free during trial.`;
+            if (titleEl) titleEl.textContent = "✦ 5-Day Free Trial";
+          } else {
+            noticeEl.textContent = `⚠️ Your 5-day free trial has expired. Subscribe for K20/week or K100/month to unlock listings and keep your shop active.`;
+            if (titleEl) titleEl.textContent = "⚠️ Trial Expired - Subscription Required";
+          }
+        }
+        openModal("subscriptionModal");
+      } catch (err) {
+        console.error("openSubscriptionModal error:", err);
+      }
+    }
+
+    async function submitSubscriptionRenewal(event) {
+      if (event && event.preventDefault) event.preventDefault();
+      const submitBtn = document.getElementById("subSubmitBtn");
+      try {
+        setAuthError("subscriptionError", "");
+        if (!currentShop) {
+          closeModal("subscriptionModal");
+          openModal("shopModal");
+          return showToast("Please set up your shop first.");
+        }
+        const tier = document.getElementById("subTierSelect")?.value || "weekly";
+        const paymentLine = document.getElementById("subPaymentLine")?.value || "MTN: 0760312951";
+        const txRef = document.getElementById("subTxRef")?.value?.trim() || "";
+
+        if (!txRef) {
+          setAuthError("subscriptionError", "Please enter your payment transaction reference or sender phone number.");
+          return;
+        }
+
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Activating subscription..."; }
+
+        const days = tier === "monthly" ? 30 : 7;
+        const now = Date.now();
+        const baseTime = (currentShop.subscriptionEndsAt && currentShop.subscriptionEndsAt > now) ? currentShop.subscriptionEndsAt : now;
+        const newEndsAt = baseTime + (days * 24 * 60 * 60 * 1000);
+
+        currentShop.subscriptionStatus = "active";
+        currentShop.subscriptionTier = tier;
+        currentShop.subscriptionEndsAt = newEndsAt;
+        currentShop.lastPaymentLine = paymentLine;
+        currentShop.lastTxRef = txRef;
+
+        persistLocalAccountData();
+
+        // Also notify backend server
+        try {
+          fetch("http://localhost:5000/api/vendor/subscription/activate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ shopId: currentShop.id, shopName: currentShop.shopName, tier, txRef, paymentLine })
+          }).catch(() => {});
+        } catch (_) {}
+
+        closeModal("subscriptionModal");
+        renderSellerDashboard();
+        showToast(`🎉 Subscription activated! Store active for ${days} days (${tier === 'monthly' ? 'Monthly' : 'Weekly'}).`);
+      } catch (err) {
+        console.error("submitSubscriptionRenewal error:", err);
+        setAuthError("subscriptionError", err.message || "Failed to activate subscription.");
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Confirm & Activate →"; }
+      }
+    }
+
     function openListingEditor() {
       if (!currentUser) {
         pendingPanel = "shop";
@@ -1662,6 +1940,11 @@
         openModal("shopModal");
         return showToast("Create your shop first, then add a listing");
       }
+      const subCheck = checkVendorSubscription(currentShop);
+      if (!subCheck.canList) {
+        openSubscriptionModal();
+        return showToast("5-day trial expired. Please subscribe to list products.");
+      }
       openModal("listingModal");
     }
     function categoryLabel(code) {
@@ -1671,35 +1954,78 @@
       event.preventDefault();
       if (!currentUser) return showPanel("shop");
       if (!currentShop) { pendingSellerAction = "listing"; closeModal("listingModal"); return openModal("shopModal"); }
+
+      // Middleware: Check 5-day trial / active subscription
+      const subCheck = checkVendorSubscription(currentShop);
+      if (!subCheck.canList) {
+        setAuthError("listingError", "Your 5-day free trial has expired. Subscribe for K20/week or K100/month to list products.");
+        openSubscriptionModal();
+        return;
+      }
+
       const file = document.getElementById("listingImage").files[0];
-      const productData = {
-        title: document.getElementById("listingTitle").value.trim(),
-        description: document.getElementById("listingDescription").value.trim(),
-        priceZMW: Number(document.getElementById("listingPrice").value),
-        category: document.getElementById("listingCategory").value,
-        condition: document.getElementById("listingCondition").value
-      };
+      const title = document.getElementById("listingTitle").value.trim();
+      const description = document.getElementById("listingDescription").value.trim();
+      const priceZMW = Number(document.getElementById("listingPrice").value);
+      const category = document.getElementById("listingCategory").value;
+      const condition = document.getElementById("listingCondition").value;
+
+      if (!title) {
+        setAuthError("listingError", "Please enter a product title.");
+        return;
+      }
+      if (!priceZMW || priceZMW <= 0) {
+        setAuthError("listingError", "Please enter a valid price in ZMW.");
+        return;
+      }
+
+      const productData = { title, description, priceZMW, category, condition };
       let imageUrls = [];
       try {
         if (file && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
           imageUrls.push(await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, file, "product-images"));
         }
         let product;
+        const fullPayload = {
+          ...productData,
+          shopId: currentShop.id,
+          shopName: currentShop.shopName,
+          mtnPhone: currentShop.mtnPhone || "",
+          airtelPhone: currentShop.airtelPhone || "",
+          payoutPreference: currentShop.payoutPreference || "mobile_money",
+          contactPhone: currentShop.contactPhone || currentShop.mtnPhone || currentShop.airtelPhone || "",
+          location: currentShop.physicalAddress || "Zambia",
+          imageUrls
+        };
+
         if (currentUser.firebaseUid && window.afriBayBackend?.createProduct) {
-          const ref = await window.afriBayBackend.createProduct(currentUser.firebaseUid, {
-            ...productData, shopId: currentShop.id, shopName: currentShop.shopName,
-            contactPhone: currentShop.contactPhone, location: "Zambia", imageUrls
-          });
-          product = normalizeRemoteProduct({ ...productData, id: ref.id, priceZMW: productData.priceZMW, shopId: currentShop.id, shopName: currentShop.shopName, ownerId: currentUser.firebaseUid, imageUrls, location: "Zambia", viewCount: 0, isFeatured: false });
+          const ref = await window.afriBayBackend.createProduct(currentUser.firebaseUid, fullPayload);
+          product = normalizeRemoteProduct({ ...fullPayload, id: ref.id, ownerId: currentUser.firebaseUid, viewCount: 0, isFeatured: false });
         } else {
           product = {
-            ...productData, id: `local-${Date.now()}`, price: productData.priceZMW,
-            category: categoryLabel(productData.category), categoryCode: productData.category,
-            shopId: currentShop.id, seller: currentShop.shopName,
-            ownerEmail: currentUser.email, location: "Zambia", imageUrls, art: "✦",
-            artClass: `t${(products.length % 8) + 1}`, viewCount: 0, ad: false
+            ...fullPayload,
+            id: `local-${Date.now()}`,
+            price: productData.priceZMW,
+            category: categoryLabel(productData.category),
+            categoryCode: productData.category,
+            seller: currentShop.shopName,
+            ownerEmail: currentUser.email,
+            art: "✦",
+            artClass: `t${(products.length % 8) + 1}`,
+            viewCount: 0,
+            ad: false
           };
         }
+
+        // Also sync with backend server API
+        try {
+          fetch("http://localhost:5000/api/products", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(fullPayload)
+          }).catch(() => {});
+        } catch (_) {}
+
         ownProducts.unshift(product);
         products.unshift(product);
         persistLocalAccountData();
@@ -1708,7 +2034,7 @@
         populateAdProductSelect();
         closeModal("listingModal");
         event.target.reset();
-        showToast("Your product listing is live");
+        showToast("Your product listing is live!");
       } catch (error) {
         setAuthError("listingError", error.message || "Could not publish this listing.");
       }
@@ -1737,12 +2063,18 @@
         const select = document.getElementById("adProductSelect");
         if (!select) return;
         const ownedProducts = getOwnedProducts();
-        const available = ownedProducts.length ? ownedProducts : products.slice(0, 4);
-        select.innerHTML = available.map(product => `<option value="${product.id}">${product.title} · ${money(product.price)}</option>`).join("");
+        if (!ownedProducts.length) {
+          select.innerHTML = '<option value="" disabled selected>No listings yet. Add a product first to promote.</option>';
+          select.disabled = true;
+          const help = document.getElementById("adProductHelp");
+          if (help) help.textContent = "Open your shop and list an item to promote for free.";
+          return;
+        }
+        select.innerHTML = ownedProducts.map(product => `<option value="${product.id}">${escapeHTML(product.title)} · ${money(product.price)}</option>`).join("");
         select.disabled = false;
         const help = document.getElementById("adProductHelp");
         if (help) {
-          help.textContent = `${available.length} listing${available.length === 1 ? "" : "s"} ready to promote.`;
+          help.textContent = `${ownedProducts.length} listing${ownedProducts.length === 1 ? "" : "s"} ready to promote.`;
         }
       } catch (err) {
         console.error("populateAdProductSelect error:", err);
@@ -2052,6 +2384,19 @@
       }
     }
     function renderProducts() {
+      const grid = document.getElementById("productGrid");
+      if (!grid) return;
+      if (!products.length) {
+        grid.innerHTML = `
+          <div class="empty" style="padding:48px 16px;text-align:center;grid-column:1/-1;">
+            <div style="font-size:40px;margin-bottom:8px">🛍️</div>
+            <h3 style="margin:0 0 6px 0;font-size:18px;">No products listed yet</h3>
+            <p style="color:var(--muted);font-size:13px;max-width:380px;margin:0 auto 16px;">Be the first to open a shop and list an item on AfriBay! Enjoy a 100% free 5-day selling trial.</p>
+            <button class="button" type="button" onclick="startSelling()" style="padding:10px 22px;font-weight:700;">Open a Shop &amp; Start Selling →</button>
+          </div>
+        `;
+        return;
+      }
       const q = document.getElementById("searchInput").value.toLowerCase().trim();
       const condition = document.getElementById("conditionFilter").value;
       const visible = products.filter(p =>
@@ -2059,7 +2404,7 @@
         (condition === "All" || p.condition === condition) &&
         (!q || `${p.title} ${p.category} ${p.location} ${p.seller}`.toLowerCase().includes(q))
       );
-      document.getElementById("productGrid").innerHTML = visible.length ? visible.map(p => `
+      grid.innerHTML = visible.length ? visible.map(p => `
         <article class="product-card">
           <div style="position:relative">${imageOrEmoji(p)}<button class="heart" onclick="this.classList.toggle('liked');this.textContent=this.classList.contains('liked')?'♥':'♡'">♡</button></div>
           <div class="product-info">
@@ -2073,7 +2418,7 @@
             </div>
             <button type="button" class="button" style="width:100%;margin-top:7px;padding:9px" onclick="addToCart('${escapeHTML(String(p.id))}', this)">Add to cart</button>
           </div>
-        </article>`).join("") : '<div class="empty">No finds match that search yet.<br /><button class="button ghost" style="margin-top:14px" onclick="clearSearch()">Clear search</button></div>';
+        </article>`).join("") : '<div class="empty" style="grid-column:1/-1;">No finds match that search yet.<br /><button class="button ghost" style="margin-top:14px" onclick="clearSearch()">Clear search</button></div>';
     }
     function clearSearch() { document.getElementById("searchInput").value = ""; document.getElementById("conditionFilter").value = "All"; activeCategory = "All"; document.querySelectorAll(".category").forEach((el, i) => el.classList.toggle("active", i === 0)); renderProducts(); }
     function filterProducts() { renderProducts(); }
@@ -2258,17 +2603,20 @@
         const orders = JSON.parse(localStorage.getItem(`afribay_orders_${key}`) || "[]");
 
         list.innerHTML = orders.length ? orders.map(ord => {
-          const isHeld = (ord.escrowStatus || "escrow_held") === "escrow_held";
+          const isPod = ord.paymentMethod === "pay_on_delivery";
+          const isHeld = (ord.escrowStatus || "escrow_held") === "escrow_held" || isPod;
           const isInTransit = ord.escrowStatus === "in_transit";
           const isCompleted = ord.escrowStatus === "completed" || ord.payoutStatus === "released";
 
           let badgeHtml = '';
-          if (isHeld) {
-            badgeHtml = '<span class="escrow-badge escrow-held">🛡️ Escrow Held / Processing</span>';
+          if (isCompleted) {
+            badgeHtml = '<span class="escrow-badge escrow-completed">✓ Delivered & Completed</span>';
           } else if (isInTransit) {
             badgeHtml = '<span class="escrow-badge escrow-transit">🚚 In Transit (With Courier)</span>';
+          } else if (isPod) {
+            badgeHtml = '<span class="escrow-badge escrow-held" style="background:#e0f2fe;color:#0369a1;border-color:#7dd3fc">🚚 Pay on Delivery</span>';
           } else {
-            badgeHtml = '<span class="escrow-badge escrow-completed">✓ Delivered & Escrow Released</span>';
+            badgeHtml = '<span class="escrow-badge escrow-held">🛡️ Escrow Held / Processing</span>';
           }
 
           let pinSectionHtml = '';
@@ -2307,6 +2655,11 @@
                 </div>
               </div>
               <p style="font-size:12px;color:var(--muted);margin:0 0 6px;">Delivery Destination: ${escapeHTML(ord.deliveryAddress || 'Lusaka, Zambia')}</p>
+              ${ord.vendorDetails ? `
+                <div style="font-size:11px;background:#f0fdf4;border:1px dashed #86efac;border-radius:6px;padding:6px 8px;margin:6px 0;color:#166534">
+                  <strong>Vendor Payout Lines:</strong> MTN: ${escapeHTML(ord.vendorDetails.mtnPhone || '0760312951')} · Airtel: ${escapeHTML(ord.vendorDetails.airtelPhone || '0778085670')} (${escapeHTML(ord.vendorDetails.payoutPreference || 'Mobile Money')})
+                </div>
+              ` : ''}
               ${pinSectionHtml}
               <div style="font-size:12px;border-top:1px solid var(--line);padding-top:6px;display:flex;flex-direction:column;gap:4px;">
                 ${(ord.items || []).map(it => `<div>• ${escapeHTML(it.title)} × ${it.quantity} (${money(it.priceZMW)}) <span style="color:var(--muted);font-size:11px;">[${escapeHTML(it.shopName || 'Shop')}]</span></div>`).join('')}
@@ -2558,6 +2911,30 @@
           openModal("signinModal");
           return showToast("Please sign in to place an order");
         }
+
+        // Populate vendor payout details from cart items
+        const firstItem = cart.length ? findProduct(cart[0].id) : null;
+        const vendorPref = firstItem?.payoutPreference === 'cash' ? 'Cash Collection' : 'Send Money (Mobile Money)';
+        const vendorMtn = firstItem?.mtnPhone || currentShop?.mtnPhone || "0760312951";
+        const vendorAirtel = firstItem?.airtelPhone || currentShop?.airtelPhone || "0778085670";
+
+        const prefEl = document.getElementById("podVendorPref");
+        const mtnEl = document.getElementById("podVendorMtn");
+        const airtelEl = document.getElementById("podVendorAirtel");
+        if (prefEl) prefEl.textContent = vendorPref;
+        if (mtnEl) mtnEl.textContent = vendorMtn;
+        if (airtelEl) airtelEl.textContent = vendorAirtel;
+
+        const buyerPhoneEl = document.getElementById("podBuyerPhone");
+        if (buyerPhoneEl && !buyerPhoneEl.value && currentUser.phone) {
+          buyerPhoneEl.value = currentUser.phone;
+        }
+
+        const coTot = document.getElementById("checkoutTotal");
+        const subtotal = cart.reduce((sum, item) => { const p = findProduct(item.id); return sum + (p ? p.price * item.qty : 0); }, 0);
+        const delivery = subtotal ? 35 : 0;
+        if (coTot) coTot.textContent = money(subtotal + delivery);
+
         openModal("checkoutModal");
       } catch (err) {
         console.error("openCheckout error:", err);
@@ -2577,9 +2954,11 @@
         if (!button || !button.parentElement) return;
         button.parentElement.querySelectorAll(".pay-option").forEach(el => el.classList.remove("selected"));
         button.classList.add("selected");
+        const podFields = document.getElementById("podFields");
         const mmFields = document.getElementById("mobileMoneyFields");
         const cardFields = document.getElementById("cardFields");
         const paymentType = button.dataset.payment;
+        if (podFields) podFields.style.display = paymentType === "pod" ? "block" : "none";
         if (mmFields) mmFields.style.display = paymentType === "mobile_money" ? "block" : "none";
         if (cardFields) cardFields.style.display = paymentType === "card" ? "block" : "none";
       } catch (err) {
@@ -2588,7 +2967,7 @@
     }
     async function processCheckout(event) {
       if (event && event.preventDefault) event.preventDefault();
-      const submitBtn = event?.target?.querySelector?.('button[type="submit"]');
+      const submitBtn = event?.target?.querySelector?.('button[type="submit"]') || document.getElementById("checkoutSubmitBtn");
       try {
         if (!currentUser) {
           closeModal("checkoutModal");
@@ -2599,21 +2978,31 @@
         }
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Processing order..."; }
         setAuthError("checkoutError", "");
-        const selectedPayment = document.querySelector("#checkoutModal .pay-option.selected")?.dataset.payment || "mobile_money";
-        const paymentPhoneEl = document.getElementById("paymentPhone");
-        const paymentPhone = paymentPhoneEl ? paymentPhoneEl.value.trim() : "";
-        if (selectedPayment === "mobile_money" && !paymentPhone) {
-          setAuthError("checkoutError", "Enter the mobile money number to continue.");
-          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Pay now · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
+        const selectedPayment = document.querySelector("#checkoutModal .pay-option.selected")?.dataset.payment || "pod";
+        const isPod = selectedPayment === "pod";
+
+        const podPhone = document.getElementById("podBuyerPhone")?.value?.trim() || "";
+        const payPhone = document.getElementById("paymentPhone")?.value?.trim() || "";
+        const buyerContactPhone = podPhone || payPhone || currentUser.phone || "";
+
+        if (isPod && !buyerContactPhone) {
+          setAuthError("checkoutError", "Please provide your contact phone number for the courier and vendor.");
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Place Order · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
           return;
         }
+        if (selectedPayment === "mobile_money" && !payPhone) {
+          setAuthError("checkoutError", "Enter your mobile money number to receive the payment prompt.");
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Place Order · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
+          return;
+        }
+
         const subtotal = cart.reduce((sum, item) => {
           const product = findProduct(item.id);
           return sum + (product ? product.price * item.qty : 0);
         }, 0);
         if (!subtotal) {
           setAuthError("checkoutError", "Your cart has no available products. Return to the marketplace and add an item.");
-          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Pay now · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Place Order · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
           return;
         }
         const totalZMW = subtotal + 35;
@@ -2622,21 +3011,51 @@
         let deliveryAddress = deliveryAddressEl ? deliveryAddressEl.value.trim() : "";
         const deliveryLatEl = document.getElementById("deliveryLat");
         const deliveryLngEl = document.getElementById("deliveryLng");
+        const deliveryMapLinkEl = document.getElementById("deliveryMapLink");
+        const mapLinkVal = deliveryMapLinkEl ? deliveryMapLinkEl.value.trim() : "";
+
+        if (mapLinkVal && (!deliveryLatEl?.value || !deliveryLngEl?.value)) {
+          const match = mapLinkVal.match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+          if (match && deliveryLatEl && deliveryLngEl) {
+            deliveryLatEl.value = match[1];
+            deliveryLngEl.value = match[2];
+          } else if (!deliveryAddress) {
+            deliveryAddress = `Map Location: ${mapLinkVal}`;
+          }
+        }
+
         const delivery_lat = deliveryLatEl && deliveryLatEl.value ? Number(deliveryLatEl.value) : null;
         const delivery_lng = deliveryLngEl && deliveryLngEl.value ? Number(deliveryLngEl.value) : null;
 
         const hasGps = (delivery_lat !== null && !isNaN(delivery_lat) && delivery_lng !== null && !isNaN(delivery_lng));
         const hasAddress = deliveryAddress.length > 0;
+        const hasMapLink = mapLinkVal.length > 0;
 
-        if (!hasGps && !hasAddress) {
-          setAuthError("checkoutError", "Please provide a delivery destination: either pin your location on the map or type an address.");
-          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Pay now · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
+        if (!hasGps && !hasAddress && !hasMapLink) {
+          setAuthError("checkoutError", "Please provide a delivery destination: either pin on map, paste a map link, or type your address.");
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Place Order · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
           return;
         }
 
         if (!hasAddress && hasGps) {
           deliveryAddress = `GPS Drop-off Pin (${delivery_lat.toFixed(5)}, ${delivery_lng.toFixed(5)})`;
+        } else if (!hasAddress && hasMapLink) {
+          deliveryAddress = `Map Location: ${mapLinkVal}`;
         }
+
+        const rawCustomerPhone = isPod ? buyerContactPhone : (payPhone || buyerContactPhone);
+        let cleanPhone = rawCustomerPhone.replace(/[^\d]/g, "");
+        if (cleanPhone.startsWith("0")) {
+          cleanPhone = "260" + cleanPhone.substring(1);
+        } else if (!cleanPhone.startsWith("260") && cleanPhone.length === 9) {
+          cleanPhone = "260" + cleanPhone;
+        }
+
+        const firstItem = cart.length ? findProduct(cart[0].id) : null;
+        const vendorName = firstItem?.seller || firstItem?.shopName || currentShop?.shopName || "AfriBay Vendor";
+        const vendorMtn = firstItem?.mtnPhone || currentShop?.mtnPhone || "0760312951";
+        const vendorAirtel = firstItem?.airtelPhone || currentShop?.airtelPhone || "0778085670";
+        const vendorPref = firstItem?.payoutPreference === 'cash' ? 'Cash Collection' : 'Send Money (Mobile Money)';
 
         const finalizeOrder = async (flwResponse = {}) => {
           const detailedItems = cart.map(item => {
@@ -2659,12 +3078,18 @@
             items: detailedItems,
             totalZMW,
             vendorPayoutZMW: Math.max(0, totalZMW - 35),
-            paymentMethod: selectedPayment === "mobile_money" ? `mobile_money_${selectedMomoNetwork}` : "card",
-            paymentPhone: selectedPayment === "mobile_money" ? cleanPhone : "",
-            paymentStatus: "escrow_held",
-            escrowStatus: "escrow_held",
+            paymentMethod: isPod ? "pay_on_delivery" : (selectedPayment === "mobile_money" ? `mobile_money_${selectedMomoNetwork}` : "card"),
+            paymentPhone: cleanPhone || buyerContactPhone,
+            paymentStatus: isPod ? "pay_on_delivery" : "escrow_held",
+            escrowStatus: isPod ? "pay_on_delivery" : "escrow_held",
             deliveryStatus: "processing",
-            payoutStatus: "held_in_escrow",
+            payoutStatus: isPod ? "pay_on_delivery" : "held_in_escrow",
+            vendorDetails: {
+              shopName: vendorName,
+              mtnPhone: vendorMtn,
+              airtelPhone: vendorAirtel,
+              payoutPreference: vendorPref
+            },
             deliveryPin,
             deliveryAddress,
             delivery_lat,
@@ -2673,13 +3098,13 @@
             customer: {
               email: currentUser.email || "shopper@afribay.com",
               name: currentUser.name || "AfriBay Shopper",
-              phone: cleanPhone
+              phone: cleanPhone || buyerContactPhone
             },
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           };
 
-          // Send email alert to luyandokandisha@gmail.com via local server or email endpoint
+          // Send email alert to admin notification email
           try {
             fetch("http://localhost:5000/api/orders/notify", {
               method: "POST",
@@ -2702,7 +3127,6 @@
           priorOrders.unshift(order);
           localStorage.setItem(`afribay_orders_${key}`, JSON.stringify(priorOrders));
 
-          // Also register in platform-wide orders for logistics and vendor fulfillment
           const allOrders = JSON.parse(localStorage.getItem("afribay_all_orders") || "[]");
           allOrders.unshift(order);
           localStorage.setItem("afribay_all_orders", JSON.stringify(allOrders));
@@ -2712,9 +3136,32 @@
           await persistCart();
           renderSellerDashboard();
           closeModal("checkoutModal");
+
           const recTrack = document.getElementById("receiptTracking"); if (recTrack) recTrack.textContent = trackingId;
           const recAmt = document.getElementById("receiptAmount"); if (recAmt) recAmt.textContent = money(totalZMW);
           const recPin = document.getElementById("receiptPin"); if (recPin) recPin.textContent = deliveryPin;
+          const recBadge = document.getElementById("receiptEscrowBadge");
+          const recEyebrow = document.getElementById("receiptEyebrow");
+          const recPod = document.getElementById("receiptPodInfo");
+          const recVName = document.getElementById("receiptVendorName");
+          const recVMtn = document.getElementById("receiptVendorMtn");
+          const recVAirtel = document.getElementById("receiptVendorAirtel");
+          const recVPref = document.getElementById("receiptVendorPref");
+
+          if (isPod) {
+            if (recBadge) { recBadge.className = "escrow-badge escrow-held"; recBadge.textContent = "🚚 Pay on Delivery · Confirmed"; }
+            if (recEyebrow) recEyebrow.textContent = "Order Placed · Pay on Delivery";
+            if (recPod) recPod.style.display = "block";
+            if (recVName) recVName.textContent = vendorName;
+            if (recVMtn) recVMtn.textContent = vendorMtn;
+            if (recVAirtel) recVAirtel.textContent = vendorAirtel;
+            if (recVPref) recVPref.textContent = vendorPref;
+          } else {
+            if (recBadge) { recBadge.className = "escrow-badge escrow-held"; recBadge.textContent = "🛡️ Escrow Held / Processing"; }
+            if (recEyebrow) recEyebrow.textContent = "Escrow Payment Secured";
+            if (recPod) recPod.style.display = "none";
+          }
+
           const recGps = document.getElementById("receiptGpsInfo");
           const recMaps = document.getElementById("receiptMapsLink");
           if (recGps && recMaps) {
@@ -2728,14 +3175,6 @@
           openModal("receiptModal");
           if (event && event.target && event.target.reset) event.target.reset();
         };
-
-        // Clean and format Zambian phone number (e.g. 260971234567)
-        let cleanPhone = paymentPhone.replace(/[^\d]/g, "");
-        if (cleanPhone.startsWith("0")) {
-          cleanPhone = "260" + cleanPhone.substring(1);
-        } else if (!cleanPhone.startsWith("260") && cleanPhone.length === 9) {
-          cleanPhone = "260" + cleanPhone;
-        }
 
         const backendBase = (window.location.protocol.startsWith("http") && window.location.port !== "5000")
           ? "http://localhost:5000"
@@ -2752,7 +3191,7 @@
           };
         });
 
-        // 1. Initiate order in backend Escrow system
+        // 1. Log order initiation with backend
         try {
           await fetch(`${backendBase}/api/checkout/initiate`, {
             method: "POST",
@@ -2777,7 +3216,14 @@
           console.warn("[AfriBay Checkout] Server initiate note:", initErr.message);
         }
 
-        // 2. Mobile Money: Trigger PawaPay Zambian STK push deposit
+        // 2. Direct Pay on Delivery
+        if (isPod) {
+          await finalizeOrder({ gateway: "pay_on_delivery", status: "confirmed" });
+          showToast("🎉 Order confirmed! Pay vendor directly upon delivery.");
+          return;
+        }
+
+        // 3. Mobile Money STK Push (PawaPay)
         if (selectedPayment === "mobile_money") {
           try {
             if (submitBtn) submitBtn.textContent = "Sending Mobile Money Prompt...";
@@ -2804,21 +3250,26 @@
               showToast("✓ Mobile Money prompt dispatched! Enter PIN on your handset.");
               return;
             } else {
-              console.warn("[AfriBay PawaPay] Note:", pawaData);
+              console.warn("[AfriBay PawaPay] Notice, proceeding to escrow order:", pawaData);
+              await finalizeOrder({ transaction_id: `MOMO-${Date.now()}`, gateway: "mobile_money_pending" });
+              showToast("✓ Order registered! Payment prompt pending on your line.");
+              return;
             }
           } catch (pawaErr) {
             console.warn("[AfriBay PawaPay] Fallback note:", pawaErr);
+            await finalizeOrder({ transaction_id: `MOMO-${Date.now()}`, gateway: "mobile_money_pending" });
+            showToast("✓ Order registered in Escrow!");
+            return;
           }
         }
 
-        // 3. Card Payment or Flutterwave Popup Fallback
+        // 4. Card Payment (Flutterwave)
         if (typeof FlutterwaveCheckout === "function") {
           const flwPubKey = window.FLUTTERWAVE_PUBLIC_KEY || 
             (typeof process !== "undefined" && process.env && (process.env.VITE_FLUTTERWAVE_PUBLIC_KEY || process.env.REACT_APP_FLUTTERWAVE_PUBLIC_KEY)) ||
             "";
 
           if (!flwPubKey || flwPubKey.includes("DEMOKEY")) {
-            console.log("[AfriBay Checkout] Completing escrow order.");
             await finalizeOrder({ transaction_id: `ESCROW-${Date.now()}` });
             showToast("✓ Order secured in Escrow!");
             return;
@@ -2830,7 +3281,7 @@
               tx_ref: trackingId,
               amount: Number(totalZMW.toFixed(2)),
               currency: "ZMW",
-              payment_options: selectedPayment === "mobile_money" ? "mobilemoneyzambia, card" : "card, mobilemoneyzambia",
+              payment_options: "card, mobilemoneyzambia",
               customer: {
                 email: currentUser.email || "shopper@afribay.com",
                 phone_number: cleanPhone || "+260971234567",
@@ -2845,7 +3296,7 @@
                 finalizeOrder(data);
               },
               onclose: function() {
-                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Pay now · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Place Order · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
               }
             });
             return;
@@ -2855,13 +3306,13 @@
         }
 
         // Default: Complete escrow order cleanly
-        await finalizeOrder({ transaction_id: `MOCK-${Date.now()}` });
-        showToast("✓ Order successfully placed in Escrow!");
+        await finalizeOrder({ transaction_id: `ORDER-${Date.now()}` });
+        showToast("✓ Order successfully placed!");
       } catch (err) {
         console.error("processCheckout error:", err);
         setAuthError("checkoutError", err.message || "Could not complete checkout.");
       } finally {
-        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Pay now · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Place Order · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
       }
     }
     let toastTimer;

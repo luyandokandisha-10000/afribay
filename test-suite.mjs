@@ -68,11 +68,14 @@ async function runTestSuite() {
   assert(indexHtml === prototypeHtml, 'index.html and afrothrift-prototype (2).html are identical');
 
   const requiredElementIds = [
-    'shopName', 'shopPhone', 'shopAddressInput', 'shopLat', 'shopLng', 'shopGpsLabel', 'shopSubmitBtn', 'shopError',
+    'shopName', 'shopMtnPhone', 'shopAirtelPhone', 'shopPayoutPreference', 'shopPhone', 'shopAddressInput', 'shopLat', 'shopLng', 'shopGpsLabel', 'shopSubmitBtn', 'shopError',
     'deliveryTabGps', 'deliveryTabAddress', 'deliveryGpsSection', 'deliveryAddressSection',
     'deliveryAddress', 'deliveryLat', 'deliveryLng', 'deliveryGpsLabel', 'checkoutTotal', 'checkoutError',
+    'podFields', 'podVendorPref', 'podVendorMtn', 'podVendorAirtel', 'podBuyerPhone',
     'receiptTracking', 'receiptAmount', 'receiptPin', 'receiptGpsInfo', 'receiptMapsLink', 'receiptEscrowBadge',
+    'receiptPodInfo', 'receiptVendorName', 'receiptVendorMtn', 'receiptVendorAirtel', 'receiptVendorPref',
     'cartList', 'subtotal', 'delivery', 'total',
+    'subscriptionModal', 'subTierSelect', 'subPaymentLine', 'subTxRef', 'subSubmitBtn',
     'sellerProducts', 'sellerViews', 'sellerProductCount', 'sellerAdCount',
     'sellerAvailablePayout', 'sellerEscrowHeld', 'sellerOrdersCount', 'sellerFulfillmentList'
   ];
@@ -81,6 +84,26 @@ async function runTestSuite() {
     const hasElement = indexHtml.includes(`id="${id}"`);
     assert(hasElement, `DOM element id="${id}" exists in HTML`);
   }
+
+  // Check official subscription payment lines
+  assert(indexHtml.includes('0760312951'), 'Official MTN subscription line 0760312951 exists in HTML');
+  assert(indexHtml.includes('0778085670'), 'Official Airtel subscription line 0778085670 exists in HTML');
+
+  // Check 5 official social channel links
+  const officialSocialLinks = [
+    'https://www.facebook.com/groups/4159169450883484',
+    'https://www.facebook.com/profile.php?id=61575486501290',
+    'https://www.linkedin.com/in/nexgen-founder-18518240a/',
+    'https://www.reddit.com/user/next-gen-founder/?persist-lb-on-conversion=true&screen_view_count=1&ext-referrer=SEO',
+    'https://www.instagram.com/real_nextgen_founder/'
+  ];
+  for (const link of officialSocialLinks) {
+    assert(indexHtml.includes(link), `Official social link present: ${link}`);
+  }
+
+  // Check database reset: zero hardcoded mock products
+  assert(indexHtml.includes('const products = [];'), 'products array initialized empty with zero dummy data');
+  assert(!indexHtml.includes("shopName: \"Mimi's Closet\""), 'No dummy Mimi\'s Closet listings in client code');
 
   // ----------------------------------------------------
   // TEST SECTION 2: Firestore & Firebase Exports
@@ -330,7 +353,111 @@ async function runTestSuite() {
     assert(liveDepositRes.json?.depositId?.length === 36, 'PawaPay returns valid 36-character UUID depositId');
     assert(liveDepositRes.json?.status === 'ACCEPTED', `PawaPay sandbox deposit status is ACCEPTED (received: ${liveDepositRes.json?.status})`);
 
+    // 4.10 Vendor Shop Setup & Subscription System Tests
+    // 4.10a: Create Shop requires MTN and Airtel mobile money lines
+    const invalidShopRes = await request(`${testBaseUrl}/api/shops`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: { shopName: 'Test Shop Without Phones' },
+    });
+    assert(invalidShopRes.statusCode === 400, 'POST /api/shops rejects missing MTN/Airtel phone numbers with 400');
 
+    // 4.10b: Successfully create shop with MTN, Airtel, and payout preference
+    const validShopPayload = {
+      userId: 'vendor-123',
+      shopName: 'Zed Quality Thrift',
+      mtnPhone: '0760312951',
+      airtelPhone: '0778085670',
+      payoutPreference: 'mobile_money',
+      description: 'Authentic items in Lusaka'
+    };
+    const validShopRes = await request(`${testBaseUrl}/api/shops`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: validShopPayload,
+    });
+    assert(validShopRes.statusCode === 201, 'POST /api/shops creates shop with 201 Created');
+    assert(validShopRes.json?.subscriptionStatus === 'trial', 'New shop starts with subscriptionStatus: "trial"');
+    assert(validShopRes.json?.daysLeft === 5, 'New shop is allocated 5-day free trial');
+    assert(validShopRes.json?.mtnPhone === '0760312951', 'Shop persists MTN phone line');
+    assert(validShopRes.json?.airtelPhone === '0778085670', 'Shop persists Airtel phone line');
+
+    const testShopId = validShopRes.json.id;
+
+    // 4.10c: Check Subscription Status endpoint
+    const subStatusRes = await request(`${testBaseUrl}/api/vendor/subscription/status?shopId=${testShopId}`);
+    assert(subStatusRes.statusCode === 200, 'GET /api/vendor/subscription/status responds 200 OK');
+    assert(subStatusRes.json?.status === 'trial' && subStatusRes.json?.canList === true, 'Vendor can list products during active trial');
+    assert(subStatusRes.json?.paymentLines?.mtn === '0760312951', 'Subscription returns official MTN destination: 0760312951');
+    assert(subStatusRes.json?.paymentLines?.airtel === '0778085670', 'Subscription returns official Airtel destination: 0778085670');
+
+    // 4.10d: Create Product during active trial
+    const prodRes = await request(`${testBaseUrl}/api/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        shopId: testShopId,
+        title: 'Handmade Kitenge Bag',
+        priceZMW: 250,
+        category: 'new_goods',
+        condition: 'new'
+      }
+    });
+    assert(prodRes.statusCode === 201, 'POST /api/products succeeds during 5-day free trial');
+
+    // 4.10e: Lock product creation when trial expires
+    // Simulate expired shop
+    const expiredShopRes = await request(`${testBaseUrl}/api/shops`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        userId: 'vendor-expired',
+        shopName: 'Expired Shop',
+        mtnPhone: '0960000000',
+        airtelPhone: '0970000000',
+        payoutPreference: 'cash',
+        trialEndsAt: Date.now() - 1000 // already expired
+      }
+    });
+    const expiredShopId = expiredShopRes.json.id;
+
+    const blockedProdRes = await request(`${testBaseUrl}/api/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        shopId: expiredShopId,
+        title: 'Locked Product',
+        priceZMW: 100
+      }
+    });
+    assert(blockedProdRes.statusCode === 403, 'POST /api/products returns 403 Forbidden when trial is expired');
+    assert(blockedProdRes.json?.paymentLines?.mtn === '0760312951', 'Error response returns official subscription payment instructions');
+
+    // 4.10f: Activate subscription (K20/weekly or K100/monthly) to unlock shop
+    const activateSubRes = await request(`${testBaseUrl}/api/vendor/subscription/activate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        shopId: expiredShopId,
+        tier: 'weekly',
+        transactionRef: 'MP260101-MOMOTEST'
+      }
+    });
+    assert(activateSubRes.statusCode === 200, 'POST /api/vendor/subscription/activate responds 200 OK');
+    assert(activateSubRes.json?.shop?.subscriptionStatus === 'active', 'Shop subscriptionStatus updated to "active"');
+    assert(activateSubRes.json?.daysLeft === 7, 'Weekly tier adds 7 active days');
+
+    // Verify unlocked product creation after activation
+    const unblockedProdRes = await request(`${testBaseUrl}/api/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        shopId: expiredShopId,
+        title: 'Now Unlocked Product',
+        priceZMW: 100
+      }
+    });
+    assert(unblockedProdRes.statusCode === 201, 'POST /api/products succeeds once subscription is activated');
   } catch (err) {
     console.error('API Test Error:', err);
     assert(false, `API tests threw exception: ${err.message}`);

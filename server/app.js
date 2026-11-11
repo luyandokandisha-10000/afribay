@@ -42,8 +42,62 @@ const ADMIN_NOTIFICATION_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'luyand
 let cachedToken = null;
 let tokenExpiresAt = 0;
 
-// In-memory Escrow Order Registry
+// In-memory Registries (Escrow, Clean Shops & Clean Products)
 const escrowOrders = new Map();
+const shops = new Map();
+const productsMap = new Map();
+
+/**
+ * Validates vendor subscription & 5-day trial status.
+ * - First 5 days of selling are 100% free.
+ * - After 5 days, vendor must pay K20/week or K100/month.
+ * - Destination numbers: MTN: 0760312951 | Airtel: 0778085670.
+ */
+export function checkVendorSubscription(shop) {
+  const paymentLines = { mtn: '0760312951', airtel: '0778085670' };
+  const pricingTiers = { weekly: 'K20/week', monthly: 'K100/month' };
+  if (!shop) return { canList: false, status: 'no_shop', message: 'Shop profile not found', paymentLines, pricingTiers };
+  const now = Date.now();
+  const createdAt = shop.createdAt ? new Date(shop.createdAt).getTime() : now;
+  const trialEndsAt = shop.trialEndsAt ? new Date(shop.trialEndsAt).getTime() : (createdAt + 5 * 24 * 60 * 60 * 1000);
+  const subscriptionEndsAt = shop.subscriptionEndsAt ? new Date(shop.subscriptionEndsAt).getTime() : 0;
+
+  // Active paid subscription
+  if (shop.subscriptionStatus === 'active' && subscriptionEndsAt > now) {
+    const daysLeft = Math.ceil((subscriptionEndsAt - now) / (24 * 60 * 60 * 1000));
+    return {
+      canList: true,
+      status: 'active',
+      tier: shop.subscriptionTier || 'weekly',
+      daysLeft,
+      subscriptionEndsAt: new Date(subscriptionEndsAt).toISOString(),
+      paymentLines,
+      pricingTiers
+    };
+  }
+
+  // Active 5-day free trial
+  if (now <= trialEndsAt) {
+    const daysLeft = Math.max(1, Math.ceil((trialEndsAt - now) / (24 * 60 * 60 * 1000)));
+    return {
+      canList: true,
+      status: 'trial',
+      daysLeft,
+      trialEndsAt: new Date(trialEndsAt).toISOString(),
+      paymentLines,
+      pricingTiers
+    };
+  }
+
+  // Trial expired & no active subscription
+  return {
+    canList: false,
+    status: 'expired',
+    message: 'Your 5-day free trial has expired. Subscribe for K20/week or K100/month to keep store active and post listings.',
+    pricingTiers,
+    paymentLines
+  };
+}
 
 /**
  * Sends an email notification to luyandokandisha@gmail.com when an order is placed and held in Escrow.
@@ -617,6 +671,269 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify({
       success: true,
       order: escrowOrders.get(trackingId)
+    }));
+    return;
+  }
+
+  // Endpoint: Create or Register Shop
+  if (url.pathname === '/api/shops' && req.method === 'POST') {
+    let bodyData = '';
+    req.on('data', chunk => { bodyData += chunk; });
+    req.on('end', async () => {
+      res.setHeader('Content-Type', 'application/json');
+      try {
+        const payload = JSON.parse(bodyData || '{}');
+        const { shopName, mtnPhone, airtelPhone, payoutPreference, contactPhone, description, physicalAddress, shop_lat, shop_lng, userId } = payload;
+
+        if (!shopName || !shopName.trim()) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ success: false, error: 'Shop name is required' }));
+          return;
+        }
+
+        if (!mtnPhone || !mtnPhone.trim()) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ success: false, error: 'MTN Mobile Money phone number is required' }));
+          return;
+        }
+
+        if (!airtelPhone || !airtelPhone.trim()) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ success: false, error: 'Airtel Mobile Money phone number is required' }));
+          return;
+        }
+
+        const shopId = payload.shopId || payload.id || `shop_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+        const now = Date.now();
+        const trialDays = 5;
+        const trialEndsAt = payload.trialEndsAt ? Number(payload.trialEndsAt) : (now + (trialDays * 24 * 60 * 60 * 1000));
+
+        const shopRecord = {
+          id: shopId,
+          shopId,
+          userId: userId || 'anonymous_vendor',
+          shopName: shopName.trim(),
+          mtnPhone: mtnPhone.trim(),
+          airtelPhone: airtelPhone.trim(),
+          contactPhone: contactPhone ? contactPhone.trim() : mtnPhone.trim(),
+          payoutPreference: (payoutPreference === 'cash_collection') ? 'cash_collection' : 'mobile_money',
+          description: description ? description.trim() : '',
+          physicalAddress: physicalAddress ? physicalAddress.trim() : '',
+          shop_lat: shop_lat != null ? Number(shop_lat) : null,
+          shop_lng: shop_lng != null ? Number(shop_lng) : null,
+          createdAt: new Date().toISOString(),
+          trialEndsAt: new Date(trialEndsAt).toISOString(),
+          subscriptionStatus: 'trial',
+          subscriptionTier: null,
+          subscriptionEndsAt: null,
+          status: 'active'
+        };
+
+        shops.set(shopId, shopRecord);
+
+        res.writeHead(201);
+        res.end(JSON.stringify({
+          success: true,
+          message: 'Shop successfully created with 5-day free trial',
+          id: shopId,
+          shopId,
+          ...shopRecord,
+          shop: shopRecord,
+          subscription: checkVendorSubscription(shopRecord),
+          ...checkVendorSubscription(shopRecord)
+        }));
+      } catch (err) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // Endpoint: Query Shops
+  if (url.pathname === '/api/shops' && req.method === 'GET') {
+    res.setHeader('Content-Type', 'application/json');
+    const shopId = url.searchParams.get('shopId');
+    const userId = url.searchParams.get('userId');
+
+    if (shopId && shops.has(shopId)) {
+      const shop = shops.get(shopId);
+      res.writeHead(200);
+      res.end(JSON.stringify({ success: true, shop, subscription: checkVendorSubscription(shop) }));
+      return;
+    }
+
+    if (userId) {
+      const userShop = Array.from(shops.values()).find(s => s.userId === userId);
+      if (userShop) {
+        res.writeHead(200);
+        res.end(JSON.stringify({ success: true, shop: userShop, subscription: checkVendorSubscription(userShop) }));
+        return;
+      }
+    }
+
+    const allShops = Array.from(shops.values());
+    res.writeHead(200);
+    res.end(JSON.stringify({ success: true, count: allShops.length, shops: allShops }));
+    return;
+  }
+
+  // Endpoint: Vendor Subscription Status
+  if (url.pathname === '/api/vendor/subscription/status' && req.method === 'GET') {
+    res.setHeader('Content-Type', 'application/json');
+    const shopId = url.searchParams.get('shopId');
+    const shop = shopId ? shops.get(shopId) : Array.from(shops.values())[0];
+
+    if (!shop) {
+      res.writeHead(404);
+      res.end(JSON.stringify({ success: false, error: 'Shop not found' }));
+      return;
+    }
+
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      success: true,
+      shopId: shop.id,
+      shopName: shop.shopName,
+      subscription: checkVendorSubscription(shop),
+      ...checkVendorSubscription(shop)
+    }));
+    return;
+  }
+
+  // Endpoint: Vendor Subscription Payment Activation
+  if (url.pathname === '/api/vendor/subscription/activate' && req.method === 'POST') {
+    let bodyData = '';
+    req.on('data', chunk => { bodyData += chunk; });
+    req.on('end', async () => {
+      res.setHeader('Content-Type', 'application/json');
+      try {
+        const payload = JSON.parse(bodyData || '{}');
+        const { shopId, tier, txRef, paymentLine } = payload; // tier: 'weekly' (K20) or 'monthly' (K100)
+
+        const shop = shops.get(shopId) || Array.from(shops.values()).find(s => s.id === shopId || s.shopName === payload.shopName);
+        if (!shop) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ success: false, error: 'Shop not found to activate subscription' }));
+          return;
+        }
+
+        const now = Date.now();
+        const days = (tier === 'monthly') ? 30 : 7;
+        const currentEndsAt = (shop.subscriptionEndsAt && new Date(shop.subscriptionEndsAt).getTime() > now)
+          ? new Date(shop.subscriptionEndsAt).getTime()
+          : now;
+        const newEndsAt = currentEndsAt + (days * 24 * 60 * 60 * 1000);
+
+        shop.subscriptionStatus = 'active';
+        shop.subscriptionTier = (tier === 'monthly') ? 'monthly' : 'weekly';
+        shop.subscriptionEndsAt = new Date(newEndsAt).toISOString();
+        shop.lastPaymentTxRef = txRef || `SUB-${Date.now().toString(36).toUpperCase()}`;
+        shop.paymentDestination = paymentLine || 'MTN: 0760312951 / Airtel: 0778085670';
+        shop.updatedAt = new Date().toISOString();
+
+        shops.set(shop.id, shop);
+
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          message: `Subscription successfully activated for ${days} days (${shop.subscriptionTier})`,
+          shop,
+          subscription: checkVendorSubscription(shop),
+          ...checkVendorSubscription(shop)
+        }));
+      } catch (err) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // Endpoint: Create Product (Enforcing Vendor 5-day Trial & Subscription Middleware)
+  if (url.pathname === '/api/products' && req.method === 'POST') {
+    let bodyData = '';
+    req.on('data', chunk => { bodyData += chunk; });
+    req.on('end', async () => {
+      res.setHeader('Content-Type', 'application/json');
+      try {
+        const payload = JSON.parse(bodyData || '{}');
+        const { title, priceZMW, category, condition, shopId, description, imageUrls } = payload;
+
+        if (!title || !title.trim()) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ success: false, error: 'Product title is required' }));
+          return;
+        }
+
+        if (!priceZMW || Number(priceZMW) <= 0) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ success: false, error: 'Valid product price is required' }));
+          return;
+        }
+
+        // Middleware Check: Validate vendor subscription
+        const shop = shopId ? shops.get(shopId) : null;
+        if (shop) {
+          const subCheck = checkVendorSubscription(shop);
+          if (!subCheck.canList) {
+            res.writeHead(403);
+            res.end(JSON.stringify({
+              success: false,
+              locked: true,
+              error: 'Vendor 5-day free trial has expired. Active subscription required to list products.',
+              subscriptionCheck: subCheck,
+              paymentLines: { mtn: '0760312951', airtel: '0778085670' },
+              pricingTiers: { weekly: 'K20/week', monthly: 'K100/month' },
+              instructions: 'Please send K20 (weekly) or K100 (monthly) to official accounts: MTN: 0760312951 or Airtel: 0778085670.'
+            }));
+            return;
+          }
+        }
+
+        const productId = payload.productId || payload.id || `prod_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+        const productRecord = {
+          id: productId,
+          productId,
+          title: title.trim(),
+          description: description ? description.trim() : '',
+          priceZMW: Number(priceZMW),
+          category: category || 'clothes',
+          condition: condition || 'used_good',
+          shopId: shopId || (shop ? shop.id : ''),
+          shopName: shop ? shop.shopName : (payload.shopName || 'AfriBay Seller'),
+          mtnPhone: shop ? shop.mtnPhone : (payload.mtnPhone || ''),
+          airtelPhone: shop ? shop.airtelPhone : (payload.airtelPhone || ''),
+          payoutPreference: shop ? shop.payoutPreference : (payload.payoutPreference || 'mobile_money'),
+          imageUrls: Array.isArray(imageUrls) ? imageUrls : [],
+          createdAt: new Date().toISOString()
+        };
+
+        productsMap.set(productId, productRecord);
+
+        res.writeHead(201);
+        res.end(JSON.stringify({
+          success: true,
+          message: 'Product listing published cleanly',
+          product: productRecord
+        }));
+      } catch (err) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // Endpoint: Query Clean Marketplace Products
+  if (url.pathname === '/api/products' && req.method === 'GET') {
+    res.setHeader('Content-Type', 'application/json');
+    const allProducts = Array.from(productsMap.values());
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      success: true,
+      count: allProducts.length,
+      products: allProducts
     }));
     return;
   }

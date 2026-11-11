@@ -35,21 +35,29 @@ export async function upsertUserProfile(user) {
   );
 }
 
-// ── Shops ─────────────────────────────────────────────────────
-export async function createShop(uid, { shopName, contactPhone, description, logoUrl, shop_lat, shop_lng, physicalAddress }) {
+export async function createShop(uid, { shopName, mtnPhone, airtelPhone, contactPhone, payoutPreference, description, logoUrl, shop_lat, shop_lng, physicalAddress, trialEndsAt, subscriptionStatus }) {
   const firestore = requireDb();
+  const now = Date.now();
+  const trialExpiry = trialEndsAt || (now + 5 * 24 * 60 * 60 * 1000); // 5-day free trial default
   return addDoc(collection(firestore, "shops"), {
-    userId:          uid,
-    shopName:        shopName        || "",
-    contactPhone:    contactPhone    || "",
-    description:     description     || "",
-    logoUrl:         logoUrl         || "",
-    shop_lat:        shop_lat != null ? Number(shop_lat) : null,
-    shop_lng:        shop_lng != null ? Number(shop_lng) : null,
-    physicalAddress: physicalAddress || "",
-    status:          "active",
-    createdAt:       serverTimestamp(),
-    updatedAt:       serverTimestamp(),
+    userId:             uid,
+    shopName:           shopName           || "",
+    mtnPhone:           mtnPhone           || "",
+    airtelPhone:        airtelPhone        || "",
+    contactPhone:       contactPhone       || mtnPhone || airtelPhone || "",
+    payoutPreference:   payoutPreference   || "mobile_money", // 'mobile_money' | 'cash_collection'
+    description:        description        || "",
+    logoUrl:            logoUrl            || "",
+    shop_lat:           shop_lat != null ? Number(shop_lat) : null,
+    shop_lng:           shop_lng != null ? Number(shop_lng) : null,
+    physicalAddress:    physicalAddress    || "",
+    trialEndsAt:        trialExpiry,
+    subscriptionStatus: subscriptionStatus || "trial", // 'trial' | 'active' | 'expired'
+    subscriptionTier:   null,
+    subscriptionEndsAt: null,
+    status:             "active",
+    createdAt:          serverTimestamp(),
+    updatedAt:          serverTimestamp(),
   });
 }
 
@@ -233,33 +241,9 @@ export async function loadOrders(uid) {
 
 // ── Seed ─────────────────────────────────────────────────────
 export async function seedMarketplace() {
-  const firestore = requireDb();
-  const productsCol = collection(firestore, "products");
-
-  // Only seed if the collection is empty
-  const countSnap = await getCountFromServer(productsCol);
-  if (countSnap.data().count > 0) return;
-
-  const seeds = [
-    { title: "Toyota Vitz 2015",        priceZMW: 98000, category: "cars",        condition: "used_good",     location: "Lusaka, Zambia",     shopName: "Lusaka Motors",    art: "🚙", artClass: "t1", isFeatured: true,  videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" },
-    { title: "Vintage denim jacket",    priceZMW: 420,   category: "clothes",     condition: "used_like_new", location: "Lusaka, Zambia",     shopName: "Mimi's Closet",   art: "🧥", artClass: "t2", isFeatured: true,  videoUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" },
-    { title: "iPhone 13 128GB",         priceZMW: 11500, category: "electronics", condition: "used_like_new", location: "Kitwe, Zambia",      shopName: "SmartHub Zambia", art: "📱", artClass: "t3", isFeatured: false, videoUrl: "" },
-    { title: "Nike Air Max sneakers",   priceZMW: 850,   category: "clothes",     condition: "used_good",     location: "Ndola, Zambia",      shopName: "Second Lap",      art: "👟", artClass: "t4", isFeatured: false, videoUrl: "" },
-    { title: "Samsung smart television",priceZMW: 7200,  category: "electronics", condition: "used_like_new", location: "Livingstone, Zambia", shopName: "Home Tech ZA",   art: "📺", artClass: "t5", isFeatured: false, videoUrl: "" },
-    { title: "New African print shirt", priceZMW: 380,   category: "new_goods",   condition: "new",           location: "Lusaka, Zambia",     shopName: "Naya Collective", art: "👕", artClass: "t6", isFeatured: false, videoUrl: "" },
-  ];
-
-  for (const seed of seeds) {
-    await addDoc(productsCol, {
-      ...seed,
-      ownerId:     "verified_seller",
-      ownerEmail:  "store@afribay.com",
-      description: "",
-      imageUrls:   [],
-      viewCount:   0,
-      createdAt:   serverTimestamp(),
-    });
-  }
+  // Database Cleanup: No fake/dummy products or shops are seeded.
+  // Marketplace starts completely clean for genuine registered sellers and real products.
+  return;
 }
 
 // ── Storage ───────────────────────────────────────────────────
