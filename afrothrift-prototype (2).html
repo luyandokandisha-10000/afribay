@@ -1130,14 +1130,20 @@
       return `<div class="${className} ${escapeHTML(product.artClass || "t1")}">${isSponsored(product) ? '<span class="ad-label">Sponsored</span>' : ""}${imageUrl ? `<img src="${escapeHTML(imageUrl)}" alt="${escapeHTML(product.title)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : `<span>${escapeHTML(product.art || "✦")}</span>`}</div>`;
     }
     window.applyRemoteMarketplace = function(remoteProducts, remoteAds) {
-      if (!remoteProducts?.length) return;
-      const adsByProduct = new Map((remoteAds || []).map(ad => [String(ad.productId), ad]));
-      products.splice(0, products.length, ...remoteProducts.map(item => {
+      const realProducts = (remoteProducts || []).filter(item => {
+        const isDemo = item.ownerId === "demo" || item.ownerEmail === "demo@afribay.com" ||
+          item.shopName === "Lusaka Motors" || item.shopName === "Mimi's Closet" || item.shopName === "SmartHub Zambia" ||
+          item.shopName === "Second Lap" || item.shopName === "Home Tech ZA" || item.shopName === "Naya Collective";
+        return !isDemo;
+      });
+      const realAds = (remoteAds || []).filter(ad => ad.createdBy !== "demo");
+      const adsByProduct = new Map(realAds.map(ad => [String(ad.productId), ad]));
+      products.splice(0, products.length, ...realProducts.map(item => {
         const normalized = normalizeRemoteProduct(item);
         const ad = adsByProduct.get(String(item.id));
         return { ...normalized, videoUrl: ad?.videoUrl || normalized.videoUrl, ad: normalized.ad || Boolean(ad) };
       }));
-      adCampaigns = (remoteAds || []).map(ad => ({
+      adCampaigns = realAds.map(ad => ({
         productId: String(ad.productId),
         videoUrl: ad.videoUrl,
         createdAt: ad.createdAt?.toMillis?.() || Date.now(),

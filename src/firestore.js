@@ -89,7 +89,9 @@ export async function loadProducts() {
   const snap = await getDocs(
     query(collection(firestore, "products"), orderBy("createdAt", "desc"), limit(80))
   );
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(p => p.ownerId !== "demo" && p.ownerEmail !== "demo@afribay.com");
 }
 
 export async function loadUserProducts(uid) {
@@ -121,7 +123,9 @@ export async function loadActiveAds() {
   const snap = await getDocs(
     query(collection(firestore, "video_ads"), where("isPaid", "==", true), limit(20))
   );
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return snap.docs
+    .map(d => ({ id: d.id, ...d.data() }))
+    .filter(ad => ad.createdBy !== "demo");
 }
 
 // ── Cart ──────────────────────────────────────────────────────
