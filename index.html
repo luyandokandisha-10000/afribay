@@ -701,7 +701,55 @@
     </div>
   </div>
   <div id="listingModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'listingModal')">
-    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Sell on AfriBay</div><h2>Add a product</h2></div><button class="close" onclick="closeModal('listingModal')">×</button></div><form onsubmit="createListing(event)"><div class="form-row"><label for="listingTitle">Product title</label><input id="listingTitle" required maxlength="90" /></div><div class="form-row"><label for="listingDescription">Description</label><input id="listingDescription" required maxlength="500" /></div><div class="form-row"><label for="listingPrice">Price (ZMW)</label><input id="listingPrice" type="number" min="1" step="0.01" required /></div><div class="form-row"><label for="listingCategory">Category</label><select id="listingCategory"><option value="clothes">Clothes</option><option value="cars">Cars</option><option value="electronics">Electronics</option><option value="new_goods">New goods</option></select></div><div class="form-row"><label for="listingCondition">Condition</label><select id="listingCondition"><option value="new">New</option><option value="used_like_new">Used · Like new</option><option value="used_good">Used · Good</option></select></div><div class="form-row"><label for="listingImage">Product image (optional)</label><input id="listingImage" type="file" accept="image/*" /></div><div id="listingError" class="auth-error"></div><div class="modal-foot"><button type="button" class="button ghost" onclick="closeModal('listingModal')">Cancel</button><button type="submit" class="button">Publish listing →</button></div></form></div>
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">Sell on AfriBay</div>
+          <h2>Add a product</h2>
+        </div>
+        <button class="close" type="button" onclick="closeModal('listingModal')">×</button>
+      </div>
+      <form id="listingForm" onsubmit="createListing(event)">
+        <div class="form-row">
+          <label for="listingTitle">Product title *</label>
+          <input id="listingTitle" required maxlength="90" placeholder="e.g. Vintage Leather Jacket" />
+        </div>
+        <div class="form-row">
+          <label for="listingDescription">Description *</label>
+          <textarea id="listingDescription" required maxlength="500" placeholder="Describe the item, condition, size, brand, etc." style="width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:11px;outline:0;font-family:inherit;font-size:13px;min-height:75px;resize:vertical;"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="listingPrice">Price (ZMW) *</label>
+          <input id="listingPrice" type="number" min="1" step="0.01" placeholder="e.g. 450" required />
+        </div>
+        <div class="form-row">
+          <label for="listingCategory">Category *</label>
+          <select id="listingCategory">
+            <option value="clothes">Clothes</option>
+            <option value="cars">Cars</option>
+            <option value="electronics">Electronics</option>
+            <option value="new_goods">New goods</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="listingCondition">Condition *</label>
+          <select id="listingCondition">
+            <option value="used_good">Used · Good</option>
+            <option value="used_like_new">Used · Like new</option>
+            <option value="new">New</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="listingImage">Product photo (optional)</label>
+          <input id="listingImage" type="file" accept="image/*" />
+        </div>
+        <div id="listingError" class="auth-error"></div>
+        <div class="modal-foot">
+          <button type="button" class="button ghost" onclick="closeModal('listingModal')">Cancel</button>
+          <button id="listingSubmitBtn" type="submit" class="button">Publish listing →</button>
+        </div>
+      </form>
+    </div>
   </div>
   <div id="productModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'productModal')">
     <div class="modal" style="max-width: 540px; width: 100%;">
@@ -2148,41 +2196,99 @@
       return ({ clothes: "Clothing", cars: "Cars", electronics: "Electronics", new_goods: "New Goods" })[code] || code;
     }
     async function createListing(event) {
-      event.preventDefault();
-      if (!currentUser) return showPanel("shop");
-      if (!currentShop) { pendingSellerAction = "listing"; closeModal("listingModal"); return openModal("shopModal"); }
+      if (event && event.preventDefault) event.preventDefault();
+      const submitBtn = document.getElementById("listingSubmitBtn") || event?.target?.querySelector?.('button[type="submit"]');
 
-      // Middleware: Check 5-day trial / active subscription
-      const subCheck = checkVendorSubscription(currentShop);
-      if (!subCheck.canList) {
-        setAuthError("listingError", "Your 5-day free trial has expired. Subscribe for K20/week or K100/month to list products.");
-        openSubscriptionModal();
-        return;
-      }
-
-      const file = document.getElementById("listingImage").files[0];
-      const title = document.getElementById("listingTitle").value.trim();
-      const description = document.getElementById("listingDescription").value.trim();
-      const priceZMW = Number(document.getElementById("listingPrice").value);
-      const category = document.getElementById("listingCategory").value;
-      const condition = document.getElementById("listingCondition").value;
-
-      if (!title) {
-        setAuthError("listingError", "Please enter a product title.");
-        return;
-      }
-      if (!priceZMW || priceZMW <= 0) {
-        setAuthError("listingError", "Please enter a valid price in ZMW.");
-        return;
-      }
-
-      const productData = { title, description, priceZMW, category, condition };
-      let imageUrls = [];
       try {
-        if (file && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
-          imageUrls.push(await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, file, "product-images"));
+        setAuthError("listingError", "");
+
+        if (!currentUser) {
+          pendingPanel = "shop";
+          pendingSellerAction = "listing";
+          closeModal("listingModal");
+          openModal("signinModal");
+          showToast("Please sign in to list products");
+          return;
         }
+
+        if (!currentShop) {
+          pendingSellerAction = "listing";
+          closeModal("listingModal");
+          openModal("shopModal");
+          showToast("Please create your shop first, then add products");
+          return;
+        }
+
+        // Middleware: Check 5-day trial / active subscription
+        const subCheck = checkVendorSubscription(currentShop);
+        if (!subCheck.canList) {
+          setAuthError("listingError", "Your 5-day free trial has expired. Subscribe for K20/week or K100/month to list products.");
+          showToast("Trial expired. Please renew store subscription.");
+          openSubscriptionModal();
+          return;
+        }
+
+        const titleEl = document.getElementById("listingTitle");
+        const descEl = document.getElementById("listingDescription");
+        const priceEl = document.getElementById("listingPrice");
+        const catEl = document.getElementById("listingCategory");
+        const condEl = document.getElementById("listingCondition");
+        const fileEl = document.getElementById("listingImage");
+
+        const title = titleEl ? titleEl.value.trim() : "";
+        const description = descEl ? descEl.value.trim() : "";
+        const priceZMW = priceEl ? Number(priceEl.value) : 0;
+        const category = catEl ? catEl.value : "clothes";
+        const condition = condEl ? condEl.value : "used_good";
+        const file = fileEl?.files?.[0];
+
+        if (!title) {
+          setAuthError("listingError", "Please enter a product title.");
+          if (titleEl) titleEl.focus();
+          return;
+        }
+        if (!description) {
+          setAuthError("listingError", "Please enter a brief product description.");
+          if (descEl) descEl.focus();
+          return;
+        }
+        if (!priceZMW || isNaN(priceZMW) || priceZMW <= 0) {
+          setAuthError("listingError", "Please enter a valid price in ZMW.");
+          if (priceEl) priceEl.focus();
+          return;
+        }
+
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Publishing listing...";
+        }
+
+        const productData = { title, description, priceZMW, category, condition };
+        let imageUrls = [];
+
+        // Upload media if photo was selected
+        if (file) {
+          try {
+            if (currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
+              const url = await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, file, "product-images");
+              if (url) imageUrls.push(url);
+            } else if (typeof FileReader !== "undefined") {
+              // Local preview data URL fallback
+              const dataUrl = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = () => resolve(null);
+                reader.readAsDataURL(file);
+              });
+              if (dataUrl) imageUrls.push(dataUrl);
+            }
+          } catch (uploadErr) {
+            console.warn("Product image upload fallback to emoji/local:", uploadErr);
+          }
+        }
+
         let product;
+        const now = Date.now();
         const fullPayload = {
           ...productData,
           shopId: currentShop.id,
@@ -2192,16 +2298,34 @@
           payoutPreference: currentShop.payoutPreference || "mobile_money",
           contactPhone: currentShop.contactPhone || currentShop.mtnPhone || currentShop.airtelPhone || "",
           location: currentShop.physicalAddress || "Zambia",
-          imageUrls
+          imageUrls,
+          createdAt: now
         };
 
-        if (currentUser.firebaseUid && window.afriBayBackend?.createProduct) {
-          const ref = await window.afriBayBackend.createProduct(currentUser.firebaseUid, fullPayload);
-          product = normalizeRemoteProduct({ ...fullPayload, id: ref.id, ownerId: currentUser.firebaseUid, viewCount: 0, isFeatured: false });
-        } else {
+        try {
+          if (currentUser.firebaseUid && window.afriBayBackend?.createProduct) {
+            const ref = await window.afriBayBackend.createProduct(currentUser.firebaseUid, fullPayload);
+            product = normalizeRemoteProduct({ ...fullPayload, id: ref.id, ownerId: currentUser.firebaseUid, viewCount: 0, isFeatured: false });
+          } else {
+            product = {
+              ...fullPayload,
+              id: `local-${now}`,
+              price: productData.priceZMW,
+              category: categoryLabel(productData.category),
+              categoryCode: productData.category,
+              seller: currentShop.shopName,
+              ownerEmail: currentUser.email,
+              art: "✦",
+              artClass: `t${(products.length % 8) + 1}`,
+              viewCount: 0,
+              ad: false
+            };
+          }
+        } catch (dbErr) {
+          console.warn("Cloud Firestore createProduct fallback to local state:", dbErr);
           product = {
             ...fullPayload,
-            id: `local-${Date.now()}`,
+            id: `local-${now}`,
             price: productData.priceZMW,
             category: categoryLabel(productData.category),
             categoryCode: productData.category,
@@ -2214,7 +2338,7 @@
           };
         }
 
-        // Also sync with backend server API
+        // Also sync with backend server API asynchronously
         try {
           const apiBase = getApiBase();
           if (apiBase || window.location.protocol.startsWith("http")) {
@@ -2232,11 +2356,19 @@
         renderProducts();
         renderSellerDashboard();
         populateAdProductSelect();
+
         closeModal("listingModal");
-        event.target.reset();
-        showToast("Your product listing is live!");
+        const formEl = document.getElementById("listingForm") || event?.target;
+        if (formEl && formEl.reset) formEl.reset();
+        showToast(`🎉 "${title}" published successfully!`);
       } catch (error) {
-        setAuthError("listingError", error.message || "Could not publish this listing.");
+        console.error("createListing error:", error);
+        setAuthError("listingError", error.message || "Could not publish this listing. Please check your inputs.");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Publish listing →";
+        }
       }
     }
     function openPromoteAd() {
