@@ -258,7 +258,40 @@
     .escrow-step-line.done { background: var(--green); }
     @keyframes rise { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
     @media (max-width: 900px) { .hero { grid-template-columns: 1fr; } .hero-visual { min-height: 280px; } .product-grid { grid-template-columns: repeat(3, 1fr); } .ad-grid, .cart-layout { grid-template-columns: 1fr; } }
-    @media (max-width: 640px) { .topbar { height: 65px; } .hero { padding-top: 35px; } .hero-visual { min-height: 250px; } .hero-card { width: 145px; padding: 10px; } .hero-art { height: 90px; font-size: 41px; } .hero-card.three { width: 140px; } .product-grid { grid-template-columns: repeat(2, 1fr); gap: 11px; } .product-image { height: 155px; font-size: 56px; } .product-info { padding: 4px 11px 13px; } .product-info h3 { font-size: 13px; } .promo { align-items: start; flex-direction: column; padding: 22px; } .page-title { padding-top: 29px; } .page-title h1 { font-size: 40px; } .cart-row { grid-template-columns: 58px 1fr auto; gap: 9px; } .cart-art { height: 58px; font-size: 28px; } .cart-row h3 { font-size: 13px; } }
+    @media (max-width: 640px) {
+      .topbar { height: 60px; padding: env(safe-area-inset-top, 0px) 14px 0; }
+      .brand { font-size: 18px; }
+      .hero { padding-top: 24px; padding-inline: 14px; gap: 20px; }
+      .hero-visual { min-height: 220px; border-radius: 24px; }
+      .hero-card { width: 135px; padding: 10px; }
+      .hero-art { height: 80px; font-size: 36px; }
+      .hero-card.three { width: 125px; }
+      .section { padding-inline: 14px; }
+      .search-row { padding-inline: 14px; gap: 8px; }
+      .search-box { min-height: 46px; }
+      .filter-btn { min-height: 46px; }
+      .categories { gap: 6px; padding-bottom: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+      .categories::-webkit-scrollbar { display: none; }
+      .category { padding: 8px 13px; font-size: 12px; white-space: nowrap; flex: 0 0 auto; }
+      .product-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .product-image { height: 160px; font-size: 50px; margin: 6px; }
+      .product-info { padding: 4px 10px 12px; }
+      .product-info h3 { font-size: 13px; line-height: 1.3; }
+      .price-line { margin-top: 6px; }
+      .promo { align-items: start; flex-direction: column; padding: 18px; }
+      .page-title { padding-top: 20px; padding-inline: 14px; }
+      .page-title h1 { font-size: 32px; }
+      .cart-row { grid-template-columns: 58px 1fr auto; gap: 9px; }
+      .cart-art { height: 58px; font-size: 28px; }
+      .cart-row h3 { font-size: 13px; }
+      .modal-backdrop { padding: 8px; align-items: flex-end; }
+      .modal { width: 100%; max-height: 92vh; border-radius: 22px 22px 0 0; padding: 22px 16px max(24px, env(safe-area-inset-bottom, 24px)); }
+      input, select, textarea { font-size: 16px !important; } /* Prevents iOS auto-zoom on mobile */
+      .button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+      .icon-btn, .avatar-btn { min-width: 42px; min-height: 42px; }
+      .pay-options { grid-template-columns: 1fr; }
+      .detail-slide-viewer { height: 230px; }
+    }
   </style>
 </head>
 <body>
@@ -740,13 +773,43 @@
           </select>
         </div>
         <div class="form-row">
-          <label for="listingImage">Product photo (optional)</label>
-          <input id="listingImage" type="file" accept="image/*" />
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <label style="margin:0;font-weight:700;">Product Photos &amp; Image Slides</label>
+            <span style="font-size:11px;color:var(--muted)">Up to 8 photo slides</span>
+          </div>
+          <div id="listingPhotosPreview" style="display:flex;gap:8px;overflow-x:auto;padding:6px 0;scrollbar-width:thin;">
+            <span style="font-size:12px;color:var(--muted);padding:4px 0;">No photos added yet. Tap below to add your first photo slide.</span>
+          </div>
+          <button type="button" class="button ghost" onclick="document.getElementById('listingImage').click()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;font-size:13px;border:1px dashed var(--green);background:var(--green-soft);color:var(--green-deep);font-weight:700;border-radius:11px;">
+            📷 ＋ Add Photo Slides (Choose Images)
+          </button>
+          <input id="listingImage" type="file" accept="image/*" multiple onchange="handleListingImagesSelected(event)" style="display:none;" />
+          <small style="color:var(--muted);font-size:11px;display:block;margin-top:5px;">Select 1 or multiple photos. Each image becomes an interactive slide in your product carousel.</small>
         </div>
+
+        <div class="form-row">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <label style="margin:0;font-weight:700;">Product Video Clip (Optional)</label>
+            <span style="font-size:11px;color:var(--muted)">Video showcase</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;">
+            <input id="listingVideoUrl" type="url" placeholder="Paste video link (MP4/WebM) or upload" oninput="previewListingVideoUrl()" style="font-size:13px;padding:10px 12px;" />
+            <button type="button" class="button ghost" onclick="document.getElementById('listingVideoFile').click()" style="padding:10px 14px;font-size:12px;white-space:nowrap;font-weight:700;">
+              📹 Upload Clip
+            </button>
+            <input id="listingVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime,video/*" onchange="handleListingVideoSelected(event)" style="display:none;" />
+          </div>
+          <div id="listingVideoWrapper" style="position:relative;display:none;margin-top:8px;">
+            <video id="listingVideoPreview" controls muted loop playsinline style="width:100%;max-height:160px;border-radius:10px;background:#173d30;object-fit:cover;display:block;"></video>
+            <button type="button" onclick="clearListingVideo()" title="Remove video" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);color:white;border:0;border-radius:50%;width:24px;height:24px;font-size:13px;display:grid;place-items:center;cursor:pointer;">×</button>
+          </div>
+          <small style="color:var(--muted);font-size:11px;display:block;margin-top:4px;">Add a short video to showcase the item in motion. It will appear as an interactive video slide.</small>
+        </div>
+
         <div id="listingError" class="auth-error"></div>
         <div class="modal-foot">
           <button type="button" class="button ghost" onclick="closeModal('listingModal')">Cancel</button>
-          <button id="listingSubmitBtn" type="submit" class="button">Publish listing →</button>
+          <button id="listingSubmitBtn" type="submit" class="button">Publish product →</button>
         </div>
       </form>
     </div>
@@ -1212,9 +1275,15 @@
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
       }[character]));
     }
+    function isValidMediaUrl(url) {
+      if (!url || typeof url !== "string") return false;
+      return url.startsWith("data:") || url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("/");
+    }
     function imageOrEmoji(product, className = "product-image") {
-      const imageUrl = product.imageUrls?.find(url => /^https:\/\//i.test(url));
-      return `<div class="${className} ${escapeHTML(product.artClass || "t1")}">${isSponsored(product) ? '<span class="ad-label">Sponsored</span>' : ""}${imageUrl ? `<img src="${escapeHTML(imageUrl)}" alt="${escapeHTML(product.title)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : `<span>${escapeHTML(product.art || "✦")}</span>`}</div>`;
+      const urls = Array.isArray(product.imageUrls) ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []);
+      const imageUrl = urls.find(isValidMediaUrl);
+      const videoThumb = isValidMediaUrl(product.videoUrl) ? product.videoUrl : "";
+      return `<div class="${className} ${escapeHTML(product.artClass || "t1")}">${isSponsored(product) ? '<span class="ad-label">Sponsored</span>' : ""}${imageUrl ? `<img src="${escapeHTML(imageUrl)}" alt="${escapeHTML(product.title)}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" onerror="this.style.display='none';this.parentElement.querySelector('.art-fallback').style.display='grid'">` : (videoThumb ? `<video src="${escapeHTML(videoThumb)}" muted loop playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" onerror="this.style.display='none';this.parentElement.querySelector('.art-fallback').style.display='grid'"></video>` : "")}<span class="art-fallback" style="display:${imageUrl || videoThumb ? 'none' : 'grid'}">${escapeHTML(product.art || "✦")}</span></div>`;
     }
     window.applyRemoteMarketplace = function(remoteProducts, remoteAds) {
       const realProducts = (remoteProducts || []).filter(item => {
@@ -2201,6 +2270,9 @@
       }
     }
 
+    let pendingListingImages = [];
+    let pendingListingVideo = { file: null, dataUrl: "", sourceUrl: "" };
+
     function openListingEditor() {
       if (!currentUser) {
         pendingPanel = "shop";
@@ -2210,18 +2282,128 @@
       if (!currentShop) {
         pendingSellerAction = "listing";
         openModal("shopModal");
-        return showToast("Create your shop first, then add a listing");
+        return showToast("Create your shop first, then add a product");
       }
       const subCheck = checkVendorSubscription(currentShop);
       if (!subCheck.canList) {
         openSubscriptionModal();
         return showToast("5-day trial expired. Please subscribe to list products.");
       }
+      renderListingPhotosPreview();
       openModal("listingModal");
     }
+
+    async function handleListingImagesSelected(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+      for (const file of files) {
+        if (!file.type.startsWith("image/")) continue;
+        if (pendingListingImages.length >= 8) {
+          showToast("Maximum 8 photo slides per product");
+          break;
+        }
+        try {
+          const dataUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(file);
+          });
+          if (dataUrl) {
+            pendingListingImages.push({ file, dataUrl, name: file.name });
+          }
+        } catch (_) {}
+      }
+      event.target.value = "";
+      renderListingPhotosPreview();
+    }
+
+    function removeListingPhoto(index) {
+      if (index >= 0 && index < pendingListingImages.length) {
+        pendingListingImages.splice(index, 1);
+        renderListingPhotosPreview();
+      }
+    }
+
+    function renderListingPhotosPreview() {
+      const container = document.getElementById("listingPhotosPreview");
+      if (!container) return;
+      if (!pendingListingImages.length) {
+        container.innerHTML = '<span style="font-size:12px;color:var(--muted);padding:4px 0;">No photos added yet. Tap below to add your first photo slide.</span>';
+        return;
+      }
+      container.innerHTML = pendingListingImages.map((img, idx) => `
+        <div style="position:relative;width:68px;height:68px;border-radius:10px;overflow:hidden;border:2px solid var(--green);flex:0 0 auto;background:#f0f2f0;">
+          <img src="${img.dataUrl}" alt="Slide ${idx + 1}" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <button type="button" onclick="removeListingPhoto(${idx})" title="Remove photo" style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,0.75);color:white;border:0;border-radius:50%;width:20px;height:20px;font-size:12px;display:grid;place-items:center;cursor:pointer;line-height:1;padding:0;">×</button>
+          <span style="position:absolute;bottom:2px;left:2px;background:rgba(0,0,0,0.65);color:white;font-size:9px;font-weight:800;padding:1px 4px;border-radius:4px;">#${idx + 1}</span>
+        </div>
+      `).join('');
+    }
+
+    async function handleListingVideoSelected(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const preview = document.getElementById("listingVideoPreview");
+      const wrapper = document.getElementById("listingVideoWrapper");
+      try {
+        const videoDataUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => resolve("");
+          reader.readAsDataURL(file);
+        });
+        pendingListingVideo = { file, dataUrl: videoDataUrl, sourceUrl: videoDataUrl };
+        if (preview && wrapper) {
+          preview.src = videoDataUrl;
+          wrapper.style.display = "block";
+          preview.play().catch(() => {});
+        }
+        const urlInput = document.getElementById("listingVideoUrl");
+        if (urlInput) urlInput.value = "";
+        showToast("✓ Product video clip added!");
+      } catch (err) {
+        console.warn("Video read error:", err);
+      }
+    }
+
+    function previewListingVideoUrl() {
+      const urlInput = document.getElementById("listingVideoUrl");
+      const url = urlInput ? urlInput.value.trim() : "";
+      const preview = document.getElementById("listingVideoPreview");
+      const wrapper = document.getElementById("listingVideoWrapper");
+      if (!url) {
+        if (!pendingListingVideo.file) {
+          if (preview) preview.removeAttribute("src");
+          if (wrapper) wrapper.style.display = "none";
+          pendingListingVideo = { file: null, dataUrl: "", sourceUrl: "" };
+        }
+        return;
+      }
+      pendingListingVideo = { file: null, dataUrl: "", sourceUrl: url };
+      if (preview && wrapper) {
+        preview.src = url;
+        wrapper.style.display = "block";
+        preview.play().catch(() => {});
+      }
+    }
+
+    function clearListingVideo() {
+      pendingListingVideo = { file: null, dataUrl: "", sourceUrl: "" };
+      const preview = document.getElementById("listingVideoPreview");
+      const wrapper = document.getElementById("listingVideoWrapper");
+      if (preview) preview.removeAttribute("src");
+      if (wrapper) wrapper.style.display = "none";
+      const urlInput = document.getElementById("listingVideoUrl");
+      if (urlInput) urlInput.value = "";
+      const fileInput = document.getElementById("listingVideoFile");
+      if (fileInput) fileInput.value = "";
+    }
+
     function categoryLabel(code) {
       return ({ clothes: "Clothing", cars: "Cars", electronics: "Electronics", new_goods: "New Goods" })[code] || code;
     }
+
     async function createListing(event) {
       if (event && event.preventDefault) event.preventDefault();
       const submitBtn = document.getElementById("listingSubmitBtn") || event?.target?.querySelector?.('button[type="submit"]');
@@ -2267,7 +2449,7 @@
         const priceZMW = priceEl ? Number(priceEl.value) : 0;
         const category = catEl ? catEl.value : "clothes";
         const condition = condEl ? condEl.value : "used_good";
-        const file = fileEl?.files?.[0];
+        const singleFile = fileEl?.files?.[0];
 
         if (!title) {
           setAuthError("listingError", "Please enter a product title.");
@@ -2287,20 +2469,20 @@
 
         if (submitBtn) {
           submitBtn.disabled = true;
-          submitBtn.textContent = "Publishing listing...";
+          submitBtn.textContent = "Publishing product...";
         }
 
         const productData = { title, description, priceZMW, category, condition };
-        let imageUrls = [];
 
-        // 1. Instantly read local photo preview into memory via FileReader (sub-second)
-        if (file && typeof FileReader !== "undefined") {
+        // 1. Gather all photo slides from pendingListingImages (plus single file fallback)
+        let imageUrls = pendingListingImages.map(img => img.dataUrl).filter(Boolean);
+        if (singleFile && !imageUrls.length && typeof FileReader !== "undefined") {
           try {
             const dataUrl = await new Promise((resolve) => {
               const reader = new FileReader();
               reader.onload = () => resolve(reader.result);
               reader.onerror = () => resolve("");
-              reader.readAsDataURL(file);
+              reader.readAsDataURL(singleFile);
             });
             if (dataUrl) imageUrls.push(dataUrl);
           } catch (readErr) {
@@ -2308,6 +2490,7 @@
           }
         }
 
+        const videoUrl = pendingListingVideo.sourceUrl || "";
         const now = Date.now();
         const localId = `prod_${now}_${Math.random().toString(36).slice(2, 8)}`;
         const fullPayload = {
@@ -2327,6 +2510,7 @@
           contactPhone: currentShop.contactPhone || currentShop.mtnPhone || currentShop.airtelPhone || "",
           location: currentShop.physicalAddress || "Lusaka, Zambia",
           imageUrls,
+          videoUrl,
           art: "✦",
           artClass: `t${(products.length % 8) + 1}`,
           viewCount: 0,
@@ -2349,6 +2533,10 @@
         closeModal("listingModal");
         const formEl = document.getElementById("listingForm") || event?.target;
         if (formEl && formEl.reset) formEl.reset();
+        pendingListingImages = [];
+        pendingListingVideo = { file: null, dataUrl: "", sourceUrl: "" };
+        renderListingPhotosPreview();
+        clearListingVideo();
         showToast(`🎉 "${title}" published successfully!`);
 
         // 4. Asynchronously sync to backend REST API & cloud in background (fire-and-forget, with timeouts)
@@ -2367,14 +2555,14 @@
 
           // Cloud Storage upload (bounded 4-second timeout)
           let uploadedUrl = null;
-          if (file && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
+          if (singleFile && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
             try {
-              const uploadP = window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, file, "product-images");
+              const uploadP = window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, singleFile, "product-images");
               const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error("Storage timeout")), 4000));
               uploadedUrl = await Promise.race([uploadP, timeoutP]);
               if (uploadedUrl) {
-                product.imageUrls = [uploadedUrl];
-                fullPayload.imageUrls = [uploadedUrl];
+                product.imageUrls = [uploadedUrl, ...product.imageUrls.slice(1)];
+                fullPayload.imageUrls = product.imageUrls;
                 persistLocalAccountData();
                 renderProducts();
               }
@@ -2400,11 +2588,11 @@
         })();
       } catch (error) {
         console.error("createListing error:", error);
-        setAuthError("listingError", error.message || "Could not publish this listing. Please check your inputs.");
+        setAuthError("listingError", error.message || "Could not publish this product. Please check your inputs.");
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.textContent = "Publish listing →";
+          submitBtn.textContent = "Publish product →";
         }
       }
     }
@@ -2631,22 +2819,28 @@
         currentProductSlides = [];
         const adSource = getAdVideoSource(product);
 
-        if (Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
-          product.imageUrls.forEach((url, i) => {
-            if (url && /^https?:\/\//i.test(url)) {
+        const imgList = Array.isArray(product.imageUrls) ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []);
+        if (imgList.length > 0) {
+          imgList.forEach((url, i) => {
+            if (isValidMediaUrl(url)) {
               currentProductSlides.push({ type: "image", src: url, label: `Photo ${i + 1}` });
             }
           });
         }
 
-        // If no valid image urls, use emoji/art
-        if (currentProductSlides.length === 0) {
-          currentProductSlides.push({ type: "art", art: product.art || "✦", artClass: product.artClass || "t1", label: "Overview" });
+        // If product has its own video clip, include it as an interactive slide
+        if (isValidMediaUrl(product.videoUrl)) {
+          currentProductSlides.push({ type: "video", src: product.videoUrl, label: "Product Video" });
         }
 
-        // If product has video ad or is sponsored, include the video slide
-        if (adSource) {
-          currentProductSlides.push({ type: "video", src: adSource, label: "Video Ad" });
+        // If product has a sponsored ad campaign video and it differs from product video, include it
+        if (adSource && adSource !== product.videoUrl && isValidMediaUrl(adSource)) {
+          currentProductSlides.push({ type: "video", src: adSource, label: "Featured Video Ad" });
+        }
+
+        // If no media slides at all, fallback to emoji/art
+        if (currentProductSlides.length === 0) {
+          currentProductSlides.push({ type: "art", art: product.art || "✦", artClass: product.artClass || "t1", label: "Overview" });
         }
 
         currentSlideIndex = 0;
