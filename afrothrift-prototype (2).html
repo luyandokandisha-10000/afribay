@@ -1773,6 +1773,18 @@
 
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Creating shop..."; }
 
+        // Instantly read logo preview if provided
+        if (logoFile && typeof FileReader !== "undefined") {
+          try {
+            logoUrl = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = () => resolve("");
+              reader.readAsDataURL(logoFile);
+            });
+          } catch (_) {}
+        }
+
         const now = Date.now();
         const trialEndsAt = now + (5 * 24 * 60 * 60 * 1000); // 5-day free trial
 
@@ -1795,32 +1807,8 @@
           status: "active"
         };
 
-        try {
-          if (logoFile && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
-            shopPayload.logoUrl = await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, logoFile, "shop-logos");
-          }
-          if (window.afriBayBackend?.createShop && currentUser.firebaseUid) {
-            const ref = await window.afriBayBackend.createShop(currentUser.firebaseUid, shopPayload);
-            currentShop = { id: ref.id, userId: currentUser.firebaseUid, ...shopPayload };
-          } else {
-            currentShop = { id: `local-${now}`, userId: currentUser.firebaseUid || currentUser.email, ...shopPayload };
-          }
-        } catch (error) {
-          console.warn("Falling back to local shop session:", error);
-          currentShop = { id: `local-${now}`, userId: currentUser.firebaseUid || currentUser.email, ...shopPayload };
-        }
-
-        // Also sync with backend server
-        try {
-          const apiBase = getApiBase();
-          if (apiBase || window.location.protocol.startsWith("http")) {
-            fetch(`${apiBase}/api/shops`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ ...shopPayload, userId: currentUser.firebaseUid || currentUser.email })
-            }).catch(() => {});
-          }
-        } catch (_) {}
+        const localShopId = currentShop?.id || `shop_${now}_${Math.random().toString(36).slice(2, 8)}`;
+        currentShop = { id: localShopId, userId: currentUser.firebaseUid || currentUser.email, ...shopPayload };
 
         const userIndex = users.findIndex(user => user.email === currentUser.email);
         if (userIndex >= 0) { users[userIndex].shopName = shopName; localStorage.setItem(USERS_KEY, JSON.stringify(users)); }
@@ -1835,6 +1823,45 @@
           pendingSellerAction = null;
           openModal("listingModal");
         }
+
+        // Background non-blocking sync with backend server & Firestore
+        (async () => {
+          try {
+            const apiBase = getApiBase();
+            if (apiBase || window.location.protocol.startsWith("http")) {
+              fetch(`${apiBase}/api/shops`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...shopPayload, userId: currentUser.firebaseUid || currentUser.email })
+              }).catch(() => {});
+            }
+          } catch (_) {}
+
+          if (logoFile && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
+            try {
+              const upP = window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, logoFile, "shop-logos");
+              const toP = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 4000));
+              const remoteLogo = await Promise.race([upP, toP]);
+              if (remoteLogo && currentShop) {
+                currentShop.logoUrl = remoteLogo;
+                shopPayload.logoUrl = remoteLogo;
+                persistLocalAccountData();
+              }
+            } catch (_) {}
+          }
+
+          if (window.afriBayBackend?.createShop && currentUser.firebaseUid) {
+            try {
+              const fsP = window.afriBayBackend.createShop(currentUser.firebaseUid, shopPayload);
+              const toP = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 4000));
+              const ref = await Promise.race([fsP, toP]);
+              if (ref && ref.id && currentShop) {
+                currentShop.id = ref.id;
+                persistLocalAccountData();
+              }
+            } catch (_) {}
+          }
+        })();
       } catch (err) {
         console.error("createShop error:", err);
         setAuthError("shopError", err.message || "Error creating shop. Please try again.");
@@ -2266,90 +2293,51 @@
         const productData = { title, description, priceZMW, category, condition };
         let imageUrls = [];
 
-        // Upload media if photo was selected
-        if (file) {
+        // 1. Instantly read local photo preview into memory via FileReader (sub-second)
+        if (file && typeof FileReader !== "undefined") {
           try {
-            if (currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
-              const url = await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, file, "product-images");
-              if (url) imageUrls.push(url);
-            } else if (typeof FileReader !== "undefined") {
-              // Local preview data URL fallback
-              const dataUrl = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = () => resolve(null);
-                reader.readAsDataURL(file);
-              });
-              if (dataUrl) imageUrls.push(dataUrl);
-            }
-          } catch (uploadErr) {
-            console.warn("Product image upload fallback to emoji/local:", uploadErr);
+            const dataUrl = await new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = () => resolve("");
+              reader.readAsDataURL(file);
+            });
+            if (dataUrl) imageUrls.push(dataUrl);
+          } catch (readErr) {
+            console.warn("Local image preview notice:", readErr);
           }
         }
 
-        let product;
         const now = Date.now();
+        const localId = `prod_${now}_${Math.random().toString(36).slice(2, 8)}`;
         const fullPayload = {
           ...productData,
+          id: localId,
+          price: productData.priceZMW,
+          category: categoryLabel(productData.category),
+          categoryCode: productData.category,
           shopId: currentShop.id,
           shopName: currentShop.shopName,
+          seller: currentShop.shopName,
+          ownerEmail: currentUser.email,
+          ownerId: currentUser.firebaseUid || currentUser.email,
           mtnPhone: currentShop.mtnPhone || "",
           airtelPhone: currentShop.airtelPhone || "",
           payoutPreference: currentShop.payoutPreference || "mobile_money",
           contactPhone: currentShop.contactPhone || currentShop.mtnPhone || currentShop.airtelPhone || "",
-          location: currentShop.physicalAddress || "Zambia",
+          location: currentShop.physicalAddress || "Lusaka, Zambia",
           imageUrls,
+          art: "✦",
+          artClass: `t${(products.length % 8) + 1}`,
+          viewCount: 0,
+          isFeatured: false,
+          ad: false,
           createdAt: now
         };
 
-        try {
-          if (currentUser.firebaseUid && window.afriBayBackend?.createProduct) {
-            const ref = await window.afriBayBackend.createProduct(currentUser.firebaseUid, fullPayload);
-            product = normalizeRemoteProduct({ ...fullPayload, id: ref.id, ownerId: currentUser.firebaseUid, viewCount: 0, isFeatured: false });
-          } else {
-            product = {
-              ...fullPayload,
-              id: `local-${now}`,
-              price: productData.priceZMW,
-              category: categoryLabel(productData.category),
-              categoryCode: productData.category,
-              seller: currentShop.shopName,
-              ownerEmail: currentUser.email,
-              art: "✦",
-              artClass: `t${(products.length % 8) + 1}`,
-              viewCount: 0,
-              ad: false
-            };
-          }
-        } catch (dbErr) {
-          console.warn("Cloud Firestore createProduct fallback to local state:", dbErr);
-          product = {
-            ...fullPayload,
-            id: `local-${now}`,
-            price: productData.priceZMW,
-            category: categoryLabel(productData.category),
-            categoryCode: productData.category,
-            seller: currentShop.shopName,
-            ownerEmail: currentUser.email,
-            art: "✦",
-            artClass: `t${(products.length % 8) + 1}`,
-            viewCount: 0,
-            ad: false
-          };
-        }
+        const product = normalizeRemoteProduct({ ...fullPayload });
 
-        // Also sync with backend server API asynchronously
-        try {
-          const apiBase = getApiBase();
-          if (apiBase || window.location.protocol.startsWith("http")) {
-            fetch(`${apiBase}/api/products`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(fullPayload)
-            }).catch(() => {});
-          }
-        } catch (_) {}
-
+        // 2. Publish IMMEDIATELY to local store & update UI without any delay!
         ownProducts.unshift(product);
         products.unshift(product);
         persistLocalAccountData();
@@ -2357,10 +2345,59 @@
         renderSellerDashboard();
         populateAdProductSelect();
 
+        // 3. Immediately close modal, reset form, and display success toast
         closeModal("listingModal");
         const formEl = document.getElementById("listingForm") || event?.target;
         if (formEl && formEl.reset) formEl.reset();
         showToast(`🎉 "${title}" published successfully!`);
+
+        // 4. Asynchronously sync to backend REST API & cloud in background (fire-and-forget, with timeouts)
+        (async () => {
+          // Sync with backend server
+          try {
+            const apiBase = getApiBase();
+            if (apiBase || window.location.protocol.startsWith("http")) {
+              fetch(`${apiBase}/api/products`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(fullPayload)
+              }).catch(() => {});
+            }
+          } catch (_) {}
+
+          // Cloud Storage upload (bounded 4-second timeout)
+          let uploadedUrl = null;
+          if (file && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
+            try {
+              const uploadP = window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, file, "product-images");
+              const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error("Storage timeout")), 4000));
+              uploadedUrl = await Promise.race([uploadP, timeoutP]);
+              if (uploadedUrl) {
+                product.imageUrls = [uploadedUrl];
+                fullPayload.imageUrls = [uploadedUrl];
+                persistLocalAccountData();
+                renderProducts();
+              }
+            } catch (upErr) {
+              console.warn("Cloud storage upload notice:", upErr.message);
+            }
+          }
+
+          // Cloud Firestore createProduct (bounded 4-second timeout)
+          if (currentUser.firebaseUid && window.afriBayBackend?.createProduct) {
+            try {
+              const firestoreP = window.afriBayBackend.createProduct(currentUser.firebaseUid, fullPayload);
+              const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error("Firestore timeout")), 4000));
+              const ref = await Promise.race([firestoreP, timeoutP]);
+              if (ref && ref.id) {
+                product.id = ref.id;
+                persistLocalAccountData();
+              }
+            } catch (dbErr) {
+              console.warn("Cloud Firestore createProduct notice:", dbErr.message);
+            }
+          }
+        })();
       } catch (error) {
         console.error("createListing error:", error);
         setAuthError("listingError", error.message || "Could not publish this listing. Please check your inputs.");
@@ -2446,25 +2483,10 @@
         if (!videoUrl) return setAuthError("adVideoError", "Add a short video URL or upload a video clip to feature.");
         const days = duration === "weekly" ? 7 : (duration === "monthly" ? 30 : 1);
         const price = 0; // 100% Free to publish!
-        if (window.afriBayBackend?.createVideoAd && currentUser.firebaseUid && product.shopId) {
-          try {
-            if (pendingVideoFile) videoUrl = await window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, pendingVideoFile, "video-ads");
-            await window.afriBayBackend.createVideoAd(currentUser.firebaseUid, {
-              shopId: product.shopId,
-              productId: product.id,
-              videoUrl,
-              caption: `${product.title} on AfriBay`,
-              priceZMW: 0,
-              isPaid: true,
-              duration
-            });
-          } catch (error) {
-            console.warn("Could not save video ad to Firestore, saving locally:", error);
-          }
-        }
         adCampaigns = adCampaigns.filter(ad => String(ad.productId) !== String(productId));
         adCampaigns.push({ productId, duration, price: 0, videoUrl, createdBy: currentUser.email, createdAt: Date.now(), expiresAt: Date.now() + days * 24 * 60 * 60 * 1000 });
         localStorage.setItem(ADS_KEY, JSON.stringify(adCampaigns));
+        const videoFileToUpload = pendingVideoFile;
         pendingVideoFile = null;
         pendingVideoSource = "";
         renderProducts();
@@ -2473,6 +2495,35 @@
         closeModal("boostModal");
         showPanel("ads");
         showToast(`✓ Free Ad Published! "${product.title}" is now live in the Ads feed`);
+
+        // Async sync video ad to Firestore in background with bounded timeout
+        if (window.afriBayBackend?.createVideoAd && currentUser.firebaseUid && product.shopId) {
+          (async () => {
+            try {
+              let finalVidUrl = videoUrl;
+              if (videoFileToUpload && window.afriBayBackend.uploadUserMedia) {
+                try {
+                  const upP = window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, videoFileToUpload, "video-ads");
+                  const toP = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 4000));
+                  finalVidUrl = await Promise.race([upP, toP]) || videoUrl;
+                } catch (_) {}
+              }
+              const adP = window.afriBayBackend.createVideoAd(currentUser.firebaseUid, {
+                shopId: product.shopId,
+                productId: product.id,
+                videoUrl: finalVidUrl,
+                caption: `${product.title} on AfriBay`,
+                priceZMW: 0,
+                isPaid: true,
+                duration
+              });
+              const toP = new Promise((_, rej) => setTimeout(() => rej(new Error("Timeout")), 4000));
+              await Promise.race([adP, toP]);
+            } catch (error) {
+              console.warn("Could not save video ad to Firestore in background:", error.message);
+            }
+          })();
+        }
       } catch (err) {
         console.error("createAd error:", err);
         setAuthError("adVideoError", err.message || "Failed to create ad.");

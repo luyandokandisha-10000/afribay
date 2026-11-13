@@ -19,6 +19,13 @@ function requireStorage() {
   return storage;
 }
 
+function withTimeout(promise, ms = 4500) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`Operation timed out after ${ms}ms`)), ms))
+  ]);
+}
+
 // ── User profile ──────────────────────────────────────────────
 export async function upsertUserProfile(user) {
   const firestore = requireDb();
@@ -39,7 +46,7 @@ export async function createShop(uid, { shopName, mtnPhone, airtelPhone, contact
   const firestore = requireDb();
   const now = Date.now();
   const trialExpiry = trialEndsAt || (now + 5 * 24 * 60 * 60 * 1000); // 5-day free trial default
-  return addDoc(collection(firestore, "shops"), {
+  return withTimeout(addDoc(collection(firestore, "shops"), {
     userId:             uid,
     shopName:           shopName           || "",
     mtnPhone:           mtnPhone           || "",
@@ -58,7 +65,7 @@ export async function createShop(uid, { shopName, mtnPhone, airtelPhone, contact
     status:             "active",
     createdAt:          serverTimestamp(),
     updatedAt:          serverTimestamp(),
-  });
+  }), 5000);
 }
 
 export async function loadUserShop(uid) {
@@ -96,14 +103,14 @@ export async function deleteShop(uid, shopId) {
 // ── Products ──────────────────────────────────────────────────
 export async function createProduct(uid, productData) {
   const firestore = requireDb();
-  return addDoc(collection(firestore, "products"), {
+  return withTimeout(addDoc(collection(firestore, "products"), {
     ...productData,
     ownerId:    uid,
     ownerEmail: "",
     isFeatured: false,
     viewCount:  0,
     createdAt:  serverTimestamp(),
-  });
+  }), 5000);
 }
 
 export async function deleteProduct(uid, productId) {
@@ -147,7 +154,7 @@ export async function loadUserProducts(uid) {
 // ── Video Ads ─────────────────────────────────────────────────
 export async function createVideoAd(uid, { shopId, productId, videoUrl, caption, priceZMW, isPaid, duration }) {
   const firestore = requireDb();
-  return addDoc(collection(firestore, "video_ads"), {
+  return withTimeout(addDoc(collection(firestore, "video_ads"), {
     shopId,
     productId,
     videoUrl,
@@ -157,7 +164,7 @@ export async function createVideoAd(uid, { shopId, productId, videoUrl, caption,
     duration:  duration  || "daily",
     createdBy: uid,
     createdAt: serverTimestamp(),
-  });
+  }), 5000);
 }
 
 export async function loadActiveAds() {
@@ -343,6 +350,9 @@ export async function uploadUserMedia(uid, file, folder) {
   const stor = requireStorage();
   const filename = `${folder}/${uid}/${Date.now()}-${file.name}`;
   const storageRef = ref(stor, filename);
-  const snapshot = await uploadBytes(storageRef, file);
-  return getDownloadURL(snapshot.ref);
+  const doUpload = async () => {
+    const snapshot = await uploadBytes(storageRef, file);
+    return getDownloadURL(snapshot.ref);
+  };
+  return withTimeout(doUpload(), 6000);
 }
