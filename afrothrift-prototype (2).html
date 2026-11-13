@@ -1121,8 +1121,20 @@
   </script>
 
   <script>
+    // Public platform keys for cross-account discoverability
+    const PUBLIC_PRODUCTS_KEY = "afribay_public_products";
+    const PUBLIC_SHOPS_KEY = "afribay_public_shops";
+
     // Real Marketplace Products (Starts completely clean — no fake or dummy listings)
     const products = [];
+    (function loadInitialPublicProducts() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(PUBLIC_PRODUCTS_KEY) || "[]");
+        if (Array.isArray(stored) && stored.length > 0) {
+          products.push(...stored);
+        }
+      } catch (_) {}
+    })();
     let activeCategory = "All";
     let cart = [];
     const SESSION_KEY = "afribay_session";
@@ -1265,12 +1277,53 @@
         }
       }
     }
-    function persistLocalAccountData() {
-      if (!currentUser) return;
+    function getPublicShops() {
       try {
-        const key = currentUser.firebaseUid || currentUser.email;
-        safeSetItem(`afribay_shop_${key}`, JSON.stringify(currentShop));
-        safeSetItem(`afribay_products_${key}`, JSON.stringify(ownProducts));
+        const stored = JSON.parse(localStorage.getItem(PUBLIC_SHOPS_KEY) || "[]");
+        return Array.isArray(stored) ? stored : [];
+      } catch (_) { return []; }
+    }
+    function savePublicShops(shopList) {
+      safeSetItem(PUBLIC_SHOPS_KEY, JSON.stringify(shopList || []));
+    }
+    function getPublicProducts() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(PUBLIC_PRODUCTS_KEY) || "[]");
+        return Array.isArray(stored) ? stored : [];
+      } catch (_) { return []; }
+    }
+    function savePublicProducts(prodList) {
+      safeSetItem(PUBLIC_PRODUCTS_KEY, JSON.stringify(prodList || []));
+    }
+
+    function persistLocalAccountData() {
+      try {
+        // 1. Maintain global public shop list across accounts
+        if (currentShop) {
+          const publicShops = getPublicShops();
+          const sIdx = publicShops.findIndex(s => String(s.id) === String(currentShop.id) || (s.userId && s.userId === currentShop.userId));
+          if (sIdx >= 0) publicShops[sIdx] = currentShop;
+          else publicShops.unshift(currentShop);
+          savePublicShops(publicShops);
+        }
+
+        // 2. Maintain global public product catalog across accounts
+        if (Array.isArray(ownProducts) && ownProducts.length) {
+          const publicProducts = getPublicProducts();
+          ownProducts.forEach(op => {
+            const pIdx = publicProducts.findIndex(p => String(p.id) === String(op.id));
+            if (pIdx >= 0) publicProducts[pIdx] = op;
+            else publicProducts.unshift(op);
+          });
+          savePublicProducts(publicProducts);
+        }
+
+        // 3. User-scoped persistence
+        if (currentUser) {
+          const key = currentUser.firebaseUid || currentUser.email;
+          safeSetItem(`afribay_shop_${key}`, JSON.stringify(currentShop));
+          safeSetItem(`afribay_products_${key}`, JSON.stringify(ownProducts));
+        }
         safeSetItem(cartKey(), JSON.stringify(cart));
       } catch (err) {
         console.warn("persistLocalAccountData non-fatal storage error:", err);
@@ -1284,8 +1337,27 @@
     function restoreLocalAccount() {
       const key = currentUser?.firebaseUid || currentUser?.email;
       currentShop = key ? JSON.parse(localStorage.getItem(`afribay_shop_${key}`) || "null") : null;
+      if (!currentShop && key) {
+        const publicShops = getPublicShops();
+        currentShop = publicShops.find(s => s.userId === key || s.userId === currentUser?.email || s.userId === currentUser?.firebaseUid) || null;
+      }
       ownProducts = key ? JSON.parse(localStorage.getItem(`afribay_products_${key}`) || "[]") : [];
+
+      // Ensure products array has all public products so all accounts see them
+      const publicProducts = getPublicProducts();
+      publicProducts.forEach(pubP => {
+        if (!products.some(p => String(p.id) === String(pubP.id))) {
+          products.push(pubP);
+        }
+      });
+      ownProducts.forEach(op => {
+        if (!products.some(p => String(p.id) === String(op.id))) {
+          products.unshift(op);
+        }
+      });
+
       cart = JSON.parse(localStorage.getItem(cartKey()) || "[]");
+      renderProducts();
       renderSellerDashboard();
       updateCart();
     }
@@ -1322,11 +1394,23 @@
       });
       const realAds = (remoteAds || []).filter(ad => ad.createdBy !== "demo");
       const adsByProduct = new Map(realAds.map(ad => [String(ad.productId), ad]));
-      products.splice(0, products.length, ...realProducts.map(item => {
+      
+      const normalizedRemote = realProducts.map(item => {
         const normalized = normalizeRemoteProduct(item);
         const ad = adsByProduct.get(String(item.id));
         return { ...normalized, videoUrl: ad?.videoUrl || normalized.videoUrl, ad: normalized.ad || Boolean(ad) };
-      }));
+      });
+
+      // Merge remote products into public products without deleting local listings
+      const localPublic = getPublicProducts();
+      const mergedMap = new Map();
+      localPublic.forEach(p => mergedMap.set(String(p.id), p));
+      normalizedRemote.forEach(p => mergedMap.set(String(p.id), p));
+      const combined = Array.from(mergedMap.values());
+      
+      savePublicProducts(combined);
+      products.splice(0, products.length, ...combined);
+
       adCampaigns = realAds.map(ad => ({
         productId: String(ad.productId),
         videoUrl: ad.videoUrl,
@@ -1576,7 +1660,20 @@
         currentShop = null;
         ownProducts = [];
         localStorage.removeItem(SESSION_KEY);
+
+        // Keep all public products loaded so the homepage displays the marketplace to visitors
+        const publicProducts = getPublicProducts();
+        publicProducts.forEach(pubP => {
+          if (!products.some(p => String(p.id) === String(pubP.id))) {
+            products.push(pubP);
+          }
+        });
+
+        cart = JSON.parse(localStorage.getItem(cartKey()) || "[]");
         renderAuthUI();
+        renderProducts();
+        renderSellerDashboard();
+        updateCart();
         showPanel("home");
         showToast("You have been signed out");
       } catch (err) {
@@ -1998,6 +2095,12 @@
         ownProducts = [];
         currentShop = null;
 
+        // Clean up from global public shops & public products
+        const publicShops = getPublicShops().filter(s => s.id !== shopId && s.shopName !== shopName);
+        savePublicShops(publicShops);
+        const publicProducts = getPublicProducts().filter(p => p.shopId !== shopId && p.seller !== shopName);
+        savePublicProducts(publicProducts);
+
         if (currentUser) {
           currentUser.shopName = "";
           localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
@@ -2198,6 +2301,10 @@
         if (pIdx >= 0) products.splice(pIdx, 1);
         ownProducts = ownProducts.filter(p => String(p.id) !== String(productId));
         cart = cart.filter(item => String(item.id) !== String(productId));
+
+        // Clean up from global public products
+        const publicProducts = getPublicProducts().filter(p => String(p.id) !== String(productId));
+        savePublicProducts(publicProducts);
 
         persistLocalAccountData();
         updateCart();
@@ -3000,10 +3107,20 @@
         if (!product) return;
         const sellerName = product.seller || "AfriBay Shop";
         
+        // Lookup shop details from public shops or currentShop
+        const publicShops = getPublicShops();
+        const matchedShop = publicShops.find(s => 
+          (product.shopId && s.id === product.shopId) ||
+          (product.seller && s.shopName.toLowerCase() === sellerName.toLowerCase()) ||
+          (product.ownerEmail && s.userId === product.ownerEmail) ||
+          (product.ownerId && s.userId === product.ownerId)
+        ) || (currentShop && currentShop.shopName.toLowerCase() === sellerName.toLowerCase() ? currentShop : null);
+
         // Find all products by this seller/shop
         let sellerProducts = products.filter(p => 
           (product.shopId && p.shopId === product.shopId) ||
           (product.ownerEmail && p.ownerEmail === product.ownerEmail) ||
+          (product.ownerId && p.ownerId === product.ownerId) ||
           (product.seller && p.seller.toLowerCase() === sellerName.toLowerCase())
         );
         // If this seller has only 1 listing, include related products from same category so visitors have plenty to explore
@@ -3012,14 +3129,18 @@
           sellerProducts = [product, ...sameCat.slice(0, 3)];
         }
 
-        const titleEl = document.getElementById("shopViewTitle"); if (titleEl) titleEl.textContent = sellerName;
-        const nameEl = document.getElementById("shopViewName"); if (nameEl) nameEl.textContent = sellerName;
-        const avEl = document.getElementById("shopViewAvatar"); if (avEl) avEl.textContent = initials(sellerName);
-        const locEl = document.getElementById("shopViewLocation"); if (locEl) locEl.textContent = `${product.location || "Lusaka, Zambia"} · Active Seller`;
-        const descEl = document.getElementById("shopViewDescription"); if (descEl) descEl.textContent = `Welcome to ${sellerName}! Browse all active listings from this verified merchant.`;
+        const shopDisplayName = matchedShop?.shopName || sellerName;
+        const shopDesc = matchedShop?.description || `Welcome to ${shopDisplayName}! Browse all active listings from this verified merchant.`;
+        const shopLoc = matchedShop?.physicalAddress || product.location || "Lusaka, Zambia";
+
+        const titleEl = document.getElementById("shopViewTitle"); if (titleEl) titleEl.textContent = shopDisplayName;
+        const nameEl = document.getElementById("shopViewName"); if (nameEl) nameEl.textContent = shopDisplayName;
+        const avEl = document.getElementById("shopViewAvatar"); if (avEl) avEl.textContent = initials(shopDisplayName);
+        const locEl = document.getElementById("shopViewLocation"); if (locEl) locEl.textContent = `${shopLoc} · Active Seller`;
+        const descEl = document.getElementById("shopViewDescription"); if (descEl) descEl.textContent = shopDesc;
         const countEl = document.getElementById("shopViewCount"); if (countEl) countEl.textContent = `${sellerProducts.length} listing${sellerProducts.length === 1 ? "" : "s"} from this seller`;
 
-        const phone = (product.contactPhone || "+260971234567").replace(/[^\d+]/g, "");
+        const phone = (matchedShop?.contactPhone || matchedShop?.mtnPhone || matchedShop?.airtelPhone || product.contactPhone || "+260971234567").replace(/[^\d+]/g, "");
         const wa = document.getElementById("shopViewWhatsApp"); if (wa) wa.href = `https://wa.me/${phone.replace(/\D/g, "")}`;
         const call = document.getElementById("shopViewCall"); if (call) call.href = `tel:${phone}`;
 
