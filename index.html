@@ -1245,14 +1245,42 @@
         ad: Boolean(item.isFeatured)
       };
     }
+    function safeSetItem(key, value) {
+      try {
+        localStorage.setItem(key, value);
+      } catch (e) {
+        console.warn("Storage quota exceeded or restricted while writing:", key, e?.name || e);
+        // Try trimming redundant caches if quota hit
+        try {
+          // Remove old non-critical keys if any
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && (k.startsWith("cached_") || k.includes("_backup_"))) {
+              localStorage.removeItem(k);
+            }
+          }
+          localStorage.setItem(key, value);
+        } catch (_) {
+          // Non-fatal: in-memory state remains fully functional
+        }
+      }
+    }
     function persistLocalAccountData() {
       if (!currentUser) return;
-      const key = currentUser.firebaseUid || currentUser.email;
-      localStorage.setItem(`afribay_shop_${key}`, JSON.stringify(currentShop));
-      localStorage.setItem(`afribay_products_${key}`, JSON.stringify(ownProducts));
-      localStorage.setItem(cartKey(), JSON.stringify(cart));
+      try {
+        const key = currentUser.firebaseUid || currentUser.email;
+        safeSetItem(`afribay_shop_${key}`, JSON.stringify(currentShop));
+        safeSetItem(`afribay_products_${key}`, JSON.stringify(ownProducts));
+        safeSetItem(cartKey(), JSON.stringify(cart));
+      } catch (err) {
+        console.warn("persistLocalAccountData non-fatal storage error:", err);
+      }
     }
-    function saveLocalCart() { localStorage.setItem(cartKey(), JSON.stringify(cart)); }
+    function saveLocalCart() {
+      try {
+        safeSetItem(cartKey(), JSON.stringify(cart));
+      } catch (_) {}
+    }
     function restoreLocalAccount() {
       const key = currentUser?.firebaseUid || currentUser?.email;
       currentShop = key ? JSON.parse(localStorage.getItem(`afribay_shop_${key}`) || "null") : null;
@@ -2293,6 +2321,46 @@
       openModal("listingModal");
     }
 
+    // Client-side image compression to prevent localStorage QuotaExceededError
+    async function compressImageFile(file, maxWidth = 960, maxHeight = 960, quality = 0.72) {
+      if (!file || !file.type.startsWith("image/")) return "";
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            try {
+              let width = img.width;
+              let height = img.height;
+              if (width > maxWidth || height > maxHeight) {
+                if (width > height) {
+                  height = Math.round((height * maxWidth) / width);
+                  width = maxWidth;
+                } else {
+                  width = Math.round((width * maxHeight) / height);
+                  height = maxHeight;
+                }
+              }
+              const canvas = document.createElement("canvas");
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext("2d");
+              if (!ctx) return resolve(e.target.result);
+              ctx.drawImage(img, 0, 0, width, height);
+              const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+              resolve(compressedDataUrl || e.target.result);
+            } catch (_) {
+              resolve(e.target.result);
+            }
+          };
+          img.onerror = () => resolve(e.target.result);
+          img.src = e.target.result;
+        };
+        reader.onerror = () => resolve("");
+        reader.readAsDataURL(file);
+      });
+    }
+
     async function handleListingImagesSelected(event) {
       const files = Array.from(event.target.files || []);
       if (!files.length) return;
@@ -2303,14 +2371,10 @@
           break;
         }
         try {
-          const dataUrl = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = () => resolve("");
-            reader.readAsDataURL(file);
-          });
-          if (dataUrl) {
-            pendingListingImages.push({ file, dataUrl, name: file.name });
+          // Auto-compress high-res phone camera photos to lightweight ~40-60KB JPEGs
+          const compressedDataUrl = await compressImageFile(file, 960, 960, 0.72);
+          if (compressedDataUrl) {
+            pendingListingImages.push({ file, dataUrl: compressedDataUrl, name: file.name });
           }
         } catch (_) {}
       }
@@ -2347,15 +2411,22 @@
       const preview = document.getElementById("listingVideoPreview");
       const wrapper = document.getElementById("listingVideoWrapper");
       try {
-        const videoDataUrl = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = () => resolve("");
-          reader.readAsDataURL(file);
-        });
-        pendingListingVideo = { file, dataUrl: videoDataUrl, sourceUrl: videoDataUrl };
+        // Use lightweight Blob Object URL to avoid blowing through localStorage 5MB quota
+        let videoPlaybackUrl = "";
+        if (typeof URL !== "undefined" && URL.createObjectURL) {
+          videoPlaybackUrl = URL.createObjectURL(file);
+        }
+        if (!videoPlaybackUrl) {
+          videoPlaybackUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(file);
+          });
+        }
+        pendingListingVideo = { file, dataUrl: videoPlaybackUrl, sourceUrl: videoPlaybackUrl };
         if (preview && wrapper) {
-          preview.src = videoDataUrl;
+          preview.src = videoPlaybackUrl;
           wrapper.style.display = "block";
           preview.play().catch(() => {});
         }
@@ -2476,15 +2547,10 @@
 
         // 1. Gather all photo slides from pendingListingImages (plus single file fallback)
         let imageUrls = pendingListingImages.map(img => img.dataUrl).filter(Boolean);
-        if (singleFile && !imageUrls.length && typeof FileReader !== "undefined") {
+        if (singleFile && !imageUrls.length) {
           try {
-            const dataUrl = await new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result);
-              reader.onerror = () => resolve("");
-              reader.readAsDataURL(singleFile);
-            });
-            if (dataUrl) imageUrls.push(dataUrl);
+            const compressed = await compressImageFile(singleFile, 960, 960, 0.72);
+            if (compressed) imageUrls.push(compressed);
           } catch (readErr) {
             console.warn("Local image preview notice:", readErr);
           }
@@ -2524,7 +2590,11 @@
         // 2. Publish IMMEDIATELY to local store & update UI without any delay!
         ownProducts.unshift(product);
         products.unshift(product);
-        persistLocalAccountData();
+        try {
+          persistLocalAccountData();
+        } catch (storageErr) {
+          console.warn("Non-fatal storage notice while persisting listing:", storageErr);
+        }
         renderProducts();
         renderSellerDashboard();
         populateAdProductSelect();
