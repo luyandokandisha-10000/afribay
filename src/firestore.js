@@ -106,7 +106,7 @@ export async function createProduct(uid, productData) {
   return withTimeout(addDoc(collection(firestore, "products"), {
     ...productData,
     ownerId:    uid,
-    ownerEmail: "",
+    ownerEmail: productData.ownerEmail || "",
     isFeatured: false,
     viewCount:  0,
     createdAt:  serverTimestamp(),

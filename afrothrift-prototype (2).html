@@ -1301,8 +1301,8 @@
         // 1. Maintain global public shop list across accounts
         if (currentShop) {
           const publicShops = getPublicShops();
-          const sIdx = publicShops.findIndex(s => String(s.id) === String(currentShop.id) || (s.userId && s.userId === currentShop.userId));
-          if (sIdx >= 0) publicShops[sIdx] = currentShop;
+          const sIdx = publicShops.findIndex(s => String(s.id) === String(currentShop.id) || (s.userId && (s.userId === currentShop.userId || s.userId === currentUser?.email || s.userId === currentUser?.firebaseUid)));
+          if (sIdx >= 0) publicShops[sIdx] = { ...publicShops[sIdx], ...currentShop };
           else publicShops.unshift(currentShop);
           savePublicShops(publicShops);
         }
@@ -1310,19 +1310,17 @@
         // 2. Maintain global public product catalog across accounts
         if (Array.isArray(ownProducts) && ownProducts.length) {
           const publicProducts = getPublicProducts();
-          ownProducts.forEach(op => {
-            const pIdx = publicProducts.findIndex(p => String(p.id) === String(op.id));
-            if (pIdx >= 0) publicProducts[pIdx] = op;
-            else publicProducts.unshift(op);
-          });
-          savePublicProducts(publicProducts);
+          const prodMap = new Map();
+          publicProducts.forEach(p => prodMap.set(String(p.id), p));
+          ownProducts.forEach(op => prodMap.set(String(op.id), op));
+          savePublicProducts(Array.from(prodMap.values()));
         }
 
         // 3. User-scoped persistence
         if (currentUser) {
           const key = currentUser.firebaseUid || currentUser.email;
-          safeSetItem(`afribay_shop_${key}`, JSON.stringify(currentShop));
-          safeSetItem(`afribay_products_${key}`, JSON.stringify(ownProducts));
+          if (currentShop) safeSetItem(`afribay_shop_${key}`, JSON.stringify(currentShop));
+          if (Array.isArray(ownProducts) && ownProducts.length) safeSetItem(`afribay_products_${key}`, JSON.stringify(ownProducts));
         }
         safeSetItem(cartKey(), JSON.stringify(cart));
       } catch (err) {
@@ -1341,20 +1339,33 @@
         const publicShops = getPublicShops();
         currentShop = publicShops.find(s => s.userId === key || s.userId === currentUser?.email || s.userId === currentUser?.firebaseUid) || null;
       }
-      ownProducts = key ? JSON.parse(localStorage.getItem(`afribay_products_${key}`) || "[]") : [];
+      if (currentShop && currentUser && !currentUser.shopName) {
+        currentUser.shopName = currentShop.shopName;
+      }
 
-      // Ensure products array has all public products so all accounts see them
+      const storedOwn = key ? JSON.parse(localStorage.getItem(`afribay_products_${key}`) || "[]") : [];
       const publicProducts = getPublicProducts();
-      publicProducts.forEach(pubP => {
-        if (!products.some(p => String(p.id) === String(pubP.id))) {
-          products.push(pubP);
-        }
-      });
-      ownProducts.forEach(op => {
-        if (!products.some(p => String(p.id) === String(op.id))) {
-          products.unshift(op);
-        }
-      });
+
+      // Find any products in public registry that belong to this user / shop
+      const matchingFromPublic = currentUser ? publicProducts.filter(p => {
+        const matchUser = (p.ownerId && (p.ownerId === currentUser.firebaseUid || p.ownerId === currentUser.email)) ||
+                          (p.ownerEmail && p.ownerEmail === currentUser.email);
+        const matchShop = currentShop && ((p.shopId && String(p.shopId) === String(currentShop.id)) ||
+                          (p.seller && p.seller.toLowerCase() === currentShop.shopName.toLowerCase()));
+        return matchUser || matchShop;
+      }) : [];
+
+      const ownMap = new Map();
+      storedOwn.forEach(p => ownMap.set(String(p.id), p));
+      matchingFromPublic.forEach(p => ownMap.set(String(p.id), p));
+      ownProducts = Array.from(ownMap.values());
+
+      // Ensure products array on homepage has all public products and own products
+      const allProductMap = new Map();
+      products.forEach(p => allProductMap.set(String(p.id), p));
+      publicProducts.forEach(p => allProductMap.set(String(p.id), p));
+      ownProducts.forEach(p => allProductMap.set(String(p.id), p));
+      products.splice(0, products.length, ...Array.from(allProductMap.values()));
 
       cart = JSON.parse(localStorage.getItem(cartKey()) || "[]");
       renderProducts();
@@ -1405,6 +1416,8 @@
       const localPublic = getPublicProducts();
       const mergedMap = new Map();
       localPublic.forEach(p => mergedMap.set(String(p.id), p));
+      (products || []).forEach(p => mergedMap.set(String(p.id), p));
+      (ownProducts || []).forEach(p => mergedMap.set(String(p.id), p));
       normalizedRemote.forEach(p => mergedMap.set(String(p.id), p));
       const combined = Array.from(mergedMap.values());
       
@@ -1470,8 +1483,36 @@
     };
     window.applyAccountData = function(data) {
       try {
-        currentShop = data.shop || null;
-        if (Array.isArray(data.ownProducts)) ownProducts = data.ownProducts.map(normalizeRemoteProduct);
+        if (data.shop) {
+          currentShop = data.shop;
+        } else if (!currentShop && currentUser) {
+          const key = currentUser.firebaseUid || currentUser.email;
+          const localShop = JSON.parse(localStorage.getItem(`afribay_shop_${key}`) || "null");
+          if (localShop) currentShop = localShop;
+          else {
+            const publicShops = getPublicShops();
+            currentShop = publicShops.find(s => s.userId === key || s.userId === currentUser.email || s.userId === currentUser.firebaseUid) || null;
+          }
+        }
+        if (currentShop && currentUser && !currentUser.shopName) {
+          currentUser.shopName = currentShop.shopName;
+        }
+
+        const remoteProducts = Array.isArray(data.ownProducts) ? data.ownProducts.map(normalizeRemoteProduct) : [];
+        const existingOwn = ownProducts || [];
+        const mergedOwnMap = new Map();
+        existingOwn.forEach(p => mergedOwnMap.set(String(p.id), p));
+        remoteProducts.forEach(p => mergedOwnMap.set(String(p.id), p));
+        ownProducts = Array.from(mergedOwnMap.values());
+
+        // Sync with public products and products array
+        if (ownProducts.length) {
+          const prodMap = new Map();
+          products.forEach(p => prodMap.set(String(p.id), p));
+          ownProducts.forEach(p => prodMap.set(String(p.id), p));
+          products.splice(0, products.length, ...Array.from(prodMap.values()));
+        }
+
         if (Array.isArray(data.cartItems)) {
           cart = data.cartItems.map(item => ({
             id: item.productId,
@@ -1479,6 +1520,7 @@
           }));
         }
         persistLocalAccountData();
+        renderProducts();
         renderSellerDashboard();
         updateCart();
         populateAdProductSelect();
@@ -2125,9 +2167,21 @@
     }
     function getOwnedProducts() {
       if (!currentUser) return [];
-      if (currentUser.firebaseUid && ownProducts.length) return ownProducts;
-      const filtered = products.filter(product => product.ownerEmail === currentUser.email || product.ownerId === currentUser.firebaseUid);
-      return filtered;
+      const prodMap = new Map();
+      (ownProducts || []).forEach(p => prodMap.set(String(p.id), p));
+      
+      const matchCriteria = (p) => {
+        if (!p) return false;
+        const emailMatch = p.ownerEmail && currentUser.email && p.ownerEmail.toLowerCase() === currentUser.email.toLowerCase();
+        const uidMatch = p.ownerId && ((currentUser.firebaseUid && p.ownerId === currentUser.firebaseUid) || p.ownerId === currentUser.email);
+        const shopMatch = currentShop && ((p.shopId && String(p.shopId) === String(currentShop.id)) ||
+                          (p.seller && p.seller.toLowerCase() === currentShop.shopName.toLowerCase()));
+        return Boolean(emailMatch || uidMatch || shopMatch);
+      };
+
+      products.filter(matchCriteria).forEach(p => prodMap.set(String(p.id), p));
+      getPublicProducts().filter(matchCriteria).forEach(p => prodMap.set(String(p.id), p));
+      return Array.from(prodMap.values());
     }
     function openProduct(id) {
       viewProduct(id);
