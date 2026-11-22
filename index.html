@@ -313,7 +313,6 @@
             <div id="memberMenu" style="display:none">
               <button onclick="showPanel('account')">◎ &nbsp; Account</button>
               <button id="ownerShopMenuBtn" onclick="showPanel('shop')" style="display:none">▦ &nbsp; Store Admin</button>
-              <button onclick="showPanel('ads')">✦ &nbsp; Official Channels</button>
               <button onclick="openContactModal()">💬 &nbsp; Contact Store</button>
               <button onclick="showPanel('settings')">⚙ &nbsp; Settings</button>
               <button onclick="logout()">↪ &nbsp; Sign out</button>
@@ -360,28 +359,13 @@
             <div class="section-head"><div><h2>Fresh in Store</h2><p>Handpicked, quality-inspected items ready for nationwide delivery</p></div><button class="link-btn" onclick="clearSearch();document.getElementById('products').scrollIntoView({behavior:'smooth'})">See all →</button></div>
             <div id="productGrid" class="product-grid"></div>
           </div>
-        </div>
-      </section>
-
-      <section id="adsPanel" class="panel">
-        <div class="section ads-toolbar"><div><div class="eyebrow">Official Storefront &amp; Community</div><h1>Good finds, <em>featured.</em></h1><p>Connect with AfriBay's official community channels and watch product highlights directly from the store owner.</p></div><button class="button orange" id="ownerPromoteBtn" style="display:none;" onclick="openPromoteAd()">＋ Feature a Product</button></div>
-        <div class="section">
-          <div class="section-head"><div><h2>Featured Highlights</h2><p>Product spotlights, video previews, and official store announcements</p></div><button class="button ghost" id="ownerPromoteBtn2" style="display:none;" onclick="openPromoteAd()">Feature Product</button></div>
-          <div id="sponsoredFeed" class="sponsored-feed"></div>
-          <div id="adsGuestState" class="auth-card" style="margin-top:24px;display:none;"><strong>Store Owner?</strong><span style="color:var(--muted);font-size:13px"> Sign in as luyandokandisha@gmail.com to spotlight items.</span> <button class="link-btn" onclick="openModal('signinModal')">Sign in →</button></div>
-          <div id="adsMemberState" class="auth-card member-only" style="margin-top:24px;display:none;">
-            <div class="member-badge">● Store Owner Tools</div>
-            <h3 style="margin:16px 0 7px">Feature one of your store products in this feed.</h3>
-            <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-top:0">Choose a product from your catalog, attach a short video preview, and publish directly to AfriBay.</p>
-            <button class="button orange" onclick="openPromoteAd()">Create Featured Ad →</button>
-          </div>
 
           <!-- Official Social Communities & Founder Links -->
-          <div class="auth-card" style="margin-top:24px;background:linear-gradient(135deg, #f9fafb, #f3f6f4);border:1px solid #d1ded6;padding:20px;">
+          <div class="auth-card" style="margin-top:32px;background:linear-gradient(135deg, #f9fafb, #f3f6f4);border:1px solid #d1ded6;padding:20px;">
             <div class="eyebrow" style="color:var(--green-deep);font-weight:800;">Official AfriBay & NexGen Communities</div>
             <h3 style="margin:4px 0 8px;font-size:18px;">Connect with Us on Social Media</h3>
             <p style="color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 16px;">
-              Join our active community of Zambian thrifters, sellers, and tech creators. Get the latest market updates, feature announcements, and direct seller support.
+              Join our active community of Zambian thrifters, shoppers, and tech creators. Get the latest arrivals, special announcements, and direct store support.
             </p>
             <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px;">
               <a href="https://www.facebook.com/groups/4159169450883484" target="_blank" rel="noopener" class="button ghost" style="display:flex;align-items:center;gap:10px;text-align:left;padding:10px 14px;background:white;border-radius:10px;text-decoration:none;">
@@ -546,7 +530,6 @@
             <div class="auth-card">
               <h3 style="margin-top:0">Your AfriBay access</h3>
               <div class="feature-row" id="accountShopRow" style="display:none;"><div class="feature-icon">▦</div><div><strong>Store Admin Workspace</strong><small>Add products, manage inventory, and view orders.</small></div><button class="link-btn" onclick="showPanel('shop')">Open</button></div>
-              <div class="feature-row"><div class="feature-icon">✦</div><div><strong>Official Channels &amp; Ads</strong><small>Connect on social media and view promotions.</small></div><button class="link-btn" onclick="showPanel('ads')">Open</button></div>
               <div class="feature-row"><div class="feature-icon">🛒</div><div><strong>Cart &amp; checkout</strong><small>Complete purchases with saved session access.</small></div><button class="link-btn" onclick="showPanel('cart')">Open</button></div>
               <div class="feature-row"><div class="feature-icon">📦</div><div><strong>Your orders</strong><small>Track purchase history and order receipts.</small></div><button class="link-btn" onclick="openOrdersModal()">Open</button></div>
               <div class="feature-row"><div class="feature-icon">💬</div><div><strong>Contact Store</strong><small>Send inquiries directly to the store owner.</small></div><button class="link-btn" onclick="openContactModal()">Message</button></div>
@@ -576,8 +559,8 @@
 
     <nav class="bottom-nav">
       <button class="nav-item active" data-panel="home" onclick="showPanel('home')"><span>⌂</span><span id="navHomeLabel">Home</span></button>
-      <button class="nav-item" data-panel="ads" onclick="showPanel('ads')"><span>✦</span><span id="navAdsLabel">Ads</span></button>
       <button class="nav-item" data-panel="cart" onclick="showPanel('cart')"><span>🛒<i id="cartBadge" class="badge" style="display:none">0</i></span><span id="navCartLabel">Cart</span></button>
+      <button class="nav-item" data-panel="account" onclick="showPanel('account')"><span>👤</span><span id="navAccountLabel">Account</span></button>
     </nav>
   </div>
 
@@ -1785,9 +1768,6 @@
         const memberMenu = document.getElementById("memberMenu"); if (memberMenu) memberMenu.style.display = signedIn ? "block" : "none";
         const ownerMenuBtn = document.getElementById("ownerShopMenuBtn"); if (ownerMenuBtn) ownerMenuBtn.style.display = (signedIn && isOwner) ? "block" : "none";
         const accountShopRow = document.getElementById("accountShopRow"); if (accountShopRow) accountShopRow.style.display = (signedIn && isOwner) ? "flex" : "none";
-        const ownerPromoteBtn = document.getElementById("ownerPromoteBtn"); if (ownerPromoteBtn) ownerPromoteBtn.style.display = (signedIn && isOwner) ? "inline-flex" : "none";
-        const ownerPromoteBtn2 = document.getElementById("ownerPromoteBtn2"); if (ownerPromoteBtn2) ownerPromoteBtn2.style.display = (signedIn && isOwner) ? "inline-flex" : "none";
-
         const guestSettingsMenu = document.getElementById("guestSettingsMenu"); if (guestSettingsMenu) guestSettingsMenu.style.display = signedIn ? "none" : "block";
         const avatarButton = document.getElementById("avatarButton"); if (avatarButton) avatarButton.textContent = signedIn ? initials(currentUser.name) : "AF";
         const accountGuest = document.getElementById("accountGuestState"); if (accountGuest) accountGuest.classList.toggle("member-only", signedIn);
@@ -1805,8 +1785,6 @@
         }
         const shopAvatar = document.getElementById("shopAvatar"); if (shopAvatar) shopAvatar.textContent = signedIn ? initials(currentUser.name) : "AF";
         const shopWelcome = document.getElementById("shopWelcome"); if (shopWelcome) shopWelcome.textContent = signedIn ? (isOwner ? "Welcome back, Store Owner" : `Welcome, ${currentUser.name.split(" ")[0]}`) : "Welcome back";
-        const adsGuest = document.getElementById("adsGuestState"); if (adsGuest) adsGuest.style.display = (signedIn && isOwner) ? "none" : "none";
-        const adsMember = document.getElementById("adsMemberState"); if (adsMember) adsMember.classList.toggle("visible", signedIn && isOwner);
         renderSellerDashboard();
       } catch (err) {
         console.error("renderAuthUI error:", err);
