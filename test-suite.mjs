@@ -488,6 +488,22 @@ async function runTestSuite() {
     assert(reportDelayRes.statusCode === 200, 'POST /api/orders/report-delay responds 200 OK');
     assert(reportDelayRes.json?.success === true, 'POST /api/orders/report-delay returns success: true');
     assert(reportDelayRes.json?.status === 'under_investigation', 'Reported order status is under_investigation');
+
+    // 4.14: Test Customer Message / Inquiry routing directly to store owner email
+    const messageRes = await request(`${testBaseUrl}/api/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        name: 'Chileshe Mulenga',
+        email: 'chileshe@example.com',
+        phone: '0978889999',
+        subject: 'Handmade Kitenge Bag Inquiry',
+        message: 'Hello, is this item available for delivery in Woodlands today?'
+      }
+    });
+    assert(messageRes.statusCode === 200, 'POST /api/messages responds 200 OK');
+    assert(messageRes.json?.success === true, 'POST /api/messages returns success: true');
+    assert(messageRes.json?.recipient === 'luyandokandisha@gmail.com', 'Customer message delivered to store owner email luyandokandisha@gmail.com');
   } catch (err) {
     console.error('API Test Error:', err);
     assert(false, `API tests threw exception: ${err.message}`);

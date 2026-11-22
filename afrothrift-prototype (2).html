@@ -312,8 +312,9 @@
             </div>
             <div id="memberMenu" style="display:none">
               <button onclick="showPanel('account')">◎ &nbsp; Account</button>
-              <button onclick="showPanel('shop')">▦ &nbsp; My shop</button>
-              <button onclick="showPanel('ads')">✦ &nbsp; Selling & ads</button>
+              <button id="ownerShopMenuBtn" onclick="showPanel('shop')" style="display:none">▦ &nbsp; Store Admin</button>
+              <button onclick="showPanel('ads')">✦ &nbsp; Official Channels</button>
+              <button onclick="openContactModal()">💬 &nbsp; Contact Store</button>
               <button onclick="showPanel('settings')">⚙ &nbsp; Settings</button>
               <button onclick="logout()">↪ &nbsp; Sign out</button>
             </div>
@@ -330,7 +331,7 @@
           <div>
             <div class="eyebrow">A better way to thrift</div>
             <h1>Find your next <em>favourite.</em></h1>
-            <p class="hero-copy">Shop unique pre-loved pieces and fresh finds from independent sellers across Africa. Good things deserve a second life.</p>
+            <p class="hero-copy">Handpicked, verified finds directly from AfriBay Store. Authentic fashion, electronics, cars, and goods with secure Zambian Mobile Money escrow.</p>
             <button class="button" onclick="document.getElementById('products').scrollIntoView({behavior:'smooth'})">Explore the market →</button>
           </div>
           <div class="hero-visual" aria-label="Featured marketplace items">
@@ -352,27 +353,27 @@
             <button class="category" data-category="New Goods" onclick="setCategory('New Goods', this)">✦ New goods</button>
           </div>
           <div class="promo">
-            <div><strong>Turn your closet into cash.</strong><p>Open your free shop and reach people looking for your kind of find.</p></div>
-            <button class="button light" onclick="startSelling()">Start selling</button>
+            <div><strong>AfriBay Official Storefront</strong><p>Have questions about a listing or custom order? Message the store owner directly.</p></div>
+            <button class="button light" onclick="openContactModal()">💬 Message Store</button>
           </div>
           <div id="products">
-            <div class="section-head"><div><h2>Fresh on the market</h2><p>Handpicked finds from shops near you</p></div><button class="link-btn" onclick="clearSearch();document.getElementById('products').scrollIntoView({behavior:'smooth'})">See all →</button></div>
+            <div class="section-head"><div><h2>Fresh in Store</h2><p>Handpicked, quality-inspected items ready for nationwide delivery</p></div><button class="link-btn" onclick="clearSearch();document.getElementById('products').scrollIntoView({behavior:'smooth'})">See all →</button></div>
             <div id="productGrid" class="product-grid"></div>
           </div>
         </div>
       </section>
 
       <section id="adsPanel" class="panel">
-        <div class="section ads-toolbar"><div><div class="eyebrow">Featured marketplace</div><h1>Good finds, <em>featured.</em></h1><p>Browse short video ads created by shop owners. Sponsoring your products in this feed is 100% free for all sellers.</p></div><button class="button orange" onclick="openPromoteAd()">＋ Promote a Product (Free)</button></div>
+        <div class="section ads-toolbar"><div><div class="eyebrow">Official Storefront &amp; Community</div><h1>Good finds, <em>featured.</em></h1><p>Connect with AfriBay's official community channels and watch product highlights directly from the store owner.</p></div><button class="button orange" id="ownerPromoteBtn" style="display:none;" onclick="openPromoteAd()">＋ Feature a Product</button></div>
         <div class="section">
-          <div class="section-head"><div><h2>Sponsored videos</h2><p>Swipe vertically to watch short ads from marketplace shops (100% Free to publish)</p></div><button class="button ghost" onclick="openPromoteAd()">Promote My Item (Free)</button></div>
+          <div class="section-head"><div><h2>Featured Highlights</h2><p>Product spotlights, video previews, and official store announcements</p></div><button class="button ghost" id="ownerPromoteBtn2" style="display:none;" onclick="openPromoteAd()">Feature Product</button></div>
           <div id="sponsoredFeed" class="sponsored-feed"></div>
-          <div id="adsGuestState" class="auth-card" style="margin-top:24px"><strong>Own a shop?</strong><span style="color:var(--muted);font-size:13px"> Sign in to promote one of your products here for free.</span> <button class="link-btn" onclick="openPromoteAd()">Sign in to promote →</button></div>
-          <div id="adsMemberState" class="auth-card member-only" style="margin-top:24px">
-            <div class="member-badge">● Seller tools unlocked</div>
-            <h3 style="margin:16px 0 7px">Put one of your products in this feed for free.</h3>
-            <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-top:0">Choose a listing, add your short video clip, and publish instantly. It is 100% free to feature your products on AfriBay Ads.</p>
-            <button class="button orange" onclick="openPromoteAd()">Create Free Ad →</button>
+          <div id="adsGuestState" class="auth-card" style="margin-top:24px;display:none;"><strong>Store Owner?</strong><span style="color:var(--muted);font-size:13px"> Sign in as luyandokandisha@gmail.com to spotlight items.</span> <button class="link-btn" onclick="openModal('signinModal')">Sign in →</button></div>
+          <div id="adsMemberState" class="auth-card member-only" style="margin-top:24px;display:none;">
+            <div class="member-badge">● Store Owner Tools</div>
+            <h3 style="margin:16px 0 7px">Feature one of your store products in this feed.</h3>
+            <p style="color:var(--muted);font-size:13px;line-height:1.5;margin-top:0">Choose a product from your catalog, attach a short video preview, and publish directly to AfriBay.</p>
+            <button class="button orange" onclick="openPromoteAd()">Create Featured Ad →</button>
           </div>
 
           <!-- Official Social Communities & Founder Links -->
@@ -424,17 +425,23 @@
       </section>
 
       <section id="shopPanel" class="panel">
-        <div class="page-title"><div class="eyebrow">Seller workspace</div><h1>Your <em>shop.</em></h1></div>
+        <div class="page-title"><div class="eyebrow">Store Admin Workspace</div><h1>Store <em>Dashboard.</em></h1></div>
         <div class="section">
-          <div id="shopGuestState" class="empty">Sign in to access your shop dashboard.<br /><button class="button ghost" style="margin-top:15px" onclick="openModal('signinModal')">Sign in to continue</button></div>
+          <div id="shopGuestState" class="empty">Sign in as the store owner (luyandokandisha@gmail.com) to access store management.<br /><button class="button ghost" style="margin-top:15px" onclick="openModal('signinModal')">Sign in to continue</button></div>
+          <div id="shopNonOwnerNotice" class="empty" style="display:none;padding:40px 16px;">
+            <div style="font-size:36px;margin-bottom:8px">🔒</div>
+            <h3>Store Admin Workspace</h3>
+            <p style="color:var(--muted);font-size:13px;max-width:400px;margin:0 auto 16px;">AfriBay is owned and operated exclusively by <strong>luyandokandisha@gmail.com</strong>. You are currently signed in as a customer account.</p>
+            <button class="button" onclick="showPanel('home')">Browse Store Products →</button>
+          </div>
           <div id="shopMemberState" class="member-only">
             <div class="account-grid">
               <div class="auth-card">
                 <div class="member-avatar" id="shopAvatar">AF</div>
-                <div class="member-badge">● Shop owner</div>
+                <div class="member-badge">● Store Owner</div>
                 <h2 id="shopWelcome" style="margin-top:15px">Welcome back</h2>
-                <p id="shopDescription" style="color:var(--muted);font-size:13px;line-height:1.5">Your seller workspace is unlocked. Set up your shop and publish listings.</p>
-                <button id="shopSetupButton" class="button" onclick="openShopModalSafe()">Create your shop →</button>
+                <p id="shopDescription" style="color:var(--muted);font-size:13px;line-height:1.5">AfriBay Store Admin Workspace. Manage your product catalog, orders, and customer inquiries.</p>
+                <button id="shopSetupButton" class="button" onclick="openShopModalSafe()">Edit Store Details →</button>
               </div>
               <div class="auth-card">
                 <h3 style="margin-top:0">Selling tools</h3>
@@ -538,10 +545,11 @@
             </div>
             <div class="auth-card">
               <h3 style="margin-top:0">Your AfriBay access</h3>
-              <div class="feature-row"><div class="feature-icon">▦</div><div><strong>Shop dashboard</strong><small>Create and manage your own shop.</small></div><button class="link-btn" onclick="showPanel('shop')">Open</button></div>
-              <div class="feature-row"><div class="feature-icon">✦</div><div><strong>Ads & promotion</strong><small>Boost listings and manage campaigns.</small></div><button class="link-btn" onclick="showPanel('ads')">Open</button></div>
-              <div class="feature-row"><div class="feature-icon">🛒</div><div><strong>Cart & checkout</strong><small>Complete purchases with saved session access.</small></div><button class="link-btn" onclick="showPanel('cart')">Open</button></div>
+              <div class="feature-row" id="accountShopRow" style="display:none;"><div class="feature-icon">▦</div><div><strong>Store Admin Workspace</strong><small>Add products, manage inventory, and view orders.</small></div><button class="link-btn" onclick="showPanel('shop')">Open</button></div>
+              <div class="feature-row"><div class="feature-icon">✦</div><div><strong>Official Channels &amp; Ads</strong><small>Connect on social media and view promotions.</small></div><button class="link-btn" onclick="showPanel('ads')">Open</button></div>
+              <div class="feature-row"><div class="feature-icon">🛒</div><div><strong>Cart &amp; checkout</strong><small>Complete purchases with saved session access.</small></div><button class="link-btn" onclick="showPanel('cart')">Open</button></div>
               <div class="feature-row"><div class="feature-icon">📦</div><div><strong>Your orders</strong><small>Track purchase history and order receipts.</small></div><button class="link-btn" onclick="openOrdersModal()">Open</button></div>
+              <div class="feature-row"><div class="feature-icon">💬</div><div><strong>Contact Store</strong><small>Send inquiries directly to the store owner.</small></div><button class="link-btn" onclick="openContactModal()">Message</button></div>
             </div>
           </div>
         </div>
@@ -856,9 +864,10 @@
         <strong id="detailShop"></strong>
         <p id="detailCondition" style="margin:6px 0 0;color:var(--muted);font-size:12px"></p>
         <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
-          <button type="button" class="button ghost" id="detailViewShopBtn" onclick="viewCurrentProductShop()">🏬 View Shop</button>
-          <a id="sellerWhatsApp" class="button ghost" href="#" target="_blank" rel="noopener">WhatsApp seller</a>
-          <a id="sellerCall" class="button ghost" href="#">Call seller</a>
+          <button type="button" class="button ghost" id="detailViewShopBtn" style="display:none;" onclick="viewCurrentProductShop()">🏬 View Shop</button>
+          <button type="button" class="button" style="background:var(--green-deep)" onclick="openContactModalForProduct()">💬 Message Store</button>
+          <a id="sellerWhatsApp" class="button ghost" href="#" target="_blank" rel="noopener">WhatsApp Store</a>
+          <a id="sellerCall" class="button ghost" href="#">Call Store</a>
         </div>
       </div>
 
@@ -866,6 +875,43 @@
         <button id="detailDeleteProductBtn" class="button ghost" type="button" style="color:#b23b3b;border-color:#fca5a5;display:none;" onclick="confirmDeleteCurrentProduct()">🗑 Delete Listing</button>
         <button id="detailAddToCart" class="button" type="button" onclick="addCurrentProductToCart(this)">Add to cart →</button>
       </div>
+    </div>
+  </div>
+
+  <div id="contactModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'contactModal')">
+    <div class="modal" style="max-width: 520px; width: 100%;">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">Direct Store Inquiries</div>
+          <h2>Message AfriBay Store</h2>
+        </div>
+        <button class="close" type="button" onclick="closeModal('contactModal')">×</button>
+      </div>
+      <form onsubmit="sendCustomerInquiry(event)">
+        <div class="form-row">
+          <label for="contactCustomerName">Your Name</label>
+          <input id="contactCustomerName" type="text" placeholder="e.g. Chanda Mwewa" required />
+        </div>
+        <div class="form-row">
+          <label for="contactCustomerContact">Phone Number or Email</label>
+          <input id="contactCustomerContact" type="text" placeholder="e.g. 097... or name@example.com" required />
+        </div>
+        <div class="form-row">
+          <label for="contactSubject">Subject</label>
+          <input id="contactSubject" type="text" placeholder="Product inquiry, sizing, delivery question..." required />
+        </div>
+        <div class="form-row">
+          <label for="contactMessage">Your Message</label>
+          <textarea id="contactMessage" rows="4" placeholder="Write your message here... The store owner will reply to you directly." required style="width:100%;border:1px solid var(--border);border-radius:10px;padding:10px;font-family:inherit;font-size:13px;"></textarea>
+        </div>
+        <div id="contactNotice" class="auth-card" style="padding:10px;font-size:12px;background:#f0fdf4;border-color:#86efac;color:#166534;">
+          ✉ <strong>Instant Email Routing:</strong> Your message goes directly to the store owner's personal inbox (luyandokandisha@gmail.com). You can also WhatsApp or call directly: <strong>0760312951</strong> / <strong>0778085670</strong>.
+        </div>
+        <div id="contactError" class="auth-error"></div>
+        <div class="modal-foot">
+          <button id="contactSubmitBtn" type="submit" class="button" style="width:100%;background:var(--green-deep);">Send Message to Store Owner →</button>
+        </div>
+      </form>
     </div>
   </div>
   <div id="shopViewModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'shopViewModal')">
@@ -1173,6 +1219,11 @@
 
     let users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
 
+    const OWNER_EMAIL = "luyandokandisha@gmail.com";
+    function isStoreOwner() {
+      return Boolean(currentUser && currentUser.email && currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase());
+    }
+
     /**
      * Checks vendor 5-day trial and subscription status.
      * Free Trial: First 5 days of selling are 100% free.
@@ -1180,6 +1231,9 @@
      * Destination numbers: MTN: 0760312951 | Airtel: 0778085670.
      */
     function checkVendorSubscription(shop) {
+      if (isStoreOwner()) {
+        return { canList: true, status: "active", tier: "owner_unlimited", daysLeft: 9999, endsAt: Date.now() + 10000000000 };
+      }
       if (!shop) return { canList: false, status: "no_shop", message: "Please open your shop first." };
       const now = Date.now();
       const createdAt = shop.createdAt ? new Date(shop.createdAt).getTime() : now;
@@ -1725,8 +1779,15 @@
     function renderAuthUI() {
       try {
         const signedIn = Boolean(currentUser);
+        const isOwner = isStoreOwner();
+
         const guestMenu = document.getElementById("guestMenu"); if (guestMenu) guestMenu.style.display = signedIn ? "none" : "block";
         const memberMenu = document.getElementById("memberMenu"); if (memberMenu) memberMenu.style.display = signedIn ? "block" : "none";
+        const ownerMenuBtn = document.getElementById("ownerShopMenuBtn"); if (ownerMenuBtn) ownerMenuBtn.style.display = (signedIn && isOwner) ? "block" : "none";
+        const accountShopRow = document.getElementById("accountShopRow"); if (accountShopRow) accountShopRow.style.display = (signedIn && isOwner) ? "flex" : "none";
+        const ownerPromoteBtn = document.getElementById("ownerPromoteBtn"); if (ownerPromoteBtn) ownerPromoteBtn.style.display = (signedIn && isOwner) ? "inline-flex" : "none";
+        const ownerPromoteBtn2 = document.getElementById("ownerPromoteBtn2"); if (ownerPromoteBtn2) ownerPromoteBtn2.style.display = (signedIn && isOwner) ? "inline-flex" : "none";
+
         const guestSettingsMenu = document.getElementById("guestSettingsMenu"); if (guestSettingsMenu) guestSettingsMenu.style.display = signedIn ? "none" : "block";
         const avatarButton = document.getElementById("avatarButton"); if (avatarButton) avatarButton.textContent = signedIn ? initials(currentUser.name) : "AF";
         const accountGuest = document.getElementById("accountGuestState"); if (accountGuest) accountGuest.classList.toggle("member-only", signedIn);
@@ -1734,12 +1795,18 @@
         const accountName = document.getElementById("accountName"); if (accountName) accountName.textContent = signedIn ? currentUser.name : "Sign in to AfriBay";
         const accountEmail = document.getElementById("accountEmail"); if (accountEmail) accountEmail.textContent = signedIn ? currentUser.email : "";
         const accountAvatar = document.getElementById("accountAvatar"); if (accountAvatar) accountAvatar.textContent = signedIn ? initials(currentUser.name) : "AF";
+        
         const shopGuest = document.getElementById("shopGuestState"); if (shopGuest) shopGuest.style.display = signedIn ? "none" : "block";
-        const shopMember = document.getElementById("shopMemberState"); if (shopMember) shopMember.classList.toggle("visible", signedIn);
+        const shopNonOwnerNotice = document.getElementById("shopNonOwnerNotice"); if (shopNonOwnerNotice) shopNonOwnerNotice.style.display = (signedIn && !isOwner) ? "block" : "none";
+        const shopMember = document.getElementById("shopMemberState");
+        if (shopMember) {
+          shopMember.classList.toggle("visible", signedIn && isOwner);
+          shopMember.style.display = (signedIn && isOwner) ? "block" : "none";
+        }
         const shopAvatar = document.getElementById("shopAvatar"); if (shopAvatar) shopAvatar.textContent = signedIn ? initials(currentUser.name) : "AF";
-        const shopWelcome = document.getElementById("shopWelcome"); if (shopWelcome) shopWelcome.textContent = signedIn ? `Welcome, ${currentUser.name.split(" ")[0]}` : "Welcome back";
-        const adsGuest = document.getElementById("adsGuestState"); if (adsGuest) adsGuest.style.display = signedIn ? "none" : "block";
-        const adsMember = document.getElementById("adsMemberState"); if (adsMember) adsMember.classList.toggle("visible", signedIn);
+        const shopWelcome = document.getElementById("shopWelcome"); if (shopWelcome) shopWelcome.textContent = signedIn ? (isOwner ? "Welcome back, Store Owner" : `Welcome, ${currentUser.name.split(" ")[0]}`) : "Welcome back";
+        const adsGuest = document.getElementById("adsGuestState"); if (adsGuest) adsGuest.style.display = (signedIn && isOwner) ? "none" : "none";
+        const adsMember = document.getElementById("adsMemberState"); if (adsMember) adsMember.classList.toggle("visible", signedIn && isOwner);
         renderSellerDashboard();
       } catch (err) {
         console.error("renderAuthUI error:", err);
@@ -1751,7 +1818,11 @@
         if (!currentUser) {
           pendingPanel = "shop";
           openModal("signinModal");
-          showToast("Please sign in to open a shop");
+          showToast("Please sign in as store owner (luyandokandisha@gmail.com)");
+          return;
+        }
+        if (!isStoreOwner()) {
+          showToast("AfriBay is owned and operated exclusively by luyandokandisha@gmail.com.");
           return;
         }
         showPanel("shop");
@@ -1767,7 +1838,11 @@
         if (!currentUser) {
           pendingPanel = "shop";
           openModal("signinModal");
-          showToast("Please sign in to create a shop");
+          showToast("Please sign in as store owner");
+          return;
+        }
+        if (!isStoreOwner()) {
+          showToast("Only the store owner (luyandokandisha@gmail.com) can manage store details.");
           return;
         }
         const delBtn = document.getElementById("shopDeleteBtn");
@@ -2468,15 +2543,23 @@
         pendingSellerAction = "listing";
         return openModal("signinModal");
       }
-      if (!currentShop) {
-        pendingSellerAction = "listing";
-        openModal("shopModal");
-        return showToast("Create your shop first, then add a product");
+      if (!isStoreOwner()) {
+        return showToast("Only the store owner (luyandokandisha@gmail.com) can publish products.");
       }
-      const subCheck = checkVendorSubscription(currentShop);
-      if (!subCheck.canList) {
-        openSubscriptionModal();
-        return showToast("5-day trial expired. Please subscribe to list products.");
+      if (!currentShop) {
+        currentShop = {
+          id: "afribay-store-official",
+          shopName: "AfriBay Store",
+          userId: OWNER_EMAIL,
+          userEmail: OWNER_EMAIL,
+          contactPhone: "0760312951",
+          mtnPhone: "0760312951",
+          airtelPhone: "0778085670",
+          payoutPreference: "mobile_money",
+          physicalAddress: "Lusaka, Zambia",
+          description: "Official AfriBay Storefront",
+          subscriptionStatus: "active"
+        };
       }
       renderListingPhotosPreview();
       openModal("listingModal");
@@ -2648,25 +2731,30 @@
           pendingSellerAction = "listing";
           closeModal("listingModal");
           openModal("signinModal");
-          showToast("Please sign in to list products");
+          showToast("Please sign in as store owner (luyandokandisha@gmail.com)");
+          return;
+        }
+
+        if (!isStoreOwner()) {
+          setAuthError("listingError", "Only the store owner (luyandokandisha@gmail.com) can publish products.");
+          showToast("Only the store owner can publish products.");
           return;
         }
 
         if (!currentShop) {
-          pendingSellerAction = "listing";
-          closeModal("listingModal");
-          openModal("shopModal");
-          showToast("Please create your shop first, then add products");
-          return;
-        }
-
-        // Middleware: Check 5-day trial / active subscription
-        const subCheck = checkVendorSubscription(currentShop);
-        if (!subCheck.canList) {
-          setAuthError("listingError", "Your 5-day free trial has expired. Subscribe for K20/week or K100/month to list products.");
-          showToast("Trial expired. Please renew store subscription.");
-          openSubscriptionModal();
-          return;
+          currentShop = {
+            id: "afribay-store-official",
+            shopName: "AfriBay Store",
+            userId: OWNER_EMAIL,
+            userEmail: OWNER_EMAIL,
+            contactPhone: "0760312951",
+            mtnPhone: "0760312951",
+            airtelPhone: "0778085670",
+            payoutPreference: "mobile_money",
+            physicalAddress: "Lusaka, Zambia",
+            description: "Official AfriBay Storefront",
+            subscriptionStatus: "active"
+          };
         }
 
         const titleEl = document.getElementById("listingTitle");
@@ -2954,8 +3042,8 @@
       feed.innerHTML = sponsored.length ? sponsored.map(product => `
         <article class="sponsored-card">
           <div class="ad-video"><span class="ad-label" style="background:var(--green)">✓ Free Featured Ad</span>${getAdVideoSource(product) ? `<video src="${escapeHTML(getAdVideoSource(product))}" muted loop playsinline controls preload="metadata" onerror="this.style.display='none';this.parentElement.querySelector('.ad-video-fallback').style.display='grid'"></video>` : ""}<div class="ad-video-fallback" style="display:${getAdVideoSource(product) ? "none" : "grid"}">${escapeHTML(product.art)}</div><span class="video-duration">▶ short video</span></div>
-          <div class="product-info"><h3>${escapeHTML(product.title)}</h3><div class="ad-shop">Shop · ${escapeHTML(product.seller)}</div><div class="price-line"><span class="price">${money(product.price)}</span><span class="verified">✓ verified</span></div><button class="button" style="width:100%" onclick="buyNow('${escapeHTML(String(product.id))}')">Buy Now · ${money(product.price)}</button><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px"><button class="button ghost" style="width:100%" onclick="viewProduct('${escapeHTML(String(product.id))}')">👁 Product</button><button class="button ghost" style="width:100%" onclick="viewShopByProduct('${escapeHTML(String(product.id))}')">🏬 Shop</button></div><button class="button" style="width:100%;margin-top:8px;background:var(--orange)" onclick="openPromoteAd()">✦ Promote Your Item (Free)</button></div>
-        </article>`).join("") : '<div class="empty ad-feed-empty">No sponsored short videos are live yet. Be the first to promote a product for free!</div>';
+          <div class="product-info"><h3>${escapeHTML(product.title)}</h3><div class="ad-shop">Store · AfriBay Official</div><div class="price-line"><span class="price">${money(product.price)}</span><span class="verified">✓ verified</span></div><button class="button" style="width:100%" onclick="buyNow('${escapeHTML(String(product.id))}')">Buy Now · ${money(product.price)}</button><div style="margin-top:8px"><button class="button ghost" style="width:100%" onclick="viewProduct('${escapeHTML(String(product.id))}')">👁 View Details &amp; Inquire</button></div>${isStoreOwner() ? `<button class="button" style="width:100%;margin-top:8px;background:var(--orange)" onclick="openPromoteAd()">✦ Feature Another Item</button>` : ""}</div>
+        </article>`).join("") : '<div class="empty ad-feed-empty">No video spotlights are live yet. Browse our active products on the homepage or connect with our official community links below!</div>';
       if ("IntersectionObserver" in window) {
         const observer = new IntersectionObserver(entries => entries.forEach(entry => {
           const video = entry.target.querySelector("video");
@@ -3113,16 +3201,24 @@
           }
         }
 
-        const phone = (product.contactPhone || currentShop?.contactPhone || "+260971234567").replace(/[^\d+]/g, "");
+        const phone = (product.contactPhone || currentShop?.contactPhone || "0760312951").replace(/[^\d+]/g, "");
         const wa = document.getElementById("sellerWhatsApp");
         if (wa) {
-          wa.href = phone ? `https://wa.me/${phone.replace(/\D/g, "")}` : "#";
+          wa.href = phone ? `https://wa.me/${phone.replace(/\D/g, "")}` : "https://wa.me/260760312951";
           wa.style.display = "inline-flex";
         }
         const call = document.getElementById("sellerCall");
         if (call) {
-          call.href = phone ? `tel:${phone}` : "#";
+          call.href = phone ? `tel:${phone}` : "tel:0760312951";
           call.style.display = "inline-flex";
+        }
+        const shopBtn = document.getElementById("detailViewShopBtn");
+        if (shopBtn) {
+          shopBtn.style.display = "none";
+        }
+        const detailShop = document.getElementById("detailShop");
+        if (detailShop) {
+          detailShop.textContent = "AfriBay Store · Official";
         }
         const addBtn = document.getElementById("detailAddToCart");
         if (addBtn) {
@@ -3130,15 +3226,8 @@
           addBtn.disabled = false;
         }
 
-        // Show delete button only if current user owns this product
-        const isOwner = Boolean(
-          currentUser && (
-            (product.ownerId && currentUser.firebaseUid && product.ownerId === currentUser.firebaseUid) ||
-            (product.ownerEmail && currentUser.email && product.ownerEmail === currentUser.email) ||
-            (currentShop && product.shopId && currentShop.id === product.shopId) ||
-            (currentShop && product.seller && currentShop.shopName.toLowerCase() === product.seller.toLowerCase())
-          )
-        );
+        // Show delete button only if store owner
+        const isOwner = isStoreOwner();
         const delProdBtn = document.getElementById("detailDeleteProductBtn");
         if (delProdBtn) {
           delProdBtn.style.display = isOwner ? "inline-flex" : "none";
@@ -3224,12 +3313,19 @@
       const grid = document.getElementById("productGrid");
       if (!grid) return;
       if (!products.length) {
-        grid.innerHTML = `
+        grid.innerHTML = isStoreOwner() ? `
           <div class="empty" style="padding:48px 16px;text-align:center;grid-column:1/-1;">
             <div style="font-size:40px;margin-bottom:8px">🛍️</div>
-            <h3 style="margin:0 0 6px 0;font-size:18px;">No products listed yet</h3>
-            <p style="color:var(--muted);font-size:13px;max-width:380px;margin:0 auto 16px;">Be the first to open a shop and list an item on AfriBay! Enjoy a 100% free 5-day selling trial.</p>
-            <button class="button" type="button" onclick="startSelling()" style="padding:10px 22px;font-weight:700;">Open a Shop &amp; Start Selling →</button>
+            <h3 style="margin:0 0 6px 0;font-size:18px;">Your Storefront is Ready</h3>
+            <p style="color:var(--muted);font-size:13px;max-width:380px;margin:0 auto 16px;">Welcome, Store Owner! Add your products to start receiving customer orders directly to your email.</p>
+            <button class="button" type="button" onclick="openListingEditor()" style="padding:10px 22px;font-weight:700;">＋ Add First Product →</button>
+          </div>
+        ` : `
+          <div class="empty" style="padding:48px 16px;text-align:center;grid-column:1/-1;">
+            <div style="font-size:40px;margin-bottom:8px">🛍️</div>
+            <h3 style="margin:0 0 6px 0;font-size:18px;">Fresh Stock Arriving Soon</h3>
+            <p style="color:var(--muted);font-size:13px;max-width:420px;margin:0 auto 16px;">We are currently cataloging exciting new products for the store. Looking for something specific? Message us directly!</p>
+            <button class="button" type="button" onclick="openContactModal()" style="padding:10px 22px;font-weight:700;">💬 Message Store Owner →</button>
           </div>
         `;
         return;
@@ -3249,13 +3345,96 @@
             <div class="price-line"><span class="price">${money(p.price)}</span><span class="verified">✓ verified</span></div>
             <div class="cond-badge cond-${escapeHTML(p.condition || 'used_good')}">${escapeHTML({new:'✦ New',used_like_new:'★ Like new',used_good:'◎ Good'}[p.condition]||'◎ Good')}</div>
             <div class="location">${escapeHTML(p.location || "Zambia")} · ${escapeHTML(p.seller)}</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:9px">
-              <button type="button" class="button ghost" style="padding:8px 4px;font-size:12px;width:100%" onclick="viewProduct('${escapeHTML(String(p.id))}')">👁 View Product</button>
-              <button type="button" class="button ghost" style="padding:8px 4px;font-size:12px;width:100%" onclick="viewShopByProduct('${escapeHTML(String(p.id))}')">🏬 View Shop</button>
+            <div style="margin-top:9px">
+              <button type="button" class="button ghost" style="padding:8px 4px;font-size:12px;width:100%" onclick="viewProduct('${escapeHTML(String(p.id))}')">👁 View Details &amp; Inquire</button>
             </div>
             <button type="button" class="button" style="width:100%;margin-top:7px;padding:9px" onclick="addToCart('${escapeHTML(String(p.id))}', this)">Add to cart</button>
           </div>
         </article>`).join("") : '<div class="empty" style="grid-column:1/-1;">No finds match that search yet.<br /><button class="button ghost" style="margin-top:14px" onclick="clearSearch()">Clear search</button></div>';
+    }
+
+    function openContactModal(initialSubject = "", initialMessage = "") {
+      const nameInput = document.getElementById("contactCustomerName");
+      const contactInput = document.getElementById("contactCustomerContact");
+      const subInput = document.getElementById("contactSubject");
+      const msgInput = document.getElementById("contactMessage");
+      const errEl = document.getElementById("contactError");
+      if (errEl) errEl.textContent = "";
+
+      if (currentUser) {
+        if (nameInput && !nameInput.value) nameInput.value = currentUser.name || "";
+        if (contactInput && !contactInput.value) contactInput.value = currentUser.phone || currentUser.email || "";
+      }
+      if (subInput) subInput.value = initialSubject || "Customer Inquiry";
+      if (msgInput) msgInput.value = initialMessage || "";
+      openModal("contactModal");
+    }
+
+    function openContactModalForProduct() {
+      const product = selectedProductId ? findProduct(selectedProductId) : null;
+      if (product) {
+        openContactModal(
+          `Inquiry about: ${product.title}`,
+          `Hi! I'm interested in "${product.title}" (${money(product.price)}). Is this available for delivery in Zambia?`
+        );
+      } else {
+        openContactModal();
+      }
+    }
+
+    async function sendCustomerInquiry(event) {
+      if (event && event.preventDefault) event.preventDefault();
+      const submitBtn = document.getElementById("contactSubmitBtn");
+      const errEl = document.getElementById("contactError");
+      const name = document.getElementById("contactCustomerName")?.value?.trim() || "";
+      const contact = document.getElementById("contactCustomerContact")?.value?.trim() || "";
+      const subject = document.getElementById("contactSubject")?.value?.trim() || "";
+      const message = document.getElementById("contactMessage")?.value?.trim() || "";
+
+      if (!name || !contact || !message) {
+        if (errEl) errEl.textContent = "Please provide your name, contact phone or email, and message.";
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Sending to store owner...";
+      }
+
+      try {
+        const payload = {
+          name,
+          email: contact.includes("@") ? contact : "",
+          phone: !contact.includes("@") ? contact : "",
+          subject,
+          message,
+          productTitle: selectedProductId ? findProduct(selectedProductId)?.title : ""
+        };
+
+        const apiBase = getApiBase();
+        const res = await fetch(`${apiBase}/api/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          closeModal("contactModal");
+          showToast("✓ Message delivered directly to the store owner's inbox!");
+        } else {
+          if (errEl) errEl.textContent = data.error || "Failed to send message. Please contact via WhatsApp or phone.";
+        }
+      } catch (err) {
+        console.error("sendCustomerInquiry error:", err);
+        closeModal("contactModal");
+        showToast("✓ Message logged. You can also contact the store owner at 0760312951.");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Send Message to Store Owner →";
+        }
+      }
     }
     function clearSearch() { document.getElementById("searchInput").value = ""; document.getElementById("conditionFilter").value = "All"; activeCategory = "All"; document.querySelectorAll(".category").forEach((el, i) => el.classList.toggle("active", i === 0)); renderProducts(); }
     function filterProducts() { renderProducts(); }
@@ -3357,11 +3536,17 @@
     }
     function showPanel(name) {
       try {
-        if (name === "shop" && !currentUser) {
-          pendingPanel = name;
-          openModal("signinModal");
-          showToast("Please sign in to access seller tools");
-          return;
+        if (name === "shop") {
+          if (!currentUser) {
+            pendingPanel = name;
+            openModal("signinModal");
+            showToast("Please sign in as store owner (luyandokandisha@gmail.com)");
+            return;
+          }
+          if (!isStoreOwner()) {
+            showToast("Only the store owner (luyandokandisha@gmail.com) can access store management.");
+            return showPanel("home");
+          }
         }
         document.querySelectorAll(".panel").forEach(el => el.classList.remove("active"));
         const targetPanel = document.getElementById(name + "Panel");
@@ -4297,6 +4482,10 @@
     window.toggleTheme         = toggleTheme;
     window.changeLanguage      = changeLanguage;
     window.savePrivacySetting  = savePrivacySetting;
+    window.isStoreOwner        = isStoreOwner;
+    window.openContactModal    = openContactModal;
+    window.openContactModalForProduct = openContactModalForProduct;
+    window.sendCustomerInquiry = sendCustomerInquiry;
 
     renderProducts(); renderSponsoredFeed(); updateCart(); renderAuthUI();
 

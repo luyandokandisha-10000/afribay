@@ -1,63 +1,76 @@
-# AfriBay — Modern Zambian Marketplace
+# AfriBay — Exclusive Single-Seller Storefront & E-Commerce Platform
 
-AfriBay is a full-featured web marketplace and video feed platform tailored for Zambia's new and second-hand (thrift) goods economy.
+AfriBay is a curated single-seller e-commerce web application and storefront owned and operated exclusively by **Luyando Kandisha** (`luyandokandisha@gmail.com`). 
 
-## 🚀 Key Features
+The platform offers verified fashion, thrift, electronics, vehicles, and premium goods with automated Zambian Mobile Money checkout, courier navigation, and direct email notifications.
 
-- **🛍️ Verified Marketplace (Home Feed):**
-  - Instant category filtering: Clothing, Cars, Electronics, and New Goods.
+---
+
+## 🚀 Storefront Highlights
+
+- **🛍️ Official Store Catalog:**
+  - Curated, high-quality inventory managed exclusively by the store owner.
+  - Instant category filtering: **Clothing**, **Cars**, **Electronics**, and **New Goods**.
   - Condition badges: *✦ New*, *★ Like new*, and *◎ Good*.
-  - **👁 View Product**: Detailed item specifications, pricing in Zambian Kwacha (ZMW), description, and direct contact options (WhatsApp & Call seller).
-  - **🏬 View Shop**: Dedicated shop profile modal showcasing the seller's storefront, verified badge, and full product catalog.
-  - **Tactile Add-to-Cart**: Real-time feedback with instant badge counters.
+  - **👁 View Details & Inquire**: Comprehensive item specs, pricing in Zambian Kwacha (ZMW), image carousels, and instant direct messaging.
+  - **Tactile Cart & Checkout**: Real-time ZMW calculations and item quantity adjustments.
 
-- **✦ 100% Free Video Ads Feed:**
-  - TikTok-style vertical short video feed for shops to showcase their inventory.
-  - Free video ad creation: 24h, 7-day, and 30-day durations with zero fees.
-  - Instant "Buy Now", "Product", and "Shop" shortcuts directly on video cards.
+- **✉️ Direct Message & Inquiry Routing:**
+  - Shoppers can send inquiries directly from any product or from the navigation menu.
+  - Inquiries route straight to the owner's personal inbox (`luyandokandisha@gmail.com`) via `POST /api/messages`.
+  - Fast communication with official WhatsApp and phone hotlines (**MTN: 0760312951**, **Airtel: 0778085670**).
 
-- **🏬 Seller Workspace & Storefront:**
-  - One-click shop creation with name, phone, description, and custom logo upload.
-  - Product listing builder with photo upload, category, price, and condition.
-  - Live seller metrics: Total views, active listings, and live video campaigns.
+- **🔒 Exclusive Store Owner Administration:**
+  - Inventory management, product creation, photo/video uploads, and deletion restricted strictly to `luyandokandisha@gmail.com`.
+  - Non-owner visitor accounts act as shoppers who can browse, message, add to cart, and place orders.
 
-- **🛒 Cart, Orders & Zambian Mobile Money Checkout:**
-  - Real-time cart calculation in ZMW including standard delivery fee.
-  - Seamless support for Zambian Mobile Money (**MTN**, **Airtel**, **Zamtel**) and Debit Cards.
-  - Order tracking references generated upon checkout.
-  - **📦 Your Orders & Payouts**: Full order history modal to review past purchases and delivery addresses.
+- **🚚 Zambian Mobile Money & Escrow Checkout:**
+  - Seamless payments powered by **PawaPay** and **Flutterwave** across **MTN MoMo**, **Airtel Money**, and **Zamtel**.
+  - **Pay on Delivery (POD)**: Customers inspect their goods upon delivery and pay via cash or direct mobile money transfer to official store lines:
+    - **MTN MoMo:** `0760312951`
+    - **Airtel Money:** `0778085670`
+  - Automated 6-digit drop-off PIN generated on checkout for courier handover verification.
+  - Instant order dispatch emails sent to `luyandokandisha@gmail.com` detailing customer name, phone, items, total ZMW, and Google Maps delivery coordinates.
 
-- **🔐 Firebase Backend & Authentication:**
-  - **Firebase Auth**: Email/password registration and Google OAuth sign-in.
-  - **Cloud Firestore**: Persistent storage for marketplace products, shops, video ads, cart sync, and orders.
-  - **Firebase Storage**: Secure media uploads for shop logos, listing photos, and short promo videos.
+- **✦ Official Brand Channels & Founder Links:**
+  - Facebook Community Group: [AfriBay Facebook Group](https://www.facebook.com/groups/4159169450883484)
+  - Nexen Facebook: [Official Profile](https://www.facebook.com/profile.php?id=61575486501290)
+  - Instagram: [@real_nextgen_founder](https://www.instagram.com/real_nextgen_founder/)
+  - LinkedIn: [NexGen Founder](https://www.linkedin.com/in/nexgen-founder-18518240a/)
+  - Reddit: [u/next-gen-founder](https://www.reddit.com/user/next-gen-founder/?persist-lb-on-conversion=true&screen_view_count=1&ext-referrer=SEO)
+
+---
 
 ## 🛠️ Project Structure
 
 ```text
 ├── index.html                     # Main application entry point
-├── afrothrift-prototype (2).html   # Standalone HTML application mirror
-├── .gitignore                     # Git ignore rules
+├── afrothrift-prototype (2).html   # Standalone HTML application mirror (exact parity)
+├── test-suite.mjs                 # Comprehensive automated test suite (143 assertions)
+├── server/
+│   └── app.js                     # Node.js backend: PawaPay, orders, and email routing
 ├── src/
 │   ├── firebase.js                # Firebase configuration & initialization
 │   ├── firestore.js               # Cloud Firestore & Storage service helpers
-│   ├── AuthModal.jsx              # React Auth Modal export
-│   ├── CartModal.jsx              # React Cart Modal export
-│   ├── ProductFeed.jsx            # React Product Feed export
-│   ├── VideoAdsFeed.jsx           # React Video Ads Feed export
-│   └── components/                # Modular React/ES6 components
+│   └── components/                # React / ES6 modules
+└── flutter/                       # Native Flutter mobile location & checkout module
 ```
 
-## 🌐 Running Locally
+---
 
-You can run AfriBay directly in any modern web browser or serve it using any static HTTP server:
+## 🌐 Running Locally & Testing
 
+### 1. Launch Backend Server & Storefront
 ```bash
-# With python
-python -m http.server 3000
+# Start backend server
+node server/app.js
 
-# Or with npx serve
+# Serve frontend
 npx serve .
 ```
 
-Open `http://localhost:3000` to view the marketplace.
+### 2. Run Automated Test Suite
+```bash
+node test-suite.mjs
+```
+All 143 automated test assertions verify DOM element integrity, dual-file parity, PawaPay webhooks, escrow flows, and customer email routing.

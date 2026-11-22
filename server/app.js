@@ -37,7 +37,8 @@ const PORT = process.env.PORT || 5000;
 const CLIENT_ID = process.env.FLUTTERWAVE_CLIENT_ID || '7f21e663-d2ee-4286-b96e-83c671b2fcd1';
 const CLIENT_SECRET = process.env.FLUTTERWAVE_CLIENT_SECRET || 'RO1K7hNqNvQOq3Qjy6OnlFGAvM7BkfmE';
 const ENCRYPTION_KEY = process.env.FLUTTERWAVE_ENCRYPTION_KEY || '7OYFHKab7WEyROpKYVBlpxm5g/LtzUBH+k4ouAGLAsM=';
-const ADMIN_NOTIFICATION_EMAIL = process.env.ADMIN_NOTIFICATION_EMAIL || 'luyandokandisha@gmail.com';
+const OWNER_EMAIL = process.env.OWNER_EMAIL || process.env.ADMIN_NOTIFICATION_EMAIL || 'luyandokandisha@gmail.com';
+const ADMIN_NOTIFICATION_EMAIL = OWNER_EMAIL;
 
 let cachedToken = null;
 let tokenExpiresAt = 0;
@@ -248,6 +249,66 @@ Notification sent to: ${recipient}
       });
     } catch (err) {
       console.warn(`[ESCROW RELEASE NOTIFICATION] Webhook note: ${err.message}`);
+    }
+  }
+
+  return { success: true, recipient, emailSubject };
+}
+
+/**
+ * Sends customer message / inquiry directly to store owner email (luyandokandisha@gmail.com)
+ */
+export async function sendCustomerMessageEmail(messageData) {
+  const recipient = OWNER_EMAIL;
+  const senderName = messageData.name || messageData.customerName || 'AfriBay Customer';
+  const senderContact = messageData.email || messageData.phone || 'N/A';
+  const senderPhone = messageData.phone || 'N/A';
+  const productTitle = messageData.productTitle || messageData.subject || 'Store Inquiry';
+  const messageText = messageData.message || messageData.body || 'No message content';
+
+  const emailSubject = `[AfriBay Message] New Customer Inquiry from ${senderName}: ${productTitle}`;
+  const emailBody = `
+======================================================
+     AFRIBAY CUSTOMER INQUIRY / MESSAGE NOTIFICATION
+======================================================
+
+A customer has sent an inquiry through your AfriBay storefront:
+
+CUSTOMER DETAILS:
+------------------------------------------------------
+Customer Name:    ${senderName}
+Contact Email:    ${senderContact}
+Contact Phone:    ${senderPhone}
+Subject/Product:  ${productTitle}
+
+MESSAGE / INQUIRY:
+------------------------------------------------------
+${messageText}
+
+======================================================
+Timestamp:        ${new Date().toISOString()}
+Delivered to Owner: ${recipient}
+======================================================
+`;
+
+  console.log(`\n💬 [CUSTOMER MESSAGE EMAIL DISPATCHED] -> To: ${recipient}`);
+  console.log(emailBody);
+
+  const emailWebhookUrl = process.env.ORDER_EMAIL_WEBHOOK_URL;
+  if (emailWebhookUrl) {
+    try {
+      await fetch(emailWebhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: recipient,
+          subject: emailSubject,
+          text: emailBody,
+          messageData
+        })
+      });
+    } catch (err) {
+      console.warn(`[CUSTOMER MESSAGE NOTIFICATION] Webhook note: ${err.message}`);
     }
   }
 
@@ -515,6 +576,47 @@ const server = http.createServer(async (req, res) => {
         }));
       } catch (err) {
         res.writeHead(500);
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  // Endpoint: Customer Messages & Inquiries Router -> routes to OWNER_EMAIL (luyandokandisha@gmail.com)
+  if ((url.pathname === '/api/messages' || url.pathname === '/api/contact') && req.method === 'POST') {
+    let bodyData = '';
+    req.on('data', chunk => { bodyData += chunk; });
+    req.on('end', async () => {
+      res.setHeader('Content-Type', 'application/json');
+      try {
+        const messageData = JSON.parse(bodyData || '{}');
+        const name = messageData.name || messageData.customerName || 'AfriBay Customer';
+        const contact = messageData.email || messageData.phone || '';
+        const bodyText = messageData.message || messageData.body || messageData.text || '';
+
+        if (!bodyText.trim()) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ success: false, error: 'Message body is required' }));
+          return;
+        }
+
+        const emailResult = await sendCustomerMessageEmail({
+          name,
+          email: messageData.email || '',
+          phone: messageData.phone || '',
+          productTitle: messageData.productTitle || messageData.subject || 'Customer Store Inquiry',
+          message: bodyText
+        });
+
+        res.writeHead(200);
+        res.end(JSON.stringify({
+          success: true,
+          message: 'Inquiry routed to store owner email',
+          recipient: emailResult.recipient,
+          deliveredAt: new Date().toISOString()
+        }));
+      } catch (err) {
+        res.writeHead(400);
         res.end(JSON.stringify({ success: false, error: err.message }));
       }
     });
