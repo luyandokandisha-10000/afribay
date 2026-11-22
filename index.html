@@ -936,7 +936,65 @@
     <div class="modal"><div class="modal-head"><div><div class="eyebrow">Free Video Promotion</div><h2>Create a video ad (100% Free)</h2></div><button class="close" type="button" onclick="closeModal('boostModal')">×</button></div><form onsubmit="createAd(event)"><div class="form-row"><label for="adProductSelect">Your listed product</label><select id="adProductSelect" required></select><small id="adProductHelp" style="display:block;color:var(--muted);margin-top:7px;font-size:11px"></small></div><div class="form-row"><label for="adVideoUrl">Short video URL</label><input id="adVideoUrl" type="url" placeholder="https://your-site.com/ad-video.mp4" oninput="previewAdVideoUrl()" /><small style="display:block;color:var(--muted);margin-top:7px;font-size:11px">Paste an MP4 or WebM video link, or upload a clip below.</small></div><div class="form-row"><label for="adVideoFile">Or upload a video</label><input id="adVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" onchange="previewAdVideo(event)" /><video id="adVideoPreview" controls muted loop playsinline style="width:100%;max-height:150px;border-radius:11px;margin-top:9px;display:none;background:#173d30"></video><div id="adVideoError" class="auth-error"></div></div><div class="form-row"><label for="adDuration">Ad duration</label><select id="adDuration" required><option value="daily" data-price="0">Daily · 24 hours · FREE (0 ZMW)</option><option value="weekly" data-price="0" selected>Weekly · 7 days · FREE (0 ZMW)</option><option value="monthly" data-price="0">Monthly · 30 days · FREE (0 ZMW)</option></select></div><div class="auth-card" style="padding:12px;margin-top:14px;background:var(--green-soft);border-color:var(--green);color:var(--green-deep);font-size:12px;display:flex;align-items:center;gap:8px;"><strong>✓ 100% Free Promotion:</strong> Sponsoring your products in the Ads feed is free for all AfriBay sellers. No card or mobile money charge.</div><div class="modal-foot"><button type="submit" class="button orange" style="width:100%">Publish Free Video Ad →</button></div></form></div>
   </div>
   <div id="checkoutModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'checkoutModal')">
-    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div><form onsubmit="processCheckout(event)"><div class="form-row" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><label style="margin:0;font-weight:700;">Delivery Destination</label><span style="font-size:11px;color:var(--muted)">Option: Map Pin or Address</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;"><button type="button" id="deliveryTabGps" class="button ghost selected" onclick="toggleDeliveryMode('gps')" style="font-size:11px;padding:7px 4px;font-weight:800;border:2px solid var(--green);">📍 Google Maps Pin</button><button type="button" id="deliveryTabAddress" class="button ghost" onclick="toggleDeliveryMode('address')" style="font-size:11px;padding:7px 4px;font-weight:800;border:1px solid var(--border);">✍️ Written Address</button></div><div id="deliveryGpsSection" style="padding:10px;background:#f4f9f5;border-radius:8px;border:1px dashed var(--green);"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button type="button" class="button" onclick="captureDeliveryLocation()" style="font-size:11px;padding:6px 12px;background:var(--green);color:white;font-weight:700;">📍 Pin Live GPS Location</button><button type="button" class="button ghost" onclick="toggleManualGpsInput()" style="font-size:11px;padding:6px 8px;font-weight:600;">Manual Lat/Lng</button><span id="deliveryGpsLabel" style="font-size:11px;color:var(--muted)">Pin live location for courier navigation</span></div><input id="deliveryMapLink" placeholder="Or paste Google Maps link / coordinates (e.g. -15.3875, 28.3228)" oninput="syncManualMapLink()" style="margin-top:8px;width:100%;font-size:12px;padding:7px 10px;" /><div id="manualGpsFields" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><input id="manualLat" type="number" step="any" placeholder="Latitude (e.g. -15.3875)" oninput="syncManualCoordinates()" /><input id="manualLng" type="number" step="any" placeholder="Longitude (e.g. 28.3228)" oninput="syncManualCoordinates()" /></div><small style="color:var(--muted);font-size:10px;display:block;margin-top:4px;">Tip: Copy & paste coordinates directly from Google Maps if browser GPS permission is disabled.</small></div><small style="display:block;color:var(--muted);margin-top:6px;font-size:11px;">The courier will navigate directly to your drop-off coordinates on Google Maps.</small></div><div id="deliveryAddressSection" style="display:none;margin-top:6px;"><input id="deliveryAddress" placeholder="Street, area, city (e.g. Plot 42, Woodlands, Lusaka)" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">Include nearby landmarks or gate color for easy finding.</small></div><input type="hidden" id="deliveryLat" /><input type="hidden" id="deliveryLng" /></div><div class="form-row"><label>Payment method</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="pod" onclick="selectPay(this)">🚚 Pay on Delivery<br />Direct MoMo / Cash</button><button type="button" class="pay-option" data-payment="mobile_money" onclick="selectPay(this)">📱 Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">💳 Card<br />Visa · Mastercard</button></div></div><div id="podFields" class="form-row"><div style="padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12px;color:#166534"><div style="font-weight:800;font-size:13px;margin-bottom:4px;">🚚 Direct Pay on Delivery</div><p style="margin:0 0 8px 0;line-height:1.4;">Inspect your items upon arrival. You will transfer payment directly to the seller via Mobile Money or Cash upon package handover.</p><div style="background:white;padding:10px;border-radius:6px;border:1px dashed #22c55e;"><div style="font-weight:700;color:var(--green-deep);margin-bottom:4px;">Vendor Direct Payout Details:</div><div style="font-size:11px;color:var(--ink);line-height:1.6;"><div>• <strong>Payout Preference:</strong> <span id="podVendorPref" style="font-weight:700;">Send Money (Mobile Money)</span></div><div>• <strong>MTN MoMo:</strong> <span id="podVendorMtn" style="font-weight:700;">0760312951</span></div><div>• <strong>Airtel Money:</strong> <span id="podVendorAirtel" style="font-weight:700;">0778085670</span></div></div></div><label for="podBuyerPhone" style="display:block;margin-top:10px;font-weight:700;color:var(--ink)">Your Contact Phone Number</label><input id="podBuyerPhone" type="tel" placeholder="e.g. 097... or 096..." style="margin-top:4px;" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">The courier and vendor will contact you at this number for delivery coordination.</small></div></div><div id="mobileMoneyFields" class="form-row" style="display:none"><label>Mobile Money Provider</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"><button type="button" class="button ghost selected" data-provider="mtn" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:2px solid var(--green)">MTN MoMo</button><button type="button" class="button ghost" data-provider="airtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Airtel Money</button><button type="button" class="button ghost" data-provider="zamtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Zamtel</button></div><label for="paymentPhone">Zambian Mobile Money number</label><input id="paymentPhone" type="tel" placeholder="+260 97... or 096..." /><small style="display:block;color:var(--muted);margin-top:5px;font-size:11px;">Instant mobile prompt will be sent to your phone for PIN authorization.</small></div><div id="cardFields" class="form-row" style="display:none"><div style="padding:10px;background:var(--green-soft);border-radius:8px;font-size:12px;color:var(--green-deep)">🔒 Secure Zambian & International Card processing powered by Flutterwave.</div></div><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button" id="checkoutSubmitBtn">Place Order · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div><form onsubmit="processCheckout(event)">
+      <!-- 1. Delivery Zone Selector -->
+      <div class="form-row" style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <label for="deliveryZoneSelect" style="margin:0;font-weight:700;">Select Delivery Zone *</label>
+          <span id="freeDeliveryNotice" style="font-size:11px;color:var(--green-deep);font-weight:700;display:none;">🎉 FREE Delivery Unlocked (K500+)</span>
+        </div>
+        <select id="deliveryZoneSelect" onchange="onDeliveryZoneChange()" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:9px;font-family:inherit;font-size:13px;background:white;" required>
+          <option value="lusaka_local">Lusaka Local Delivery (Same-Day Moto/Courier) — K45</option>
+          <option value="intercity">Intercity Courier / Bus Parcel (Kabwe, Copperbelt &amp; Provincial Towns) — K80</option>
+          <option value="free" id="freeDeliveryOption" style="display:none;">Free Delivery (Orders K500+) — K0</option>
+          <option value="pickup">Self Pickup (Lusaka Hub) — Free (K0)</option>
+        </select>
+        <small id="deliveryZoneHelp" style="display:block;color:var(--muted);font-size:11px;margin-top:4px;">
+          Lusaka local courier K45 · Provincial towns K80 · Free delivery automatically applied on orders K500+
+        </small>
+      </div>
+
+      <!-- 2. Courier-Ready Delivery Info -->
+      <div class="form-row" style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <label style="margin:0;font-weight:700;">Courier-Ready Delivery Info *</label>
+          <span style="font-size:11px;color:var(--muted)">For Yango &amp; Couriers</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+          <div>
+            <label for="deliveryCity" style="font-size:11px;color:var(--muted);margin-bottom:2px;display:block;">City / Town *</label>
+            <input id="deliveryCity" placeholder="e.g. Lusaka, Ndola, Kitwe, Kabwe" oninput="syncCourierAddressFields()" required style="width:100%;font-size:12px;padding:8px 10px;" />
+          </div>
+          <div>
+            <label for="deliveryPhone" style="font-size:11px;color:var(--muted);margin-bottom:2px;display:block;">WhatsApp / Active Phone *</label>
+            <input id="deliveryPhone" type="tel" placeholder="e.g. 097... or 076..." oninput="syncCourierAddressFields()" required style="width:100%;font-size:12px;padding:8px 10px;" />
+          </div>
+        </div>
+        <div>
+          <label for="deliveryLandmark" style="font-size:11px;color:var(--muted);margin-bottom:2px;display:block;">Area / Street &amp; Nearest Landmark *</label>
+          <input id="deliveryLandmark" placeholder="e.g. Woodlands, near Crossroads Mall" oninput="syncCourierAddressFields()" required style="width:100%;font-size:12px;padding:8px 10px;" />
+          <small style="color:var(--muted);font-size:11px;display:block;margin-top:3px;">Helps motor riders and delivery vans locate your drop-off without delays.</small>
+        </div>
+      </div>
+
+      <!-- 3. Dynamic Order Summary Breakdown -->
+      <div class="auth-card" style="padding:12px 14px;background:#f8faf8;border:1px solid #dcf0df;margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;color:var(--text);">
+          <span>Items Subtotal:</span>
+          <strong id="checkoutSubtotal">ZMW 0.00</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;color:var(--text);">
+          <span>Shipping Fee (<span id="checkoutZoneLabel">Lusaka Local</span>):</span>
+          <strong id="checkoutShippingFee" style="color:var(--green-deep)">ZMW 45.00</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:900;border-top:1px dashed #c0e0c5;padding-top:6px;margin-top:4px;color:var(--ink);">
+          <span>Order Grand Total:</span>
+          <span id="checkoutGrandTotal" style="color:var(--green-deep);">ZMW 0.00</span>
+        </div>
+      </div>
+
+      <!-- 4. Pin/Written Address Toggle (Backwards Compatible) -->
+      <div class="form-row" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><label style="margin:0;font-weight:700;">Drop-off Location Pin / Details</label><span style="font-size:11px;color:var(--muted)">Option: Map Pin or Address</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;"><button type="button" id="deliveryTabGps" class="button ghost selected" onclick="toggleDeliveryMode('gps')" style="font-size:11px;padding:7px 4px;font-weight:800;border:2px solid var(--green);">📍 Google Maps Pin</button><button type="button" id="deliveryTabAddress" class="button ghost" onclick="toggleDeliveryMode('address')" style="font-size:11px;padding:7px 4px;font-weight:800;border:1px solid var(--border);">✍️ Written Address</button></div><div id="deliveryGpsSection" style="padding:10px;background:#f4f9f5;border-radius:8px;border:1px dashed var(--green);"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button type="button" class="button" onclick="captureDeliveryLocation()" style="font-size:11px;padding:6px 12px;background:var(--green);color:white;font-weight:700;">📍 Pin Live GPS Location</button><button type="button" class="button ghost" onclick="toggleManualGpsInput()" style="font-size:11px;padding:6px 8px;font-weight:600;">Manual Lat/Lng</button><span id="deliveryGpsLabel" style="font-size:11px;color:var(--muted)">Pin live location for courier navigation</span></div><input id="deliveryMapLink" placeholder="Or paste Google Maps link / coordinates (e.g. -15.3875, 28.3228)" oninput="syncManualMapLink()" style="margin-top:8px;width:100%;font-size:12px;padding:7px 10px;" /><div id="manualGpsFields" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><input id="manualLat" type="number" step="any" placeholder="Latitude (e.g. -15.3875)" oninput="syncManualCoordinates()" /><input id="manualLng" type="number" step="any" placeholder="Longitude (e.g. 28.3228)" oninput="syncManualCoordinates()" /></div><small style="color:var(--muted);font-size:10px;display:block;margin-top:4px;">Tip: Copy & paste coordinates directly from Google Maps if browser GPS permission is disabled.</small></div><small style="display:block;color:var(--muted);margin-top:6px;font-size:11px;">The courier will navigate directly to your drop-off coordinates on Google Maps.</small></div><div id="deliveryAddressSection" style="display:none;margin-top:6px;"><input id="deliveryAddress" placeholder="Street, area, city (e.g. Plot 42, Woodlands, Lusaka)" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">Include nearby landmarks or gate color for easy finding.</small></div><input type="hidden" id="deliveryLat" /><input type="hidden" id="deliveryLng" /></div><div class="form-row"><label>Payment method</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="pod" onclick="selectPay(this)">🚚 Pay on Delivery<br />Direct MoMo / Cash</button><button type="button" class="pay-option" data-payment="mobile_money" onclick="selectPay(this)">📱 Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">💳 Card<br />Visa · Mastercard</button></div></div><div id="podFields" class="form-row"><div style="padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12px;color:#166534"><div style="font-weight:800;font-size:13px;margin-bottom:4px;">🚚 Direct Pay on Delivery</div><p style="margin:0 0 8px 0;line-height:1.4;">Inspect your items upon arrival. You will transfer payment directly to the seller via Mobile Money or Cash upon package handover.</p><div style="background:white;padding:10px;border-radius:6px;border:1px dashed #22c55e;"><div style="font-weight:700;color:var(--green-deep);margin-bottom:4px;">Vendor Direct Payout Details:</div><div style="font-size:11px;color:var(--ink);line-height:1.6;"><div>• <strong>Payout Preference:</strong> <span id="podVendorPref" style="font-weight:700;">Send Money (Mobile Money)</span></div><div>• <strong>MTN MoMo:</strong> <span id="podVendorMtn" style="font-weight:700;">0760312951</span></div><div>• <strong>Airtel Money:</strong> <span id="podVendorAirtel" style="font-weight:700;">0778085670</span></div></div></div><label for="podBuyerPhone" style="display:block;margin-top:10px;font-weight:700;color:var(--ink)">Your Contact Phone Number</label><input id="podBuyerPhone" type="tel" placeholder="e.g. 097... or 096..." style="margin-top:4px;" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">The courier and vendor will contact you at this number for delivery coordination.</small></div></div><div id="mobileMoneyFields" class="form-row" style="display:none"><label>Mobile Money Provider</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"><button type="button" class="button ghost selected" data-provider="mtn" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:2px solid var(--green)">MTN MoMo</button><button type="button" class="button ghost" data-provider="airtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Airtel Money</button><button type="button" class="button ghost" data-provider="zamtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Zamtel</button></div><label for="paymentPhone">Zambian Mobile Money number</label><input id="paymentPhone" type="tel" placeholder="+260 97... or 096..." /><small style="display:block;color:var(--muted);margin-top:5px;font-size:11px;">Instant mobile prompt will be sent to your phone for PIN authorization.</small></div><div id="cardFields" class="form-row" style="display:none"><div style="padding:10px;background:var(--green-soft);border-radius:8px;font-size:12px;color:var(--green-deep)">🔒 Secure Zambian & International Card processing powered by Flutterwave.</div></div><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button" id="checkoutSubmitBtn">Place Order · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
   </div>
   <div id="receiptModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'receiptModal')">
     <div class="modal" style="max-width: 520px; width: 100%;">
@@ -3452,6 +3510,76 @@
         console.error("buyNow error:", err);
       }
     }
+    function calculateClientDeliveryAndTotal(zone = "lusaka_local", subtotal = 0) {
+      const calcSub = Number(subtotal || 0);
+      if (calcSub <= 0) {
+        return { subtotal: 0, shippingFee: 0, totalAmount: 0, zone: "lusaka_local", label: "Lusaka Local", isFree: false };
+      }
+      let cleanZone = String(zone || "lusaka_local").toLowerCase().trim();
+      if (calcSub >= 500) {
+        return {
+          subtotal: calcSub,
+          shippingFee: 0,
+          totalAmount: calcSub,
+          zone: cleanZone || "free",
+          label: `${cleanZone === "intercity" ? "Intercity Courier" : "Lusaka Local"} (Free Delivery — Orders K500+)`,
+          isFree: true
+        };
+      }
+      if (cleanZone === "intercity") {
+        return {
+          subtotal: calcSub,
+          shippingFee: 80,
+          totalAmount: calcSub + 80,
+          zone: "intercity",
+          label: "Intercity Courier / Bus Parcel (K80)",
+          isFree: false
+        };
+      }
+      if (cleanZone === "pickup" || cleanZone === "free") {
+        return {
+          subtotal: calcSub,
+          shippingFee: 0,
+          totalAmount: calcSub,
+          zone: cleanZone,
+          label: cleanZone === "pickup" ? "Self Pickup (Free)" : "Free Delivery",
+          isFree: true
+        };
+      }
+      return {
+        subtotal: calcSub,
+        shippingFee: 45,
+        totalAmount: calcSub + 45,
+        zone: "lusaka_local",
+        label: "Lusaka Local Delivery (K45)",
+        isFree: false
+      };
+    }
+
+    function onDeliveryZoneChange() {
+      updateCart();
+    }
+
+    function syncCourierAddressFields() {
+      const city = document.getElementById("deliveryCity")?.value?.trim() || "";
+      const landmark = document.getElementById("deliveryLandmark")?.value?.trim() || "";
+      const phone = document.getElementById("deliveryPhone")?.value?.trim() || "";
+
+      const addrEl = document.getElementById("deliveryAddress");
+      if (addrEl && (city || landmark)) {
+        addrEl.value = [landmark, city].filter(Boolean).join(", ");
+      }
+
+      const podPhone = document.getElementById("podBuyerPhone");
+      if (podPhone && phone) {
+        podPhone.value = phone;
+      }
+      const payPhone = document.getElementById("paymentPhone");
+      if (payPhone && phone && !payPhone.value) {
+        payPhone.value = phone;
+      }
+    }
+
     function updateCart() {
       try {
         const count = cart.reduce((sum, x) => sum + x.qty, 0);
@@ -3468,11 +3596,47 @@
           list.innerHTML = `<h3 style="margin-top:0">Your items <span style="color:var(--muted);font-size:12px;font-weight:400">(${count})</span></h3>` + lines.map(({ item, product }) => `<div class="cart-row"><div class="cart-art ${escapeHTML(product.artClass || "t1")}">${escapeHTML(product.art || "✦")}</div><div><h3>${escapeHTML(product.title)}</h3><p>${escapeHTML(product.seller)} · ${money(product.price)}</p><div class="qty"><button type="button" onclick="changeQty('${escapeHTML(String(product.id))}', -1)">−</button>${item.qty}<button type="button" onclick="changeQty('${escapeHTML(String(product.id))}', 1)">+</button></div></div><div class="cart-price">${money(product.price * item.qty)}</div></div>`).join("");
         }
         const subtotal = cart.reduce((sum, item) => { const p = findProduct(item.id); return sum + (p ? p.price * item.qty : 0); }, 0);
-        const delivery = subtotal ? 35 : 0;
+        
+        const zoneSelect = document.getElementById("deliveryZoneSelect");
+        const selectedZone = zoneSelect ? zoneSelect.value : "lusaka_local";
+        const calc = calculateClientDeliveryAndTotal(selectedZone, subtotal);
+
+        // Update Free delivery notice and options if order is K500+
+        const freeNotice = document.getElementById("freeDeliveryNotice");
+        const freeOption = document.getElementById("freeDeliveryOption");
+        if (subtotal >= 500) {
+          if (freeNotice) freeNotice.style.display = "inline";
+          if (freeOption) freeOption.style.display = "block";
+        } else {
+          if (freeNotice) freeNotice.style.display = "none";
+          if (freeOption) freeOption.style.display = "none";
+        }
+
         const subEl = document.getElementById("subtotal"); if (subEl) subEl.textContent = money(subtotal);
-        const delEl = document.getElementById("delivery"); if (delEl) delEl.textContent = money(delivery);
-        const totEl = document.getElementById("total"); if (totEl) totEl.textContent = money(subtotal + delivery);
-        const coTot = document.getElementById("checkoutTotal"); if (coTot) coTot.textContent = money(subtotal + delivery);
+        const delEl = document.getElementById("delivery");
+        if (delEl) {
+          if (subtotal === 0) {
+            delEl.textContent = "ZMW 0.00";
+          } else if (calc.isFree) {
+            delEl.innerHTML = '<span style="color:var(--green-deep);font-weight:700;">FREE (Orders K500+)</span>';
+          } else {
+            delEl.textContent = money(calc.shippingFee);
+          }
+        }
+        const totEl = document.getElementById("total"); if (totEl) totEl.textContent = money(calc.totalAmount);
+        
+        // Checkout modal summary elements
+        const coTot = document.getElementById("checkoutTotal"); if (coTot) coTot.textContent = money(calc.totalAmount);
+        const coSub = document.getElementById("checkoutSubtotal"); if (coSub) coSub.textContent = money(subtotal);
+        const coFee = document.getElementById("checkoutShippingFee");
+        if (coFee) {
+          coFee.textContent = calc.isFree ? "ZMW 0.00 (FREE)" : money(calc.shippingFee);
+        }
+        const coGrand = document.getElementById("checkoutGrandTotal"); if (coGrand) coGrand.textContent = money(calc.totalAmount);
+        const coLabel = document.getElementById("checkoutZoneLabel");
+        if (coLabel) {
+          coLabel.textContent = selectedZone === 'intercity' ? 'Intercity Courier' : (selectedZone === 'pickup' ? 'Self Pickup' : 'Lusaka Local');
+        }
       } catch (err) {
         console.error("updateCart error:", err);
       }
@@ -4007,10 +4171,16 @@
           buyerPhoneEl.value = currentUser.phone;
         }
 
-        const coTot = document.getElementById("checkoutTotal");
-        const subtotal = cart.reduce((sum, item) => { const p = findProduct(item.id); return sum + (p ? p.price * item.qty : 0); }, 0);
-        const delivery = subtotal ? 35 : 0;
-        if (coTot) coTot.textContent = money(subtotal + delivery);
+        // Prepopulate courier fields
+        const cityEl = document.getElementById("deliveryCity");
+        if (cityEl && !cityEl.value) cityEl.value = "Lusaka";
+        const phoneEl = document.getElementById("deliveryPhone");
+        if (phoneEl && !phoneEl.value && currentUser.phone) phoneEl.value = currentUser.phone;
+        const payPhoneEl = document.getElementById("paymentPhone");
+        if (payPhoneEl && !payPhoneEl.value && currentUser.phone) payPhoneEl.value = currentUser.phone;
+
+        syncCourierAddressFields();
+        updateCart();
 
         openModal("checkoutModal");
       } catch (err) {
@@ -4082,10 +4252,26 @@
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Place Order · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
           return;
         }
-        const totalZMW = subtotal + 35;
+
+        const zoneSelect = document.getElementById("deliveryZoneSelect");
+        const deliveryZone = zoneSelect ? zoneSelect.value : "lusaka_local";
+        const clientCalc = calculateClientDeliveryAndTotal(deliveryZone, subtotal);
+        const shippingFee = clientCalc.shippingFee;
+        const totalZMW = clientCalc.totalAmount;
+        const deliveryZoneLabel = clientCalc.label;
+
+        const deliveryCity = document.getElementById("deliveryCity")?.value?.trim() || "";
+        const deliveryLandmark = document.getElementById("deliveryLandmark")?.value?.trim() || "";
+        const deliveryPhone = document.getElementById("deliveryPhone")?.value?.trim() || "";
+
         const trackingId = `AFB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
         const deliveryAddressEl = document.getElementById("deliveryAddress");
         let deliveryAddress = deliveryAddressEl ? deliveryAddressEl.value.trim() : "";
+        if (deliveryCity || deliveryLandmark) {
+          deliveryAddress = [deliveryLandmark, deliveryCity].filter(Boolean).join(", ");
+          if (deliveryAddressEl) deliveryAddressEl.value = deliveryAddress;
+        }
+
         const deliveryLatEl = document.getElementById("deliveryLat");
         const deliveryLngEl = document.getElementById("deliveryLng");
         const deliveryMapLinkEl = document.getElementById("deliveryMapLink");
@@ -4108,8 +4294,8 @@
         const hasAddress = deliveryAddress.length > 0;
         const hasMapLink = mapLinkVal.length > 0;
 
-        if (!hasGps && !hasAddress && !hasMapLink) {
-          setAuthError("checkoutError", "Please provide a delivery destination: either pin on map, paste a map link, or type your address.");
+        if (!hasGps && !hasAddress && !hasMapLink && (!deliveryCity || !deliveryLandmark)) {
+          setAuthError("checkoutError", "Please provide your City / Town and Area & Nearest Landmark for delivery.");
           if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = `Place Order · ${document.getElementById("checkoutTotal")?.textContent || "ZMW 0.00"}`; }
           return;
         }
@@ -4120,7 +4306,7 @@
           deliveryAddress = `Map Location: ${mapLinkVal}`;
         }
 
-        const rawCustomerPhone = isPod ? buyerContactPhone : (payPhone || buyerContactPhone);
+        const rawCustomerPhone = deliveryPhone || (isPod ? buyerContactPhone : (payPhone || buyerContactPhone));
         let cleanPhone = rawCustomerPhone.replace(/[^\d]/g, "");
         if (cleanPhone.startsWith("0")) {
           cleanPhone = "260" + cleanPhone.substring(1);
@@ -4153,10 +4339,18 @@
             flutterwaveTransactionId: flwResponse.transaction_id || flwResponse.id || null,
             flutterwaveRef: flwResponse.flw_ref || null,
             items: detailedItems,
+            subtotal,
+            shippingFee,
+            deliveryZone,
+            deliveryZoneLabel,
+            city: deliveryCity || "Lusaka",
+            landmarkAddress: deliveryLandmark || deliveryAddress,
+            customerPhone: cleanPhone || deliveryPhone || buyerContactPhone,
+            totalAmount: totalZMW,
             totalZMW,
-            vendorPayoutZMW: Math.max(0, totalZMW - 35),
+            vendorPayoutZMW: Math.max(0, totalZMW - (shippingFee || 35)),
             paymentMethod: isPod ? "pay_on_delivery" : (selectedPayment === "mobile_money" ? `mobile_money_${selectedMomoNetwork}` : "card"),
-            paymentPhone: cleanPhone || buyerContactPhone,
+            paymentPhone: cleanPhone || deliveryPhone || buyerContactPhone,
             paymentStatus: isPod ? "pay_on_delivery" : "escrow_held",
             escrowStatus: isPod ? "pay_on_delivery" : "escrow_held",
             deliveryStatus: "processing",
@@ -4175,7 +4369,7 @@
             customer: {
               email: currentUser.email || "shopper@afribay.com",
               name: currentUser.name || "AfriBay Shopper",
-              phone: cleanPhone || buyerContactPhone
+              phone: cleanPhone || deliveryPhone || buyerContactPhone
             },
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
@@ -4278,8 +4472,16 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               amount: totalZMW,
+              totalAmount: totalZMW,
+              subtotal,
+              shippingFee,
+              deliveryZone,
+              deliveryZoneLabel,
+              city: deliveryCity || "Lusaka",
+              landmarkAddress: deliveryLandmark || deliveryAddress,
+              customerPhone: cleanPhone || deliveryPhone || buyerContactPhone,
               txRef: trackingId,
-              phoneNumber: cleanPhone,
+              phoneNumber: cleanPhone || deliveryPhone || buyerContactPhone,
               paymentMethod: selectedPayment,
               network: selectedMomoNetwork,
               deliveryAddress,
@@ -4288,7 +4490,8 @@
               items: payloadItems,
               customer: {
                 email: currentUser.email || "shopper@afribay.com",
-                name: currentUser.name || "AfriBay Shopper"
+                name: currentUser.name || "AfriBay Shopper",
+                phone: cleanPhone || deliveryPhone || buyerContactPhone
               }
             })
           });

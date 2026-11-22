@@ -71,6 +71,8 @@ async function runTestSuite() {
     'shopName', 'shopMtnPhone', 'shopAirtelPhone', 'shopPayoutPreference', 'shopPhone', 'shopAddressInput', 'shopLat', 'shopLng', 'shopGpsLabel', 'shopSubmitBtn', 'shopError',
     'deliveryTabGps', 'deliveryTabAddress', 'deliveryGpsSection', 'deliveryAddressSection',
     'deliveryAddress', 'deliveryLat', 'deliveryLng', 'deliveryGpsLabel', 'checkoutTotal', 'checkoutError',
+    'deliveryZoneSelect', 'deliveryCity', 'deliveryLandmark', 'deliveryPhone',
+    'checkoutSubtotal', 'checkoutShippingFee', 'checkoutGrandTotal',
     'podFields', 'podVendorPref', 'podVendorMtn', 'podVendorAirtel', 'podBuyerPhone',
     'receiptTracking', 'receiptAmount', 'receiptPin', 'receiptGpsInfo', 'receiptMapsLink', 'receiptEscrowBadge',
     'receiptPodInfo', 'receiptVendorName', 'receiptVendorMtn', 'receiptVendorAirtel', 'receiptVendorPref',
@@ -276,6 +278,77 @@ async function runTestSuite() {
     assert(notifyRes.statusCode === 200, 'POST /api/orders/notify responds 200 OK');
     assert(notifyRes.json?.recipient === 'luyandokandisha@gmail.com', 'Recipient is configured to luyandokandisha@gmail.com');
     assert(notifyRes.json?.courierMapsUrl?.includes('-15.4123,28.3456'), 'Notification payload includes Google Maps courier link');
+
+    // 4.7b: Order Notification with Delivery Zone & Courier Fields
+    const zoneNotifyRes = await request(`${testBaseUrl}/api/orders/notify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        trackingId: 'AFB-TEST-ZONE-01',
+        deliveryZone: 'lusaka_local',
+        subtotal: 200,
+        city: 'Lusaka',
+        landmarkAddress: 'Woodlands, near Crossroads Mall',
+        customerPhone: '0971234567',
+        items: [{ title: 'Kitenge Shirt', quantity: 1, priceZMW: 200, shopName: 'AfriBay Store' }]
+      }
+    });
+    assert(zoneNotifyRes.statusCode === 200, 'POST /api/orders/notify with delivery zone responds 200 OK');
+    assert(zoneNotifyRes.json?.deliveryZone === 'lusaka_local', 'Order persists deliveryZone: "lusaka_local"');
+    assert(zoneNotifyRes.json?.shippingFee === 45, 'Lusaka Local shipping fee correctly calculated as K45');
+    assert(zoneNotifyRes.json?.totalAmount === 245, 'Grand total correctly verified as K245 (200 + 45)');
+    assert(zoneNotifyRes.json?.city === 'Lusaka', 'Order persists courier City: "Lusaka"');
+    assert(zoneNotifyRes.json?.landmarkAddress === 'Woodlands, near Crossroads Mall', 'Order persists courier Landmark');
+    assert(zoneNotifyRes.json?.customerPhone === '0971234567', 'Order persists courier WhatsApp Phone');
+
+    // 4.7c: Intercity Courier Zone Calculation (K80) via Checkout
+    const intercityCheckoutRes = await request(`${testBaseUrl}/api/checkout/initiate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        deliveryZone: 'intercity',
+        subtotal: 250,
+        city: 'Ndola',
+        landmarkAddress: 'Broadway, near Kansenshi',
+        customerPhone: '0969998877',
+        items: [{ title: 'Handmade Bag', quantity: 1, priceZMW: 250, shopName: 'AfriBay Store' }]
+      }
+    });
+    assert(intercityCheckoutRes.statusCode === 200, 'POST /api/checkout/initiate for Intercity Courier responds 200 OK');
+    assert(intercityCheckoutRes.json?.deliveryZone === 'intercity', 'Checkout persists deliveryZone: "intercity"');
+    assert(intercityCheckoutRes.json?.shippingFee === 80, 'Intercity Courier shipping fee correctly calculated as K80');
+    assert(intercityCheckoutRes.json?.amountZMW === 330, 'Grand total correctly verified as K330 (250 + 80)');
+    assert(intercityCheckoutRes.json?.city === 'Ndola', 'Checkout persists destination city: "Ndola"');
+
+    // 4.7d: Free Delivery Automatically Applied for Orders >= K500
+    const freeDeliveryRes = await request(`${testBaseUrl}/api/checkout/initiate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        deliveryZone: 'lusaka_local',
+        subtotal: 550,
+        city: 'Lusaka',
+        landmarkAddress: 'Plot 12, Rhodes Park',
+        items: [{ title: 'Premium Suit', quantity: 1, priceZMW: 550, shopName: 'AfriBay Store' }]
+      }
+    });
+    assert(freeDeliveryRes.statusCode === 200, 'POST /api/checkout/initiate for K500+ order responds 200 OK');
+    assert(freeDeliveryRes.json?.shippingFee === 0, 'Free delivery automatically applied (shipping fee = K0)');
+    assert(freeDeliveryRes.json?.amountZMW === 550, 'Grand total correctly verified as K550 (subtotal only, zero shipping)');
+
+    // 4.7e: Self Pickup Option (K0)
+    const pickupDeliveryRes = await request(`${testBaseUrl}/api/checkout/initiate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: {
+        deliveryZone: 'pickup',
+        subtotal: 150,
+        items: [{ title: 'Sneakers', quantity: 1, priceZMW: 150, shopName: 'AfriBay Store' }]
+      }
+    });
+    assert(pickupDeliveryRes.statusCode === 200, 'POST /api/checkout/initiate for pickup responds 200 OK');
+    assert(pickupDeliveryRes.json?.shippingFee === 0, 'Self pickup shipping fee is K0');
+    assert(pickupDeliveryRes.json?.amountZMW === 150, 'Grand total for pickup equals subtotal K150');
 
     // 4.8 PawaPay Webhook Tests (POST /api/webhooks/pawapay)
     // 4.8a: Reject invalid payload missing depositId or status

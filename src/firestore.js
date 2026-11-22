@@ -220,10 +220,23 @@ export async function createOrder(uid, order) {
   const deliveryStatus = order.deliveryStatus || "processing";
   const delivery_lat = order.delivery_lat != null ? Number(order.delivery_lat) : (order.deliveryLat != null ? Number(order.deliveryLat) : null);
   const delivery_lng = order.delivery_lng != null ? Number(order.delivery_lng) : (order.deliveryLng != null ? Number(order.deliveryLng) : null);
+  const deliveryZone = order.deliveryZone || "lusaka_local";
+  const shippingFee = order.shippingFee != null ? Number(order.shippingFee) : (order.deliveryFee != null ? Number(order.deliveryFee) : 45);
+  const city = order.city || order.deliveryCity || "Lusaka";
+  const landmarkAddress = order.landmarkAddress || order.deliveryLandmark || order.deliveryAddress || "";
+  const customerPhone = order.customerPhone || order.deliveryPhone || order.phoneNumber || order.customer?.phone || "";
+  const totalAmount = order.totalAmount != null ? Number(order.totalAmount) : Number(order.totalZMW || order.amount || 0);
 
   const orderRecord = {
     ...order,
     deliveryPin,
+    deliveryZone,
+    shippingFee,
+    city,
+    landmarkAddress,
+    customerPhone,
+    totalAmount,
+    totalZMW: totalAmount,
     delivery_lat: delivery_lat,
     delivery_lng: delivery_lng,
     escrowStatus,

@@ -100,25 +100,130 @@ export function checkVendorSubscription(shop) {
   };
 }
 
+let mailTransporter = null;
+
 /**
- * Sends an email notification to luyandokandisha@gmail.com when an order is placed and held in Escrow.
- * Details shop name, products, total amount, delivery location, Escrow status, and Delivery Confirmation PIN.
+ * Initializes and retrieves the Nodemailer mail transporter.
+ * Supports SMTP credentials if provided in env, with graceful mock/JSON fallback.
+ */
+export async function getMailTransporter() {
+  if (mailTransporter) return mailTransporter;
+  try {
+    const nodemailer = (await import('nodemailer')).default;
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+      mailTransporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT || 587),
+        secure: Number(process.env.SMTP_PORT) === 465,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        }
+      });
+      console.log(`[Nodemailer] SMTP transport configured for ${process.env.SMTP_HOST}:${process.env.SMTP_PORT || 587}`);
+    } else {
+      mailTransporter = nodemailer.createTransport({
+        jsonTransport: true
+      });
+      console.log('[Nodemailer] Active (JSON logging mode). Set SMTP_HOST, SMTP_USER, SMTP_PASS for live SMTP relay.');
+    }
+  } catch (err) {
+    console.warn('[Nodemailer Init Warning]:', err.message);
+  }
+  return mailTransporter;
+}
+
+/**
+ * Calculates delivery fee, grand total, and delivery zone details.
+ * - Lusaka Local Delivery (Same-Day Moto/Courier) — K45
+ * - Intercity Courier / Bus Parcel (Kabwe, Copperbelt & Provincial Towns) — K80
+ * - Free Delivery (orders K500+ or pickup) — K0
+ */
+export function calculateDeliveryAndTotal({ items = [], deliveryZone = 'lusaka_local', subtotal = null, requestedAmount = null }) {
+  const calcSubtotal = subtotal != null 
+    ? Number(subtotal)
+    : items.reduce((sum, it) => sum + (Number(it.priceZMW || it.price || 0) * Number(it.quantity || it.qty || 1)), 0);
+
+  let zone = String(deliveryZone || '').toLowerCase().trim();
+  let fee = 45;
+  let zoneLabel = 'Lusaka Local Delivery (Same-Day Moto/Courier)';
+
+  // If subtotal is K500 or more, Free Delivery is unlocked automatically
+  if (calcSubtotal >= 500) {
+    fee = 0;
+    zone = zone || 'free';
+    zoneLabel = `${zone === 'intercity' ? 'Intercity Courier' : 'Lusaka Local'} (Free Delivery — Orders K500+)`;
+  } else if (zone === 'free') {
+    fee = 0;
+    zoneLabel = 'Free Delivery (Promotional)';
+  } else if (zone === 'pickup') {
+    fee = 0;
+    zoneLabel = 'Self Pickup (Lusaka Hub) — Free (K0)';
+  } else if (zone === 'intercity') {
+    fee = 80;
+    zoneLabel = 'Intercity Courier / Bus Parcel (Kabwe, Copperbelt & Provincial Towns) — K80';
+  } else {
+    // Default to Lusaka Local
+    zone = 'lusaka_local';
+    fee = 45;
+    zoneLabel = 'Lusaka Local Delivery (Same-Day Moto/Courier) — K45';
+  }
+
+  // Gracefully handle legacy tests/requests that passed an explicit amount without deliveryZone
+  if (!deliveryZone && requestedAmount != null && Number(requestedAmount) > 0) {
+    const legacyTotal = Number(requestedAmount);
+    const legacyFee = Math.max(0, legacyTotal - calcSubtotal);
+    return {
+      subtotal: calcSubtotal,
+      shippingFee: legacyFee,
+      deliveryZone: 'lusaka_local',
+      deliveryZoneLabel: 'Lusaka Local Delivery (Same-Day Moto/Courier)',
+      totalAmount: legacyTotal,
+      isFreeDelivery: legacyFee === 0
+    };
+  }
+
+  return {
+    subtotal: calcSubtotal,
+    shippingFee: fee,
+    deliveryZone: zone,
+    deliveryZoneLabel: zoneLabel,
+    totalAmount: calcSubtotal + fee,
+    isFreeDelivery: fee === 0
+  };
+}
+
+/**
+ * Sends an email notification to luyandokandisha@gmail.com when an order is placed.
+ * Highlights:
+ * - Selected Delivery Zone & Shipping Fee
+ * - Customer's City, Area / Landmark, and WhatsApp Phone Number
+ * - Itemized products, Grand Total (ZMW), and Payment Method / Status
  */
 export async function sendOrderNotificationEmail(orderData) {
-  const recipient = ADMIN_NOTIFICATION_EMAIL;
+  const recipient = OWNER_EMAIL || ADMIN_NOTIFICATION_EMAIL || 'luyandokandisha@gmail.com';
   const items = Array.isArray(orderData.items) ? orderData.items : [];
   const trackingId = orderData.trackingId || orderData.txRef || 'N/A';
-  const deliveryAddress = orderData.deliveryAddress || orderData.deliveryLocation || 'Not specified';
-  const totalZMW = Number(orderData.totalZMW || orderData.amount || 0).toLocaleString('en-ZM', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  
+  const city = orderData.city || orderData.deliveryCity || 'Lusaka';
+  const landmark = orderData.landmarkAddress || orderData.deliveryLandmark || orderData.deliveryAddress || 'Not specified';
+  const deliveryAddress = orderData.deliveryAddress || `${city}, ${landmark}`;
+  const deliveryZone = orderData.deliveryZoneLabel || orderData.deliveryZone || 'Lusaka Local Delivery (Same-Day Moto/Courier)';
+  const shippingFee = Number(orderData.shippingFee ?? 45).toLocaleString('en-ZM', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  
+  const totalAmountVal = Number(orderData.totalAmount || orderData.totalZMW || orderData.amount || 0);
+  const totalZMW = totalAmountVal.toLocaleString('en-ZM', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  
   const paymentMethod = orderData.paymentMethod || 'Mobile Money / Card';
-  const paymentPhone = orderData.paymentPhone || orderData.phoneNumber || 'N/A';
+  const paymentStatus = orderData.paymentStatus || (orderData.paymentMethod === 'pay_on_delivery' ? 'Pay on Delivery (Unpaid)' : 'Escrow Held (Paid)');
+  const customerPhone = orderData.customerPhone || orderData.paymentPhone || orderData.phoneNumber || orderData.customer?.phone || 'N/A';
   const customerName = orderData.customer?.name || orderData.customerName || 'Customer';
   const customerEmail = orderData.customer?.email || orderData.customerEmail || 'N/A';
   const deliveryPin = orderData.deliveryPin || 'N/A';
   const escrowStatus = orderData.escrowStatus || 'Escrow Held / Processing';
 
   const itemsSummaryText = items.length ? items.map((it, idx) => {
-    const shop = it.shopName || it.seller || orderData.shopName || 'AfriBay Verified Seller';
+    const shop = it.shopName || it.seller || orderData.shopName || 'AfriBay Store';
     const title = it.title || it.name || 'Product item';
     const qty = it.quantity || it.qty || 1;
     const price = Number(it.priceZMW || it.price || 0).toLocaleString('en-ZM', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -131,42 +236,64 @@ export async function sendOrderNotificationEmail(orderData) {
     ? `\nGPS Coordinates:          ${deliveryLat}, ${deliveryLng}\nCourier Google Maps Pin:  https://www.google.com/maps?q=${deliveryLat},${deliveryLng}`
     : '\nGPS Coordinates:          Not pinned (Text address only)';
 
-  const emailSubject = `[AfriBay Escrow Alert] New Order ${trackingId} - ZMW ${totalZMW} (Escrow Held)`;
+  const emailSubject = `[AfriBay Order Alert] New Order ${trackingId} - ZMW ${totalZMW} (${paymentMethod})`;
   const emailBody = `
 ======================================================
-     AFRIBAY ESCROW ORDER NOTIFICATION (ZAMBIA)
+      AFRIBAY NEW ORDER NOTIFICATION (ZAMBIA)
 ======================================================
 
-An order has been placed and funds are SECURED IN ESCROW!
-Funds will remain locked until driver drop-off is verified with the PIN.
+An order has been placed on your AfriBay storefront!
 
-ESCROW & ORDER DETAILS:
+ORDER & PAYMENT SUMMARY:
 ------------------------------------------------------
 Tracking ID:              ${trackingId}
-Escrow Status:            🛡️ ${escrowStatus}
-Delivery Confirmation PIN: 🔑 [ ${deliveryPin} ]
-Total Amount Held:        ZMW ${totalZMW}
-Vendor Payout Status:     ⏳ HELD IN ESCROW (Pending drop-off verification)
-Payment Method:           ${paymentMethod}
-Customer Phone:           ${paymentPhone}
-Customer Name:            ${customerName} (${customerEmail})
+Grand Total:              ZMW ${totalZMW}
+Shipping Fee:             ZMW ${shippingFee}
+Delivery Zone:            📦 ${deliveryZone}
+Payment Method:           💳 ${paymentMethod}
+Payment / Escrow Status:  🛡️ ${paymentStatus} (${escrowStatus})
+Delivery Drop-off PIN:    🔑 [ ${deliveryPin} ]
 
-DELIVERY DESTINATION:
+COURIER-READY DELIVERY DESTINATION:
 ------------------------------------------------------
-Address:                  ${deliveryAddress}${gpsInfo}
+City / Town:              📍 ${city}
+Area / Street & Landmark: 🏠 ${landmark}
+Full Address:             ${deliveryAddress}${gpsInfo}
 
-PRODUCTS & SHOPS:
+CUSTOMER & RIDER CONTACT:
+------------------------------------------------------
+Customer Name:            ${customerName}
+WhatsApp / Active Phone:  📱 ${customerPhone}
+Email:                    ✉️ ${customerEmail}
+
+ITEMIZED PRODUCTS:
 ------------------------------------------------------
 ${itemsSummaryText}
 
 ======================================================
 Timestamp: ${new Date().toISOString()}
-Notification sent to: ${recipient}
+Delivered to Store Owner: ${recipient}
 ======================================================
 `;
 
-  console.log(`\n📧 [ESCROW HELD EMAIL DISPATCHED] -> To: ${recipient}`);
+  console.log(`\n📧 [ORDER NOTIFICATION DISPATCHED] -> To: ${recipient}`);
   console.log(emailBody);
+
+  // Nodemailer transport dispatch
+  try {
+    const transporter = await getMailTransporter();
+    if (transporter) {
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || `"AfriBay Store" <${recipient}>`,
+        to: recipient,
+        subject: emailSubject,
+        text: emailBody
+      });
+      console.log(`[Nodemailer Dispatch] Order notification email successfully processed for ${recipient}`);
+    }
+  } catch (nmErr) {
+    console.warn(`[Nodemailer Send Note]: ${nmErr.message}`);
+  }
 
   const emailWebhookUrl = process.env.ORDER_EMAIL_WEBHOOK_URL;
   if (emailWebhookUrl) {
@@ -474,8 +601,24 @@ const server = http.createServer(async (req, res) => {
 
         const txRef = payload.txRef || payload.trackingId || `AFB-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
         const deliveryPin = payload.deliveryPin || String(Math.floor(100000 + Math.random() * 900000));
-        const totalAmount = Number(payload.amount || payload.totalZMW || 0);
-        const vendorPayoutAmount = Math.max(0, totalAmount - 35); // 35 ZMW logistics delivery fee
+
+        const calc = calculateDeliveryAndTotal({
+          items: Array.isArray(payload.items) ? payload.items : [],
+          deliveryZone: payload.deliveryZone,
+          subtotal: payload.subtotal,
+          requestedAmount: payload.amount || payload.totalZMW || payload.totalAmount
+        });
+
+        const totalAmount = calc.totalAmount;
+        const shippingFee = calc.shippingFee;
+        const deliveryZone = calc.deliveryZone;
+        const deliveryZoneLabel = calc.deliveryZoneLabel;
+        const subtotal = calc.subtotal;
+
+        const city = payload.city || payload.deliveryCity || 'Lusaka';
+        const landmarkAddress = payload.landmarkAddress || payload.deliveryLandmark || payload.deliveryAddress || '';
+        const customerPhone = payload.customerPhone || payload.deliveryPhone || payload.phoneNumber || payload.customer?.phone || '';
+        const vendorPayoutAmount = Math.max(0, totalAmount - (shippingFee || 35));
 
         const delivery_lat = payload.delivery_lat != null ? Number(payload.delivery_lat) : (payload.deliveryLat != null ? Number(payload.deliveryLat) : null);
         const delivery_lng = payload.delivery_lng != null ? Number(payload.delivery_lng) : (payload.deliveryLng != null ? Number(payload.deliveryLng) : null);
@@ -484,6 +627,14 @@ const server = http.createServer(async (req, res) => {
           ...payload,
           trackingId: txRef,
           txRef,
+          subtotal,
+          shippingFee,
+          deliveryZone,
+          deliveryZoneLabel,
+          city,
+          landmarkAddress,
+          customerPhone,
+          totalAmount,
           totalZMW: totalAmount,
           vendorPayoutZMW: vendorPayoutAmount,
           deliveryPin,
@@ -519,6 +670,11 @@ const server = http.createServer(async (req, res) => {
           payoutStatus: 'held_in_escrow',
           amountZMW: totalAmount,
           vendorPayoutZMW: vendorPayoutAmount,
+          deliveryZone,
+          shippingFee,
+          city,
+          landmarkAddress,
+          customerPhone,
           notified: ADMIN_NOTIFICATION_EMAIL,
           tokenUsed: `${tokenResult.token.substring(0, 10)}...`
         }));
@@ -540,7 +696,23 @@ const server = http.createServer(async (req, res) => {
         const orderData = JSON.parse(bodyData || '{}');
         const trackingId = orderData.trackingId || orderData.txRef || `AFB-${Date.now().toString(36).toUpperCase()}`;
         const deliveryPin = orderData.deliveryPin || String(Math.floor(100000 + Math.random() * 900000));
-        const totalAmount = Number(orderData.totalZMW || orderData.amount || 0);
+
+        const calc = calculateDeliveryAndTotal({
+          items: Array.isArray(orderData.items) ? orderData.items : [],
+          deliveryZone: orderData.deliveryZone,
+          subtotal: orderData.subtotal,
+          requestedAmount: orderData.totalZMW || orderData.amount || orderData.totalAmount
+        });
+
+        const totalAmount = calc.totalAmount;
+        const shippingFee = calc.shippingFee;
+        const deliveryZone = calc.deliveryZone;
+        const deliveryZoneLabel = calc.deliveryZoneLabel;
+        const subtotal = calc.subtotal;
+
+        const city = orderData.city || orderData.deliveryCity || 'Lusaka';
+        const landmarkAddress = orderData.landmarkAddress || orderData.deliveryLandmark || orderData.deliveryAddress || '';
+        const customerPhone = orderData.customerPhone || orderData.deliveryPhone || orderData.phoneNumber || orderData.customer?.phone || '';
 
         const delivery_lat = orderData.delivery_lat != null ? Number(orderData.delivery_lat) : (orderData.deliveryLat != null ? Number(orderData.deliveryLat) : null);
         const delivery_lng = orderData.delivery_lng != null ? Number(orderData.delivery_lng) : (orderData.deliveryLng != null ? Number(orderData.deliveryLng) : null);
@@ -549,12 +721,21 @@ const server = http.createServer(async (req, res) => {
           ...orderData,
           trackingId,
           deliveryPin,
+          subtotal,
+          shippingFee,
+          deliveryZone,
+          deliveryZoneLabel,
+          city,
+          landmarkAddress,
+          customerPhone,
+          totalAmount,
+          totalZMW: totalAmount,
           delivery_lat,
           delivery_lng,
           escrowStatus: orderData.escrowStatus || 'escrow_held',
           deliveryStatus: orderData.deliveryStatus || 'processing',
           payoutStatus: orderData.payoutStatus || 'held_in_escrow',
-          vendorPayoutZMW: orderData.vendorPayoutZMW || Math.max(0, totalAmount - 35),
+          vendorPayoutZMW: orderData.vendorPayoutZMW || Math.max(0, totalAmount - (shippingFee || 35)),
           updatedAt: new Date().toISOString()
         };
 
@@ -570,6 +751,12 @@ const server = http.createServer(async (req, res) => {
           deliveryPin,
           delivery_lat,
           delivery_lng,
+          deliveryZone,
+          shippingFee,
+          city,
+          landmarkAddress,
+          customerPhone,
+          totalAmount,
           courierMapsUrl: (delivery_lat != null && delivery_lng != null) ? `https://www.google.com/maps?q=${delivery_lat},${delivery_lng}` : null,
           escrowStatus: orderRecord.escrowStatus,
           emailSubject: result.emailSubject
