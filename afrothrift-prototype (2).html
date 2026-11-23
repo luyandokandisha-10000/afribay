@@ -307,11 +307,13 @@
             <div class="menu-label">My AfriBay</div>
             <div id="guestMenu">
               <button onclick="showPanel('account')">◎ &nbsp; Account</button>
+              <button onclick="showPanel('howToBuy')">📖 &nbsp; How to Buy Guide</button>
               <button onclick="openModal('signinModal')">↳ &nbsp; Sign in</button>
               <button onclick="openModal('signupModal')">＋ &nbsp; Create account</button>
             </div>
             <div id="memberMenu" style="display:none">
               <button onclick="showPanel('account')">◎ &nbsp; Account</button>
+              <button onclick="showPanel('howToBuy')">📖 &nbsp; How to Buy Guide</button>
               <button id="ownerShopMenuBtn" onclick="showPanel('shop')" style="display:none">▦ &nbsp; Store Admin</button>
               <button onclick="openContactModal()">💬 &nbsp; Contact Store</button>
               <button onclick="showPanel('settings')">⚙ &nbsp; Settings</button>
@@ -354,6 +356,21 @@
           <div class="promo">
             <div><strong>AfriBay Official Storefront</strong><p>Have questions about a listing or custom order? Message the store owner directly.</p></div>
             <button class="button light" onclick="openContactModal()">💬 Message Store</button>
+          </div>
+          <!-- How to Buy Banner Card -->
+          <div class="auth-card" style="margin:20px 0;background:linear-gradient(135deg,#eff6ff,#f0fdf4);border:1px solid #bfdbfe;padding:16px 20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+              <div>
+                <div class="eyebrow" style="color:#1d4ed8;font-weight:800;margin-bottom:4px;">First Time Ordering on AfriBay?</div>
+                <h3 style="margin:0 0 4px;font-size:16px;color:#1e3a8a;">Step-by-Step Buying &amp; Button Guide</h3>
+                <p style="margin:0;font-size:12px;color:var(--muted);line-height:1.4;">
+                  Learn how ordering works, how to pick delivery zones, Mobile Money escrow checkout, and what every button does.
+                </p>
+              </div>
+              <button class="button" onclick="showPanel('howToBuy')" style="background:#2563eb;color:white;font-weight:700;font-size:12px;padding:9px 15px;">
+                📖 Read Buying Guide →
+              </button>
+            </div>
           </div>
           <div id="products">
             <div class="section-head"><div><h2>Fresh in Store</h2><p>Handpicked, quality-inspected items ready for nationwide delivery</p></div><button class="link-btn" onclick="clearSearch();document.getElementById('products').scrollIntoView({behavior:'smooth'})">See all →</button></div>
@@ -530,10 +547,305 @@
             </div>
             <div class="auth-card">
               <h3 style="margin-top:0">Your AfriBay access</h3>
+              <div class="feature-row"><div class="feature-icon">📖</div><div><strong>How to Buy Guide</strong><small>Step-by-step walkthrough of ordering and button purposes.</small></div><button class="link-btn" onclick="showPanel('howToBuy')">Read</button></div>
               <div class="feature-row" id="accountShopRow" style="display:none;"><div class="feature-icon">▦</div><div><strong>Store Admin Workspace</strong><small>Add products, manage inventory, and view orders.</small></div><button class="link-btn" onclick="showPanel('shop')">Open</button></div>
               <div class="feature-row"><div class="feature-icon">🛒</div><div><strong>Cart &amp; checkout</strong><small>Complete purchases with saved session access.</small></div><button class="link-btn" onclick="showPanel('cart')">Open</button></div>
               <div class="feature-row"><div class="feature-icon">📦</div><div><strong>Your orders</strong><small>Track purchase history and order receipts.</small></div><button class="link-btn" onclick="openOrdersModal()">Open</button></div>
               <div class="feature-row"><div class="feature-icon">💬</div><div><strong>Contact Store</strong><small>Send inquiries directly to the store owner.</small></div><button class="link-btn" onclick="openContactModal()">Message</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="howToBuyPanel" class="panel">
+        <div class="page-title">
+          <div class="eyebrow" style="color:var(--green-deep);font-weight:900;">Shopper Guide &amp; Instructions</div>
+          <h1>How to <em>Buy.</em></h1>
+          <p style="color:var(--muted);font-size:15px;max-width:720px;line-height:1.6;margin:10px 0 0;">
+            Welcome to the official AfriBay purchasing guide! Here is a transparent, step-by-step walkthrough of how the buying process works, how delivery zones and Mobile Money escrow work, and an explanation of every button in the app.
+          </p>
+        </div>
+
+        <div class="section">
+          <!-- Quick Action Shortcuts -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;">
+            <button class="button" onclick="showPanel('home')">⌂ Start Browsing Finds →</button>
+            <button class="button ghost" onclick="showPanel('cart')">🛒 View Cart</button>
+            <button class="button ghost" onclick="openContactModal()">💬 Message Store Owner</button>
+          </div>
+
+          <!-- Section 1: The 5-Step Order & Delivery Process -->
+          <div class="section-head" style="margin-top:0">
+            <div>
+              <h2>The 5-Step Buying Process</h2>
+              <p>From discovering items to doorstep courier delivery with escrow protection.</p>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-bottom:32px;">
+            <!-- Step 1 -->
+            <div class="auth-card" style="padding:18px;border-top:4px solid var(--green);">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <span style="width:32px;height:32px;border-radius:50%;background:var(--green);color:white;display:grid;place-items:center;font-weight:900;font-size:14px;">1</span>
+                <h3 style="margin:0;font-size:16px;">Browse &amp; Pick Your Items</h3>
+              </div>
+              <p style="color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 10px;">
+                Explore handpicked fashion, electronics, cars, and goods on the home screen. Use the category pills (👕 Clothes, 🚙 Cars, 📷 Electronics, ✦ New goods) or the search bar (⌕) to filter items.
+              </p>
+              <div style="font-size:12px;background:#f8faf8;padding:10px;border-radius:8px;border:1px solid #e2ece5;">
+                👉 <strong>Action:</strong> Click on any product card to view full images and description, then click the green <strong>"＋ Add to Cart"</strong> button.
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="auth-card" style="padding:18px;border-top:4px solid var(--orange);">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <span style="width:32px;height:32px;border-radius:50%;background:var(--orange);color:white;display:grid;place-items:center;font-weight:900;font-size:14px;">2</span>
+                <h3 style="margin:0;font-size:16px;">Review Your Cart</h3>
+              </div>
+              <p style="color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 10px;">
+                Tap the 🛒 Cart icon in the top header or bottom menu to view your chosen items, adjust quantities, or remove items.
+              </p>
+              <div style="font-size:12px;background:#fdf9f4;padding:10px;border-radius:8px;border:1px solid #f9e2cd;">
+                👉 <strong>Action:</strong> Review your items subtotal in Zambian Kwacha (ZMW) and click the <strong>"Continue to checkout →"</strong> button.
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="auth-card" style="padding:18px;border-top:4px solid #3b82f6;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <span style="width:32px;height:32px;border-radius:50%;background:#3b82f6;color:white;display:grid;place-items:center;font-weight:900;font-size:14px;">3</span>
+                <h3 style="margin:0;font-size:16px;">Select Delivery Zone &amp; Address</h3>
+              </div>
+              <p style="color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 10px;">
+                Select your delivery destination from the dropdown. Shipping is automatically calculated:
+              </p>
+              <ul style="margin:0 0 10px 0;padding-left:18px;font-size:12px;color:var(--text);line-height:1.6;">
+                <li><strong>Lusaka Local Delivery (K45):</strong> Same-day motorcycle/courier across Lusaka.</li>
+                <li><strong>Intercity Courier / Bus Parcel (K80):</strong> Copperbelt (Ndola, Kitwe), Kabwe &amp; provincial towns.</li>
+                <li><strong>Free Delivery:</strong> Automatically applied if cart subtotal is <strong>K500 or more</strong>!</li>
+                <li><strong>Self Pickup (K0):</strong> Collect directly at our Lusaka hub.</li>
+              </ul>
+              <div style="font-size:12px;background:#eff6ff;padding:10px;border-radius:8px;border:1px solid #bfdbfe;">
+                👉 <strong>Action:</strong> Type your <strong>City</strong>, <strong>WhatsApp Phone Number</strong>, and <strong>Area/Landmark</strong> (e.g. <em>"Woodlands, near Crossroads Mall"</em>). You can also click <strong>"📍 Pin Live GPS Location"</strong> so the courier can navigate directly to your gate.
+              </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="auth-card" style="padding:18px;border-top:4px solid #10b981;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <span style="width:32px;height:32px;border-radius:50%;background:#10b981;color:white;display:grid;place-items:center;font-weight:900;font-size:14px;">4</span>
+                <h3 style="margin:0;font-size:16px;">Pay with Mobile Money</h3>
+              </div>
+              <p style="color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 10px;">
+                <em>Notice: Pay on Delivery is temporarily disabled to prevent dispatch delays; all orders are safely protected through Mobile Money escrow.</em>
+              </p>
+              <div style="font-size:12px;background:#f0fdf4;padding:10px;border-radius:8px;border:1px solid #bbf7d0;">
+                👉 <strong>Action:</strong> Select your network (<strong>MTN MoMo</strong>, <strong>Airtel Money</strong>, or <strong>Zamtel</strong>), enter your mobile money number, and click <strong>"Place Order · ZMW [Total]"</strong>. An instant PIN prompt (STK Push) will appear on your phone screen—enter your PIN to authorize payment.
+              </div>
+            </div>
+
+            <!-- Step 5 -->
+            <div class="auth-card" style="padding:18px;border-top:4px solid #8b5cf6;">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <span style="width:32px;height:32px;border-radius:50%;background:#8b5cf6;color:white;display:grid;place-items:center;font-weight:900;font-size:14px;">5</span>
+                <h3 style="margin:0;font-size:16px;">Receive &amp; Confirm with Delivery PIN</h3>
+              </div>
+              <p style="color:var(--muted);font-size:13px;line-height:1.5;margin:0 0 10px;">
+                Your funds are held securely in platform escrow. You immediately receive an official receipt with your <strong>Tracking ID</strong> (e.g. <code>AFB-...</code>) and a private <strong>6-Digit Delivery PIN</strong>.
+              </p>
+              <div style="font-size:12px;background:#f5f3ff;padding:10px;border-radius:8px;border:1px solid #ddd6fe;">
+                👉 <strong>Action:</strong> When the courier rider arrives, inspect your goods. Only when you are completely satisfied do you give the rider your 6-digit PIN to release fulfillment. You can also tap <strong>"📲 Notify on WhatsApp"</strong> for live rider updates!
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Complete Button & Control Directory -->
+          <div class="section-head">
+            <div>
+              <h2>Button &amp; Control Directory</h2>
+              <p>A reference guide explaining every button, where to find it, and what happens when clicked.</p>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:36px;">
+            <!-- Button Row 1 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;">
+                <span class="button" style="display:inline-block;padding:8px 14px;font-size:12px;">Explore the market →</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Hero Banner Action Button</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Found on the home page hero. Smoothly scrolls down to the fresh product catalog and live listings.</span>
+              </div>
+            </div>
+
+            <!-- Button Row 2 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;display:flex;gap:4px;flex-wrap:wrap;">
+                <span class="category active" style="padding:6px 10px;font-size:11px;">All finds</span>
+                <span class="category" style="padding:6px 10px;font-size:11px;">👕 Clothes</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Category Filter Pills</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Found above the product listings. Filters the catalog instantly between All finds, Clothes, Cars, Electronics, and New Goods.</span>
+              </div>
+            </div>
+
+            <!-- Button Row 3 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;">
+                <span class="button light" style="display:inline-block;padding:8px 14px;font-size:12px;border:1px solid #d1ded6;">💬 Message Store</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Message Store Owner Button</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Found in the home promo banner and account page. Opens a direct contact modal so your question or custom request is sent straight to the owner's email (luyandokandisha@gmail.com).</span>
+              </div>
+            </div>
+
+            <!-- Button Row 4 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;">
+                <span class="button" style="display:inline-block;padding:8px 14px;font-size:12px;background:var(--green);">＋ Add to Cart</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Add to Cart Button</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Found inside the product preview window. Adds the selected product to your shopping bag and updates your top and bottom cart badge counts.</span>
+              </div>
+            </div>
+
+            <!-- Button Row 5 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;display:flex;gap:6px;align-items:center;">
+                <span class="button ghost" style="padding:6px 10px;font-size:12px;">−</span>
+                <span style="font-weight:700;font-size:13px;">1</span>
+                <span class="button ghost" style="padding:6px 10px;font-size:12px;">＋</span>
+                <span class="link-btn" style="color:#dc2626;font-size:11px;">🗑 Remove</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Cart Quantity &amp; Remove Controls</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Found on each item row inside the Cart screen. Lets you increase, decrease, or completely delete an item from your order.</span>
+              </div>
+            </div>
+
+            <!-- Button Row 6 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;">
+                <span class="button" style="display:inline-block;padding:8px 14px;font-size:12px;">Continue to checkout →</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Continue to Checkout Button</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Found inside the Cart Order Summary. Opens the checkout modal where you select your delivery zone, enter your courier address, and pick your Mobile Money provider.</span>
+              </div>
+            </div>
+
+            <!-- Button Row 7 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;">
+                <span class="button" style="display:inline-block;padding:8px 14px;font-size:11px;background:var(--green);color:white;">📍 Pin Live GPS Location</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Pin Live GPS Location Button</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Found in the checkout modal under Drop-off Location. Uses your browser's location permission to pin your exact latitude and longitude, generating a one-click Google Maps link for the delivery driver.</span>
+              </div>
+            </div>
+
+            <!-- Button Row 8 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;">
+                <span class="button ghost" style="display:inline-block;padding:8px 14px;font-size:11px;border:1px solid var(--border);">✍️ Written Address</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Written Address Toggle Button</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Found in the checkout modal. Switches from GPS mode to manual text address mode if you prefer typing your street, plot number, and landmark.</span>
+              </div>
+            </div>
+
+            <!-- Button Row 9 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;display:flex;gap:4px;">
+                <span class="button ghost selected" style="padding:6px 8px;font-size:11px;border:2px solid var(--green);font-weight:800;">MTN MoMo</span>
+                <span class="button ghost" style="padding:6px 8px;font-size:11px;border:1px solid var(--border);font-weight:800;">Airtel</span>
+                <span class="button ghost" style="padding:6px 8px;font-size:11px;border:1px solid var(--border);font-weight:800;">Zamtel</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Mobile Money Provider Selector</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Found in checkout when Mobile Money is selected. Specifies which Zambian cellular provider will send the instant USSD PIN authorization prompt to your phone handset.</span>
+              </div>
+            </div>
+
+            <!-- Button Row 10 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;">
+                <span class="button" style="display:inline-block;padding:9px 14px;font-size:12px;background:var(--green);font-weight:900;">Place Order · ZMW 0.00</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Place Order Submit Button</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Found at the bottom of the checkout modal. Validates your delivery zone and phone, triggers the STK Mobile Money push prompt on your phone, registers the escrow order, dispatches an email alert to the store owner, and opens your receipt.</span>
+              </div>
+            </div>
+
+            <!-- Button Row 11 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;">
+                <span class="button" style="display:inline-block;padding:8px 14px;font-size:11px;background:#22c55e;color:white;font-weight:700;">📲 Notify on WhatsApp</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Notify on WhatsApp Button</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Found on your Order Confirmation Receipt. Opens WhatsApp with a pre-filled message containing your Order Tracking ID and drop-off location, linking directly to AfriBay's official support line (0760312951) for immediate dispatch updates.</span>
+              </div>
+            </div>
+
+            <!-- Button Row 12 -->
+            <div class="auth-card" style="padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="min-width:160px;display:flex;gap:4px;">
+                <span class="nav-item active" style="padding:6px 10px;font-size:11px;"><span>⌂</span>Home</span>
+                <span class="nav-item" style="padding:6px 10px;font-size:11px;"><span>📖</span>Guide</span>
+                <span class="nav-item" style="padding:6px 10px;font-size:11px;"><span>🛒</span>Cart</span>
+                <span class="nav-item" style="padding:6px 10px;font-size:11px;"><span>👤</span>Account</span>
+              </div>
+              <div style="flex:1;min-width:220px;">
+                <strong style="display:block;font-size:14px;color:var(--text);">Bottom Navigation Bar</strong>
+                <span style="font-size:12px;color:var(--muted);line-height:1.4;display:block;">Fixed at the bottom of your screen on all devices. Allows 1-tap switching between the Storefront Home, How to Buy Guide, Shopping Cart, and Account Profile.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Buyer FAQ & Escrow Questions -->
+          <div class="section-head">
+            <div>
+              <h2>Frequently Asked Questions</h2>
+              <p>Everything you need to know about payments, delivery zones, and buyer escrow protection.</p>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:14px;margin-bottom:30px;">
+            <div class="auth-card" style="padding:16px;">
+              <strong style="font-size:14px;color:var(--text);display:block;margin-bottom:6px;">❓ Why is Pay on Delivery currently removed?</strong>
+              <p style="font-size:12px;color:var(--muted);line-height:1.5;margin:0;">
+                Pay on Delivery has been temporarily turned off to ensure smooth courier operations and prevent courier dispatch delays. With automated Mobile Money Escrow, packages are guaranteed to ship immediately without riders needing to collect cash or wait for manual buyer transfers upon arrival.
+              </p>
+            </div>
+
+            <div class="auth-card" style="padding:16px;">
+              <strong style="font-size:14px;color:var(--text);display:block;margin-bottom:6px;">🛡️ How does Escrow protect my money?</strong>
+              <p style="font-size:12px;color:var(--muted);line-height:1.5;margin:0;">
+                When you pay via Mobile Money, your money is NOT released immediately. It is held securely in escrow until the courier arrives at your location and you inspect your package. You hold the secret 6-digit PIN that validates the handover.
+              </p>
+            </div>
+
+            <div class="auth-card" style="padding:16px;">
+              <strong style="font-size:14px;color:var(--text);display:block;margin-bottom:6px;">🚚 How fast is delivery in Lusaka?</strong>
+              <p style="font-size:12px;color:var(--muted);line-height:1.5;margin:0;">
+                Lusaka Local Delivery (K45) is dispatched same-day via motorcycle or city courier van. For towns outside Lusaka (Kabwe, Ndola, Kitwe, etc.), intercity courier packages arrive within 24 to 48 hours.
+              </p>
+            </div>
+
+            <div class="auth-card" style="padding:16px;">
+              <strong style="font-size:14px;color:var(--text);display:block;margin-bottom:6px;">💬 How do I ask questions about a product?</strong>
+              <p style="font-size:12px;color:var(--muted);line-height:1.5;margin:0;">
+                Click any <strong>"💬 Message Store"</strong> button on the site. Your inquiry is emailed directly to the store owner (luyandokandisha@gmail.com) who will reply to your contact details promptly.
+              </p>
             </div>
           </div>
         </div>
@@ -544,7 +856,7 @@
         <div class="section">
           <div class="cart-layout">
             <div class="cart-list" id="cartList"></div>
-            <div class="summary"><h3>Order summary</h3><div class="summary-line"><span>Subtotal</span><span id="subtotal">ZMW 0.00</span></div><div class="summary-line"><span>Delivery</span><span id="delivery">ZMW 0.00</span></div><div class="summary-line total"><span>Total</span><span id="total">ZMW 0.00</span></div><button class="button" onclick="openCheckout()">Continue to checkout →</button><p style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:0">Secure checkout · Mobile money · Cards</p></div>
+            <div class="summary"><h3>Order summary</h3><div class="summary-line"><span>Subtotal</span><span id="subtotal">ZMW 0.00</span></div><div class="summary-line"><span>Delivery</span><span id="delivery">ZMW 0.00</span></div><div class="summary-line total"><span>Total</span><span id="total">ZMW 0.00</span></div><button class="button" onclick="openCheckout()">Continue to checkout →</button><p style="font-size:11px;color:var(--muted);text-align:center;margin-bottom:0">Secure checkout · Mobile money · Cards</p><p style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px;margin-bottom:0">Need help? <button type="button" class="link-btn" style="padding:0;font-size:12px;" onclick="showPanel('howToBuy')">Read How to Buy Guide →</button></p></div>
           </div>
         </div>
       </section>
@@ -560,6 +872,7 @@
 
     <nav class="bottom-nav">
       <button class="nav-item active" data-panel="home" onclick="showPanel('home')"><span>⌂</span><span id="navHomeLabel">Home</span></button>
+      <button class="nav-item" data-panel="howToBuy" onclick="showPanel('howToBuy')"><span>📖</span><span id="navHowToBuyLabel">How to Buy</span></button>
       <button class="nav-item" data-panel="cart" onclick="showPanel('cart')"><span>🛒<i id="cartBadge" class="badge" style="display:none">0</i></span><span id="navCartLabel">Cart</span></button>
       <button class="nav-item" data-panel="account" onclick="showPanel('account')"><span>👤</span><span id="navAccountLabel">Account</span></button>
     </nav>
@@ -994,7 +1307,7 @@
       </div>
 
       <!-- 4. Pin/Written Address Toggle (Backwards Compatible) -->
-      <div class="form-row" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><label style="margin:0;font-weight:700;">Drop-off Location Pin / Details</label><span style="font-size:11px;color:var(--muted)">Option: Map Pin or Address</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;"><button type="button" id="deliveryTabGps" class="button ghost selected" onclick="toggleDeliveryMode('gps')" style="font-size:11px;padding:7px 4px;font-weight:800;border:2px solid var(--green);">📍 Google Maps Pin</button><button type="button" id="deliveryTabAddress" class="button ghost" onclick="toggleDeliveryMode('address')" style="font-size:11px;padding:7px 4px;font-weight:800;border:1px solid var(--border);">✍️ Written Address</button></div><div id="deliveryGpsSection" style="padding:10px;background:#f4f9f5;border-radius:8px;border:1px dashed var(--green);"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button type="button" class="button" onclick="captureDeliveryLocation()" style="font-size:11px;padding:6px 12px;background:var(--green);color:white;font-weight:700;">📍 Pin Live GPS Location</button><button type="button" class="button ghost" onclick="toggleManualGpsInput()" style="font-size:11px;padding:6px 8px;font-weight:600;">Manual Lat/Lng</button><span id="deliveryGpsLabel" style="font-size:11px;color:var(--muted)">Pin live location for courier navigation</span></div><input id="deliveryMapLink" placeholder="Or paste Google Maps link / coordinates (e.g. -15.3875, 28.3228)" oninput="syncManualMapLink()" style="margin-top:8px;width:100%;font-size:12px;padding:7px 10px;" /><div id="manualGpsFields" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><input id="manualLat" type="number" step="any" placeholder="Latitude (e.g. -15.3875)" oninput="syncManualCoordinates()" /><input id="manualLng" type="number" step="any" placeholder="Longitude (e.g. 28.3228)" oninput="syncManualCoordinates()" /></div><small style="color:var(--muted);font-size:10px;display:block;margin-top:4px;">Tip: Copy & paste coordinates directly from Google Maps if browser GPS permission is disabled.</small></div><small style="display:block;color:var(--muted);margin-top:6px;font-size:11px;">The courier will navigate directly to your drop-off coordinates on Google Maps.</small></div><div id="deliveryAddressSection" style="display:none;margin-top:6px;"><input id="deliveryAddress" placeholder="Street, area, city (e.g. Plot 42, Woodlands, Lusaka)" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">Include nearby landmarks or gate color for easy finding.</small></div><input type="hidden" id="deliveryLat" /><input type="hidden" id="deliveryLng" /></div><div class="form-row"><label>Payment method</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="pod" onclick="selectPay(this)">🚚 Pay on Delivery<br />Direct MoMo / Cash</button><button type="button" class="pay-option" data-payment="mobile_money" onclick="selectPay(this)">📱 Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">💳 Card<br />Visa · Mastercard</button></div></div><div id="podFields" class="form-row"><div style="padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12px;color:#166534"><div style="font-weight:800;font-size:13px;margin-bottom:4px;">🚚 Direct Pay on Delivery</div><p style="margin:0 0 8px 0;line-height:1.4;">Inspect your items upon arrival. You will transfer payment directly to the seller via Mobile Money or Cash upon package handover.</p><div style="background:white;padding:10px;border-radius:6px;border:1px dashed #22c55e;"><div style="font-weight:700;color:var(--green-deep);margin-bottom:4px;">Vendor Direct Payout Details:</div><div style="font-size:11px;color:var(--ink);line-height:1.6;"><div>• <strong>Payout Preference:</strong> <span id="podVendorPref" style="font-weight:700;">Send Money (Mobile Money)</span></div><div>• <strong>MTN MoMo:</strong> <span id="podVendorMtn" style="font-weight:700;">0760312951</span></div><div>• <strong>Airtel Money:</strong> <span id="podVendorAirtel" style="font-weight:700;">0778085670</span></div></div></div><label for="podBuyerPhone" style="display:block;margin-top:10px;font-weight:700;color:var(--ink)">Your Contact Phone Number</label><input id="podBuyerPhone" type="tel" placeholder="e.g. 097... or 096..." style="margin-top:4px;" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">The courier and vendor will contact you at this number for delivery coordination.</small></div></div><div id="mobileMoneyFields" class="form-row" style="display:none"><label>Mobile Money Provider</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"><button type="button" class="button ghost selected" data-provider="mtn" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:2px solid var(--green)">MTN MoMo</button><button type="button" class="button ghost" data-provider="airtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Airtel Money</button><button type="button" class="button ghost" data-provider="zamtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Zamtel</button></div><label for="paymentPhone">Zambian Mobile Money number</label><input id="paymentPhone" type="tel" placeholder="+260 97... or 096..." /><small style="display:block;color:var(--muted);margin-top:5px;font-size:11px;">Instant mobile prompt will be sent to your phone for PIN authorization.</small></div><div id="cardFields" class="form-row" style="display:none"><div style="padding:10px;background:var(--green-soft);border-radius:8px;font-size:12px;color:var(--green-deep)">🔒 Secure Zambian & International Card processing powered by Flutterwave.</div></div><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button" id="checkoutSubmitBtn">Place Order · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
+      <div class="form-row" style="margin-bottom:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><label style="margin:0;font-weight:700;">Drop-off Location Pin / Details</label><span style="font-size:11px;color:var(--muted)">Option: Map Pin or Address</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;"><button type="button" id="deliveryTabGps" class="button ghost selected" onclick="toggleDeliveryMode('gps')" style="font-size:11px;padding:7px 4px;font-weight:800;border:2px solid var(--green);">📍 Google Maps Pin</button><button type="button" id="deliveryTabAddress" class="button ghost" onclick="toggleDeliveryMode('address')" style="font-size:11px;padding:7px 4px;font-weight:800;border:1px solid var(--border);">✍️ Written Address</button></div><div id="deliveryGpsSection" style="padding:10px;background:#f4f9f5;border-radius:8px;border:1px dashed var(--green);"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><button type="button" class="button" onclick="captureDeliveryLocation()" style="font-size:11px;padding:6px 12px;background:var(--green);color:white;font-weight:700;">📍 Pin Live GPS Location</button><button type="button" class="button ghost" onclick="toggleManualGpsInput()" style="font-size:11px;padding:6px 8px;font-weight:600;">Manual Lat/Lng</button><span id="deliveryGpsLabel" style="font-size:11px;color:var(--muted)">Pin live location for courier navigation</span></div><input id="deliveryMapLink" placeholder="Or paste Google Maps link / coordinates (e.g. -15.3875, 28.3228)" oninput="syncManualMapLink()" style="margin-top:8px;width:100%;font-size:12px;padding:7px 10px;" /><div id="manualGpsFields" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><input id="manualLat" type="number" step="any" placeholder="Latitude (e.g. -15.3875)" oninput="syncManualCoordinates()" /><input id="manualLng" type="number" step="any" placeholder="Longitude (e.g. 28.3228)" oninput="syncManualCoordinates()" /></div><small style="color:var(--muted);font-size:10px;display:block;margin-top:4px;">Tip: Copy & paste coordinates directly from Google Maps if browser GPS permission is disabled.</small></div><small style="display:block;color:var(--muted);margin-top:6px;font-size:11px;">The courier will navigate directly to your drop-off coordinates on Google Maps.</small></div><div id="deliveryAddressSection" style="display:none;margin-top:6px;"><input id="deliveryAddress" placeholder="Street, area, city (e.g. Plot 42, Woodlands, Lusaka)" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">Include nearby landmarks or gate color for easy finding.</small></div><input type="hidden" id="deliveryLat" /><input type="hidden" id="deliveryLng" /></div><div class="form-row"><label>Payment method</label><div class="pay-options"><button type="button" class="pay-option selected" data-payment="mobile_money" onclick="selectPay(this)">📱 Mobile Money<br />MTN · Airtel · Zamtel</button><button type="button" class="pay-option" data-payment="card" onclick="selectPay(this)">💳 Card<br />Visa · Mastercard</button></div></div><div id="podFields" class="form-row" style="display:none"><div style="padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:12px;color:#166534"><div style="font-weight:800;font-size:13px;margin-bottom:4px;">🚚 Direct Pay on Delivery</div><p style="margin:0 0 8px 0;line-height:1.4;">Inspect your items upon arrival. You will transfer payment directly to the seller via Mobile Money or Cash upon package handover.</p><div style="background:white;padding:10px;border-radius:6px;border:1px dashed #22c55e;"><div style="font-weight:700;color:var(--green-deep);margin-bottom:4px;">Vendor Direct Payout Details:</div><div style="font-size:11px;color:var(--ink);line-height:1.6;"><div>• <strong>Payout Preference:</strong> <span id="podVendorPref" style="font-weight:700;">Send Money (Mobile Money)</span></div><div>• <strong>MTN MoMo:</strong> <span id="podVendorMtn" style="font-weight:700;">0760312951</span></div><div>• <strong>Airtel Money:</strong> <span id="podVendorAirtel" style="font-weight:700;">0778085670</span></div></div></div><label for="podBuyerPhone" style="display:block;margin-top:10px;font-weight:700;color:var(--ink)">Your Contact Phone Number</label><input id="podBuyerPhone" type="tel" placeholder="e.g. 097... or 096..." style="margin-top:4px;" /><small style="display:block;color:var(--muted);margin-top:4px;font-size:11px;">The courier and vendor will contact you at this number for delivery coordination.</small></div></div><div id="mobileMoneyFields" class="form-row"><label>Mobile Money Provider</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;"><button type="button" class="button ghost selected" data-provider="mtn" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:2px solid var(--green)">MTN MoMo</button><button type="button" class="button ghost" data-provider="airtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Airtel Money</button><button type="button" class="button ghost" data-provider="zamtel" onclick="selectMomoProvider(this)" style="padding:6px 2px;font-size:11px;font-weight:800;border:1px solid var(--border)">Zamtel</button></div><label for="paymentPhone">Zambian Mobile Money number</label><input id="paymentPhone" type="tel" placeholder="+260 97... or 096..." /><small style="display:block;color:var(--muted);margin-top:5px;font-size:11px;">Instant mobile prompt will be sent to your phone for PIN authorization.</small></div><div id="cardFields" class="form-row" style="display:none"><div style="padding:10px;background:var(--green-soft);border-radius:8px;font-size:12px;color:var(--green-deep)">🔒 Secure Zambian & International Card processing powered by Flutterwave.</div></div><div id="checkoutError" class="auth-error"></div><div class="modal-foot"><button type="submit" class="button" id="checkoutSubmitBtn">Place Order · <span id="checkoutTotal">ZMW 0.00</span></button></div></form></div>
   </div>
   <div id="receiptModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'receiptModal')">
     <div class="modal" style="max-width: 520px; width: 100%;">
@@ -4268,6 +4581,9 @@
         syncCourierAddressFields();
         updateCart();
 
+        const mmBtn = document.querySelector('#checkoutModal .pay-option[data-payment="mobile_money"]');
+        if (mmBtn) selectPay(mmBtn);
+
         openModal("checkoutModal");
       } catch (err) {
         console.error("openCheckout error:", err);
@@ -4311,7 +4627,7 @@
         }
         if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Processing order..."; }
         setAuthError("checkoutError", "");
-        const selectedPayment = document.querySelector("#checkoutModal .pay-option.selected")?.dataset.payment || "pod";
+        const selectedPayment = document.querySelector("#checkoutModal .pay-option.selected")?.dataset.payment || "mobile_money";
         const isPod = selectedPayment === "pod";
 
         const podPhone = document.getElementById("podBuyerPhone")?.value?.trim() || "";
