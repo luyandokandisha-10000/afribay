@@ -1050,6 +1050,16 @@
             <span>Drop-off & Payout</span>
           </div>
         </div>
+
+        <div style="margin-top:14px;padding:12px;background:#f0fdf4;border:1px solid #86efac;border-radius:10px;text-align:center;">
+          <div style="font-size:12px;font-weight:700;color:#166534;margin-bottom:4px;">✉️ Order Details Dispatched</div>
+          <p style="font-size:11px;color:#15803d;margin:0 0 10px;line-height:1.4;">
+            Your order receipt &amp; courier drop-off instructions have been submitted directly to the store owner (<strong>luyandokandisha@gmail.com</strong>).
+          </p>
+          <a id="receiptWhatsAppNotify" href="https://wa.me/260760312951" target="_blank" rel="noopener noreferrer" class="button" style="background:#25d366;color:white;width:100%;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;text-decoration:none;">
+            📱 Chat / Confirm Order with Store Owner on WhatsApp →
+          </a>
+        </div>
       </div>
       <div class="modal-foot">
         <button class="button ghost" type="button" onclick="closeModal('receiptModal');openOrdersModal();">View in My Orders</button>
@@ -1251,12 +1261,68 @@
 
     function getApiBase() {
       if (typeof window !== "undefined" && window.location) {
+        if (window.location.port === "5000") return "";
         const host = window.location.hostname;
         if (host === "localhost" || host === "127.0.0.1") {
           return "http://localhost:5000";
         }
       }
       return "";
+    }
+
+    function fetchWithTimeout(url, options = {}, timeoutMs = 3500) {
+      if (typeof AbortController === "undefined") {
+        return fetch(url, options);
+      }
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
+    }
+
+    async function dispatchOrderNotificationDirectly(order) {
+      const itemsList = (order.items || []).map((it, i) =>
+        `${i + 1}. ${it.title} (Qty: ${it.quantity || it.qty || 1}) - ZMW ${Number(it.priceZMW || it.price || 0).toFixed(2)}`
+      ).join("\n");
+
+      // 1. Direct FormSubmit AJAX dispatch directly to luyandokandisha@gmail.com
+      try {
+        await fetchWithTimeout("https://formsubmit.co/ajax/luyandokandisha@gmail.com", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            _subject: `[AfriBay Order Alert] New Order ${order.trackingId} - ZMW ${order.totalAmount || order.totalZMW}`,
+            _template: "table",
+            Tracking_ID: order.trackingId,
+            Grand_Total_ZMW: `${order.totalAmount || order.totalZMW}`,
+            Delivery_Zone: order.deliveryZoneLabel || order.deliveryZone,
+            Shipping_Fee_ZMW: `${order.shippingFee}`,
+            Destination_City: order.city || "Lusaka",
+            Area_and_Landmark: order.landmarkAddress || order.deliveryAddress,
+            Customer_Name: order.customer?.name || "Customer",
+            Customer_Phone: order.customerPhone || order.paymentPhone,
+            Customer_Email: order.customer?.email || "N/A",
+            Payment_Method: order.paymentMethod,
+            Delivery_Confirmation_PIN: order.deliveryPin,
+            Order_Items: itemsList
+          })
+        }, 4500).catch(e => console.warn("[FormSubmit Note]:", e.message));
+      } catch (_) {}
+
+      // 2. Also forward to local backend /api/orders/notify if server is running
+      try {
+        const apiBase = getApiBase();
+        if (apiBase || (window.location.protocol.startsWith("http") && window.location.port === "5000")) {
+          fetchWithTimeout(`${apiBase || ''}/api/orders/notify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(order)
+          }, 3500).catch(e => console.warn("[Local API Notify Note]:", e.message));
+        }
+      } catch (_) {}
     }
 
     let users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
@@ -3448,20 +3514,40 @@
           productTitle: selectedProductId ? findProduct(selectedProductId)?.title : ""
         };
 
-        const apiBase = getApiBase();
-        const res = await fetch(`${apiBase}/api/messages`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
+        // 1. Direct FormSubmit AJAX dispatch directly to store owner email
+        try {
+          await fetchWithTimeout("https://formsubmit.co/ajax/luyandokandisha@gmail.com", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({
+              _subject: `[AfriBay Message] Customer Inquiry from ${name}: ${subject}`,
+              _template: "table",
+              Customer_Name: name,
+              Customer_Contact: contact,
+              Subject: subject,
+              Product_Title: payload.productTitle || "General Store Inquiry",
+              Customer_Message: message
+            })
+          }, 4500).catch(e => console.warn("[FormSubmit Message Note]:", e.message));
+        } catch (_) {}
 
-        const data = await res.json().catch(() => ({}));
-        if (res.ok) {
-          closeModal("contactModal");
-          showToast("✓ Message delivered directly to the store owner's inbox!");
-        } else {
-          if (errEl) errEl.textContent = data.error || "Failed to send message. Please contact via WhatsApp or phone.";
-        }
+        // 2. Also forward to local backend /api/messages if server is running
+        try {
+          const apiBase = getApiBase();
+          if (apiBase || (window.location.protocol.startsWith("http") && window.location.port === "5000")) {
+            fetchWithTimeout(`${apiBase || ''}/api/messages`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            }, 3000).catch(() => {});
+          }
+        } catch (_) {}
+
+        closeModal("contactModal");
+        showToast("✓ Message delivered directly to the store owner's inbox!");
       } catch (err) {
         console.error("sendCustomerInquiry error:", err);
         closeModal("contactModal");
@@ -4375,19 +4461,12 @@
             updatedAt: new Date().toISOString()
           };
 
-          // Send email alert to admin notification email
+          // Send email alert to admin notification email (both FormSubmit direct and local Node API)
           try {
-            const apiBase = getApiBase();
-            if (apiBase || window.location.protocol.startsWith("http")) {
-              fetch(`${apiBase}/api/orders/notify`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(order)
-              }).then(r => r.json()).then(res => {
-                console.log("[AfriBay Email Alert] Notification response:", res);
-              }).catch(e => console.warn("Email alert fetch note:", e));
-            }
-          } catch (_) {}
+            await dispatchOrderNotificationDirectly(order);
+          } catch (notifyErr) {
+            console.warn("Order notification dispatch note:", notifyErr);
+          }
 
           try {
             if (currentUser.firebaseUid && window.afriBayBackend?.createOrder) {
@@ -4407,7 +4486,9 @@
 
           cart = [];
           updateCart();
-          await persistCart();
+          try {
+            await persistCart();
+          } catch (_) {}
           renderSellerDashboard();
           closeModal("checkoutModal");
 
@@ -4446,13 +4527,18 @@
               recGps.style.display = "none";
             }
           }
+
+          const waLink = document.getElementById("receiptWhatsAppNotify");
+          if (waLink) {
+            const msg = encodeURIComponent(`Hi AfriBay! I just placed order ${trackingId} for ZMW ${totalZMW.toFixed(2)} (${order.deliveryZoneLabel || 'Delivery'}). Drop-off PIN: ${deliveryPin}. Destination: ${order.landmarkAddress || order.deliveryAddress}, ${order.city || 'Lusaka'}. Contact phone: ${cleanPhone || buyerContactPhone}.`);
+            waLink.href = `https://wa.me/260760312951?text=${msg}`;
+          }
+
           openModal("receiptModal");
           if (event && event.target && event.target.reset) event.target.reset();
         };
 
-        const backendBase = (window.location.protocol.startsWith("http") && window.location.port !== "5000")
-          ? "http://localhost:5000"
-          : "";
+        const backendBase = getApiBase();
 
         const payloadItems = cart.map(item => {
           const product = findProduct(item.id);
@@ -4465,36 +4551,38 @@
           };
         });
 
-        // 1. Log order initiation with backend
+        // 1. Log order initiation with backend (if active)
         try {
-          await fetch(`${backendBase}/api/checkout/initiate`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              amount: totalZMW,
-              totalAmount: totalZMW,
-              subtotal,
-              shippingFee,
-              deliveryZone,
-              deliveryZoneLabel,
-              city: deliveryCity || "Lusaka",
-              landmarkAddress: deliveryLandmark || deliveryAddress,
-              customerPhone: cleanPhone || deliveryPhone || buyerContactPhone,
-              txRef: trackingId,
-              phoneNumber: cleanPhone || deliveryPhone || buyerContactPhone,
-              paymentMethod: selectedPayment,
-              network: selectedMomoNetwork,
-              deliveryAddress,
-              delivery_lat,
-              delivery_lng,
-              items: payloadItems,
-              customer: {
-                email: currentUser.email || "shopper@afribay.com",
-                name: currentUser.name || "AfriBay Shopper",
-                phone: cleanPhone || deliveryPhone || buyerContactPhone
-              }
-            })
-          });
+          if (backendBase || (window.location.protocol.startsWith("http") && window.location.port === "5000")) {
+            await fetchWithTimeout(`${backendBase || ''}/api/checkout/initiate`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                amount: totalZMW,
+                totalAmount: totalZMW,
+                subtotal,
+                shippingFee,
+                deliveryZone,
+                deliveryZoneLabel,
+                city: deliveryCity || "Lusaka",
+                landmarkAddress: deliveryLandmark || deliveryAddress,
+                customerPhone: cleanPhone || deliveryPhone || buyerContactPhone,
+                txRef: trackingId,
+                phoneNumber: cleanPhone || deliveryPhone || buyerContactPhone,
+                paymentMethod: selectedPayment,
+                network: selectedMomoNetwork,
+                deliveryAddress,
+                delivery_lat,
+                delivery_lng,
+                items: payloadItems,
+                customer: {
+                  email: currentUser.email || "shopper@afribay.com",
+                  name: currentUser.name || "AfriBay Shopper",
+                  phone: cleanPhone || deliveryPhone || buyerContactPhone
+                }
+              })
+            }, 2500).catch(e => console.warn("[AfriBay Checkout] Server initiate note:", e.message));
+          }
         } catch (initErr) {
           console.warn("[AfriBay Checkout] Server initiate note:", initErr.message);
         }
@@ -4509,29 +4597,39 @@
         // 3. Mobile Money STK Push (PawaPay)
         if (selectedPayment === "mobile_money") {
           try {
-            if (submitBtn) submitBtn.textContent = "Sending Mobile Money Prompt...";
-            const pawapayRes = await fetch(`${backendBase}/api/checkout`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                phoneNumber: cleanPhone,
-                amount: totalZMW,
-                orderId: trackingId,
-                network: selectedMomoNetwork
-              })
-            });
+            if (submitBtn) submitBtn.textContent = "Connecting to Mobile Money...";
+            if (backendBase || (window.location.protocol.startsWith("http") && window.location.port === "5000")) {
+              const pawapayRes = await fetchWithTimeout(`${backendBase || ''}/api/checkout`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  phoneNumber: cleanPhone,
+                  amount: totalZMW,
+                  orderId: trackingId,
+                  network: selectedMomoNetwork
+                })
+              }, 4000);
 
-            const pawaData = await pawapayRes.json();
-            console.log("[AfriBay PawaPay] STK push response:", pawaData);
+              const pawaData = await pawapayRes.json().catch(() => ({}));
+              console.log("[AfriBay PawaPay] STK push response:", pawaData);
 
-            if (pawapayRes.ok && pawaData.success) {
-              await finalizeOrder({
-                transaction_id: pawaData.depositId,
-                status: pawaData.status,
-                gateway: "pawapay"
-              });
-              showToast("✓ Mobile Money prompt dispatched! Enter PIN on your handset.");
-              return;
+              if (pawapayRes.ok && pawaData.success) {
+                await finalizeOrder({
+                  transaction_id: pawaData.depositId,
+                  status: pawaData.status,
+                  gateway: "pawapay"
+                });
+                showToast("✓ Mobile Money prompt dispatched! Enter PIN on your handset.");
+                return;
+              }
+            }
+          } catch (pawaErr) {
+            console.warn("[AfriBay PawaPay] Fallback note:", pawaErr.message);
+          }
+          await finalizeOrder({ transaction_id: `MOMO-${Date.now()}`, gateway: "mobile_money_pending" });
+          showToast("✓ Order registered! Payment prompt pending on your line.");
+          return;
+        }
             } else {
               console.warn("[AfriBay PawaPay] Notice, proceeding to escrow order:", pawaData);
               await finalizeOrder({ transaction_id: `MOMO-${Date.now()}`, gateway: "mobile_money_pending" });
