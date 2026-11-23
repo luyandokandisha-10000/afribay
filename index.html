@@ -4630,19 +4630,6 @@
           showToast("✓ Order registered! Payment prompt pending on your line.");
           return;
         }
-            } else {
-              console.warn("[AfriBay PawaPay] Notice, proceeding to escrow order:", pawaData);
-              await finalizeOrder({ transaction_id: `MOMO-${Date.now()}`, gateway: "mobile_money_pending" });
-              showToast("✓ Order registered! Payment prompt pending on your line.");
-              return;
-            }
-          } catch (pawaErr) {
-            console.warn("[AfriBay PawaPay] Fallback note:", pawaErr);
-            await finalizeOrder({ transaction_id: `MOMO-${Date.now()}`, gateway: "mobile_money_pending" });
-            showToast("✓ Order registered in Escrow!");
-            return;
-          }
-        }
 
         // 4. Card Payment (Flutterwave)
         if (typeof FlutterwaveCheckout === "function") {
