@@ -533,6 +533,47 @@
               <div id="sellerFulfillmentList" style="display:flex;flex-direction:column;gap:10px;margin-top:14px;"></div>
             </div>
 
+            <!-- Cross-Device Catalog Synchronization (Phone <-> Microsoft Edge / PC) -->
+            <div class="auth-card" id="catalogSyncCard" style="margin-top:18px;border:1px solid #93c5fd;background:linear-gradient(135deg,#eff6ff,#f8fafc);">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+                <div>
+                  <div class="eyebrow" style="color:#2563eb;">Multi-Device Catalog Sync</div>
+                  <h3 style="margin:4px 0 2px;font-size:18px;">Sync Products to Microsoft Edge / PC</h3>
+                  <p style="color:var(--muted);font-size:12px;margin:0;line-height:1.5;">
+                    Listed products on your phone? Instantly copy your 1-click sync link to open on <strong>Microsoft Edge</strong> or any other browser, or paste a sync code below.
+                  </p>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                  <button class="button" type="button" id="copySyncLinkBtn" onclick="copyCatalogSyncLink()" style="background:#2563eb;font-size:12px;padding:8px 14px;">
+                    🔗 Copy 1-Click Sync Link
+                  </button>
+                  <button class="button ghost" type="button" id="copySyncCodeBtn" onclick="copyCatalogSyncCode()" style="font-size:12px;padding:8px 14px;">
+                    📋 Copy Sync Code
+                  </button>
+                  <button class="button ghost" type="button" id="downloadCatalogJsonBtn" onclick="downloadCatalogJson()" style="font-size:12px;padding:8px 14px;">
+                    💾 Download JSON
+                  </button>
+                </div>
+              </div>
+
+              <!-- Paste / Import Box -->
+              <div style="margin-top:14px;padding-top:14px;border-top:1px dashed #bfdbfe;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+                <input type="text" id="catalogSyncCodeInput" placeholder="Paste Sync Code here on Microsoft Edge..." style="flex:1;min-width:220px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;font-family:monospace;" />
+                <button class="button" type="button" id="applySyncCodeBtn" onclick="applyPastedSyncCode()" style="background:#1d4ed8;font-size:12px;padding:8px 16px;">
+                  📥 Import &amp; Merge Products
+                </button>
+                <label class="button ghost" style="margin:0;font-size:12px;padding:8px 12px;cursor:pointer;">
+                  📂 Upload JSON <input type="file" id="uploadCatalogJsonFile" accept=".json" onchange="uploadCatalogJson(event)" style="display:none;" />
+                </label>
+              </div>
+
+              <!-- Firebase Cloud Sync Status & Quick Setup Guide -->
+              <div style="margin-top:12px;padding:10px 12px;background:white;border-radius:8px;border:1px solid #e2e8f0;font-size:12px;color:#334155;line-height:1.5;">
+                <strong>☁️ Automated Cloud Sync Tip:</strong> To have products sync <em>automatically in real-time</em> across all devices without needing to copy sync links:
+                visit <a href="https://console.firebase.google.com/project/afribay/firestore" target="_blank" rel="noopener noreferrer" style="color:#2563eb;font-weight:700;text-decoration:underline;">Firebase Console Firestore Setup</a> and click <strong>"Create Database"</strong> (region: europe-west1). Once created, all phone listings will sync live to Microsoft Edge automatically!
+              </div>
+            </div>
+
             <div class="auth-card" style="margin-top:18px">
               <div class="section-head" style="margin-top:0"><div><h2>Your shop overview</h2><p id="shopStatus">Create a shop to start listing products.</p></div><button class="button ghost" onclick="openListingEditor()">＋ Add new product</button></div>
               <div class="ad-stats" style="margin:16px 0 20px"><div class="stat"><strong id="sellerViews">0</strong><small>Total views</small></div><div class="stat"><strong id="sellerProductCount">0</strong><small>Products</small></div><div class="stat"><strong id="sellerAdCount">0</strong><small>Active video ads</small></div></div>
@@ -3109,7 +3150,7 @@
     }
 
     // Client-side image compression to prevent localStorage QuotaExceededError
-    async function compressImageFile(file, maxWidth = 960, maxHeight = 960, quality = 0.72) {
+    async function compressImageFile(file, maxWidth = 640, maxHeight = 640, quality = 0.65) {
       if (!file || !file.type.startsWith("image/")) return "";
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -3158,8 +3199,8 @@
           break;
         }
         try {
-          // Auto-compress high-res phone camera photos to lightweight ~40-60KB JPEGs
-          const compressedDataUrl = await compressImageFile(file, 960, 960, 0.72);
+          // Auto-compress high-res phone camera photos to lightweight ~25-40KB JPEGs
+          const compressedDataUrl = await compressImageFile(file, 640, 640, 0.65);
           if (compressedDataUrl) {
             pendingListingImages.push({ file, dataUrl: compressedDataUrl, name: file.name });
           }
@@ -3341,7 +3382,7 @@
         let imageUrls = pendingListingImages.map(img => img.dataUrl).filter(Boolean);
         if (singleFile && !imageUrls.length) {
           try {
-            const compressed = await compressImageFile(singleFile, 960, 960, 0.72);
+            const compressed = await compressImageFile(singleFile, 640, 640, 0.65);
             if (compressed) imageUrls.push(compressed);
           } catch (readErr) {
             console.warn("Local image preview notice:", readErr);
@@ -3869,6 +3910,7 @@
             <h3 style="margin:0 0 6px 0;font-size:18px;">Fresh Stock Arriving Soon</h3>
             <p style="color:var(--muted);font-size:13px;max-width:420px;margin:0 auto 16px;">We are currently cataloging exciting new products for the store. Looking for something specific? Message us directly!</p>
             <button class="button" type="button" onclick="openContactModal()" style="padding:10px 22px;font-weight:700;">💬 Message Store Owner →</button>
+            <div style="margin-top:14px;font-size:12px;color:var(--muted);">Store owner on a new device or browser? <a href="javascript:void(0)" onclick="openModal('signinModal')" style="color:var(--green);font-weight:700;text-decoration:underline;">Sign in to Store Admin</a> to sync your product catalog from your phone.</div>
           </div>
         `;
         return;
@@ -4904,9 +4946,11 @@
             updatedAt: new Date().toISOString()
           };
 
-          // Send email alert to admin notification email (both FormSubmit direct and local Node API)
+          // Send email alert in background (non-blocking, fire-and-forget for instant mobile responsiveness)
           try {
-            await dispatchOrderNotificationDirectly(order);
+            dispatchOrderNotificationDirectly(order).catch(notifyErr => {
+              console.warn("Order notification dispatch note:", notifyErr);
+            });
           } catch (notifyErr) {
             console.warn("Order notification dispatch note:", notifyErr);
           }
@@ -4987,6 +5031,10 @@
           if (checkoutForm && window.location.hostname.includes("github.io")) {
             try {
               populateFormSubmitOrderFields(order);
+              if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "✓ Order placed! Redirecting...";
+              }
               HTMLFormElement.prototype.submit.call(checkoutForm);
               return;
             } catch (submitErr) {
@@ -5054,7 +5102,7 @@
         // 3. Mobile Money STK Push (PawaPay)
         if (selectedPayment === "mobile_money") {
           try {
-            if (submitBtn) submitBtn.textContent = "Connecting to Mobile Money...";
+            if (submitBtn) submitBtn.textContent = "Securing order...";
             if (backendBase || (window.location.protocol.startsWith("http") && window.location.port === "5000")) {
               const pawapayRes = await fetchWithTimeout(`${backendBase || ''}/api/checkout`, {
                 method: "POST",
@@ -5084,7 +5132,7 @@
             console.warn("[AfriBay PawaPay] Fallback note:", pawaErr.message);
           }
           await finalizeOrder({ transaction_id: `MOMO-${Date.now()}`, gateway: "mobile_money_pending" });
-          showToast("✓ Order registered! Payment prompt pending on your line.");
+          showToast("✓ Order registered! Redirecting to confirmation...");
           return;
         }
 
@@ -5211,6 +5259,215 @@
     window.openContactModalForProduct = openContactModalForProduct;
     window.sendCustomerInquiry = sendCustomerInquiry;
 
+    // ── Multi-Device Catalog Synchronization (Phone <-> Microsoft Edge / PC) ──
+    function exportCatalogSyncCode() {
+      try {
+        const allProds = getPublicProducts();
+        const prods = (allProds.length ? allProds : products).filter(p => !p.ownerId?.includes("demo"));
+        if (!prods.length) {
+          showToast("No products in catalog to export yet. Add a product first!");
+          return "";
+        }
+        const compact = prods.map(p => ({
+          id: String(p.id),
+          title: p.title || "Product",
+          description: p.description || "",
+          price: Number(p.price || p.priceZMW || 0),
+          priceZMW: Number(p.priceZMW || p.price || 0),
+          category: p.category || "All",
+          categoryCode: p.categoryCode || "clothes",
+          condition: p.condition || "used_good",
+          seller: p.seller || p.shopName || "AfriBay Store",
+          shopName: p.shopName || p.seller || "AfriBay Store",
+          shopId: p.shopId || "afribay-store-official",
+          ownerEmail: p.ownerEmail || OWNER_EMAIL,
+          ownerId: p.ownerId || OWNER_EMAIL,
+          mtnPhone: p.mtnPhone || "0760312951",
+          airtelPhone: p.airtelPhone || "0778085670",
+          contactPhone: p.contactPhone || "0760312951",
+          location: p.location || "Lusaka, Zambia",
+          imageUrls: Array.isArray(p.imageUrls) ? p.imageUrls : [],
+          videoUrl: p.videoUrl || "",
+          art: p.art || "✦",
+          artClass: p.artClass || "t1",
+          viewCount: Number(p.viewCount || 0),
+          createdAt: p.createdAt || Date.now()
+        }));
+        const jsonStr = JSON.stringify(compact);
+        return btoa(unescape(encodeURIComponent(jsonStr)));
+      } catch (e) {
+        console.error("exportCatalogSyncCode error:", e);
+        return "";
+      }
+    }
+
+    function importCatalogData(rawInput, showNotification = true) {
+      try {
+        if (!rawInput) return 0;
+        let jsonStr = rawInput;
+        if (typeof rawInput === "string") {
+          const trimmed = rawInput.trim();
+          if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+            jsonStr = trimmed;
+          } else {
+            try {
+              jsonStr = decodeURIComponent(escape(atob(trimmed)));
+            } catch (_) {
+              jsonStr = decodeURIComponent(trimmed);
+            }
+          }
+        }
+        const parsed = typeof jsonStr === "string" ? JSON.parse(jsonStr) : jsonStr;
+        const items = Array.isArray(parsed) ? parsed : (parsed.products || []);
+        if (!items.length) {
+          if (showNotification) showToast("No products found in sync data.");
+          return 0;
+        }
+
+        const publicProducts = getPublicProducts();
+        const map = new Map();
+        publicProducts.forEach(p => map.set(String(p.id), p));
+        (products || []).forEach(p => map.set(String(p.id), p));
+        (ownProducts || []).forEach(p => map.set(String(p.id), p));
+
+        items.forEach(rawItem => {
+          const item = normalizeRemoteProduct(rawItem);
+          if (item && item.title) {
+            map.set(String(item.id), item);
+            if (isStoreOwner() && !ownProducts.some(op => String(op.id) === String(item.id))) {
+              ownProducts.unshift(item);
+            }
+          }
+        });
+
+        const combined = Array.from(map.values());
+        savePublicProducts(combined);
+        products.length = 0;
+        products.push(...combined);
+
+        persistLocalAccountData();
+        renderProducts();
+        renderSellerDashboard();
+        if (showNotification) {
+          showToast(`🎉 Catalog synchronized! ${items.length} product${items.length === 1 ? '' : 's'} loaded successfully.`);
+        }
+        return items.length;
+      } catch (e) {
+        console.error("importCatalogData error:", e);
+        if (showNotification) showToast("⚠️ Could not import catalog: Invalid sync data.");
+        return 0;
+      }
+    }
+
+    function copyCatalogSyncLink() {
+      const code = exportCatalogSyncCode();
+      if (!code) return;
+      const baseUrl = window.location.origin + window.location.pathname;
+      const syncUrl = `${baseUrl}?sync_catalog=${encodeURIComponent(code)}`;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(syncUrl).then(() => {
+          showToast("📋 1-Click Sync Link copied! Open on Microsoft Edge to import your products.");
+        }).catch(() => {
+          prompt("Copy this 1-Click Sync Link and open on Microsoft Edge:", syncUrl);
+        });
+      } else {
+        prompt("Copy this 1-Click Sync Link and open on Microsoft Edge:", syncUrl);
+      }
+    }
+
+    function copyCatalogSyncCode() {
+      const code = exportCatalogSyncCode();
+      if (!code) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).then(() => {
+          showToast("📋 Catalog Sync Code copied! Paste it into Store Admin on Microsoft Edge.");
+        }).catch(() => {
+          prompt("Copy this Sync Code:", code);
+        });
+      } else {
+        prompt("Copy this Sync Code:", code);
+      }
+    }
+
+    function applyPastedSyncCode() {
+      const input = document.getElementById("catalogSyncCodeInput");
+      const code = input ? input.value.trim() : "";
+      if (!code) {
+        showToast("Please paste a Sync Code into the box first.");
+        return;
+      }
+      const count = importCatalogData(code, true);
+      if (count > 0 && input) {
+        input.value = "";
+      }
+    }
+
+    function downloadCatalogJson() {
+      try {
+        const allProds = getPublicProducts();
+        const prods = (allProds.length ? allProds : products).filter(p => !p.ownerId?.includes("demo"));
+        if (!prods.length) {
+          showToast("No products to download yet. Add a product first!");
+          return;
+        }
+        const blob = new Blob([JSON.stringify(prods, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `afribay-catalog-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast("💾 Catalog JSON downloaded successfully!");
+      } catch (e) {
+        console.error("downloadCatalogJson error:", e);
+        showToast("Could not export catalog file.");
+      }
+    }
+
+    function uploadCatalogJson(event) {
+      try {
+        const file = event?.target?.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const content = e.target.result;
+          const count = importCatalogData(content, true);
+          if (event.target) event.target.value = "";
+        };
+        reader.readAsText(file);
+      } catch (e) {
+        console.error("uploadCatalogJson error:", e);
+        showToast("Could not read catalog file.");
+      }
+    }
+
+    function checkCatalogSyncParam() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const syncData = params.get("sync_catalog") || params.get("import_catalog");
+        if (syncData) {
+          const count = importCatalogData(syncData, true);
+          if (count > 0 && window.history && window.history.replaceState) {
+            const cleanUrl = window.location.pathname + window.location.hash;
+            window.history.replaceState({}, document.title, cleanUrl);
+          }
+        }
+      } catch (err) {
+        console.warn("checkCatalogSyncParam error:", err);
+      }
+    }
+
+    window.exportCatalogSyncCode   = exportCatalogSyncCode;
+    window.importCatalogData        = importCatalogData;
+    window.copyCatalogSyncLink      = copyCatalogSyncLink;
+    window.copyCatalogSyncCode      = copyCatalogSyncCode;
+    window.applyPastedSyncCode      = applyPastedSyncCode;
+    window.downloadCatalogJson      = downloadCatalogJson;
+    window.uploadCatalogJson        = uploadCatalogJson;
+    window.checkCatalogSyncParam    = checkCatalogSyncParam;
+
     function checkOrderSubmittedBanner() {
       try {
         const params = new URLSearchParams(window.location.search);
@@ -5260,7 +5517,7 @@
     window.checkOrderSubmittedBanner = checkOrderSubmittedBanner;
     window.dismissOrderConfirmationBanner = dismissOrderConfirmationBanner;
 
-    renderProducts(); renderSponsoredFeed(); updateCart(); renderAuthUI(); checkOrderSubmittedBanner();
+    renderProducts(); renderSponsoredFeed(); updateCart(); renderAuthUI(); checkOrderSubmittedBanner(); checkCatalogSyncParam();
 
     // Register Progressive Web App Service Worker for offline capability & Google Play TWA
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {

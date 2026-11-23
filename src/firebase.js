@@ -14,6 +14,7 @@ const FIREBASE_CONFIG = {
   authDomain:        "afribay.firebaseapp.com",
   projectId:         "afribay",
   storageBucket:     "afribay.firebasestorage.app",
+  databaseURL:       "https://afribay-default-rtdb.europe-west1.firebasedatabase.app",
 };
 
 const CONFIGURED = true;
