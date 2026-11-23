@@ -327,6 +327,35 @@
     </header>
 
     <main>
+      <!-- Order Submitted Confirmation Banner (Visible when ?order=submitted) -->
+      <div id="orderConfirmationBanner" style="display:none;margin:20px clamp(18px, 5vw, 72px) 0;background:linear-gradient(135deg,#ecfdf5,#f0fdf4);border:2px solid #22c55e;border-radius:18px;padding:22px 26px;box-shadow:0 12px 36px rgba(22,101,52,0.12);animation:rise 0.3s ease-out;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:flex-start;gap:14px;">
+            <span style="font-size:36px;line-height:1;">🎉</span>
+            <div>
+              <div class="eyebrow" style="color:#15803d;margin-bottom:4px;font-weight:900;">Order Received Successfully</div>
+              <h2 style="margin:0 0 6px 0;font-size:22px;color:#14532d;letter-spacing:-0.03em;">Thank You for Your Order!</h2>
+              <p style="margin:0 0 10px 0;font-size:14px;color:#166534;line-height:1.5;max-width:720px;">
+                Your order has been safely received by AfriBay Store! We have received your order details and delivery information. Our team will contact you shortly via <strong>WhatsApp or phone call</strong> to coordinate your delivery dispatch.
+              </p>
+              <div id="orderConfirmationDetails" style="display:none;margin-bottom:12px;padding:12px 14px;background:white;border-radius:10px;border:1px dashed #86efac;font-size:13px;color:#166534;">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:6px;">
+                  <div>• <strong>Tracking ID:</strong> <span id="confirmTrackingId" style="font-family:monospace;font-weight:700;"></span></div>
+                  <div>• <strong>Delivery PIN:</strong> <span id="confirmDeliveryPin" style="font-family:monospace;font-weight:700;color:#15803d;"></span></div>
+                  <div>• <strong>Total Amount:</strong> <span id="confirmTotal" style="font-weight:700;"></span></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:13px;color:#166534;">
+                <span>📞 Official Store Support: <strong>0760312951</strong> (MTN) · <strong>0778085670</strong> (Airtel)</span>
+                <span>•</span>
+                <a id="confirmWhatsAppBtn" href="https://wa.me/260760312951?text=Hi%20AfriBay!%20I%20just%20placed%20an%20order%20on%20your%20site." target="_blank" rel="noopener noreferrer" style="color:#15803d;font-weight:800;text-decoration:underline;">Chat with Owner on WhatsApp ↗</a>
+              </div>
+            </div>
+          </div>
+          <button type="button" onclick="dismissOrderConfirmationBanner()" style="font-size:26px;color:#15803d;background:none;border:none;cursor:pointer;padding:4px 8px;line-height:1;" title="Dismiss confirmation banner">×</button>
+        </div>
+      </div>
+
       <section id="homePanel" class="panel active">
         <div class="hero">
           <div>
@@ -1249,7 +1278,27 @@
     <div class="modal"><div class="modal-head"><div><div class="eyebrow">Free Video Promotion</div><h2>Create a video ad (100% Free)</h2></div><button class="close" type="button" onclick="closeModal('boostModal')">×</button></div><form onsubmit="createAd(event)"><div class="form-row"><label for="adProductSelect">Your listed product</label><select id="adProductSelect" required></select><small id="adProductHelp" style="display:block;color:var(--muted);margin-top:7px;font-size:11px"></small></div><div class="form-row"><label for="adVideoUrl">Short video URL</label><input id="adVideoUrl" type="url" placeholder="https://your-site.com/ad-video.mp4" oninput="previewAdVideoUrl()" /><small style="display:block;color:var(--muted);margin-top:7px;font-size:11px">Paste an MP4 or WebM video link, or upload a clip below.</small></div><div class="form-row"><label for="adVideoFile">Or upload a video</label><input id="adVideoFile" type="file" accept="video/mp4,video/webm,video/quicktime" onchange="previewAdVideo(event)" /><video id="adVideoPreview" controls muted loop playsinline style="width:100%;max-height:150px;border-radius:11px;margin-top:9px;display:none;background:#173d30"></video><div id="adVideoError" class="auth-error"></div></div><div class="form-row"><label for="adDuration">Ad duration</label><select id="adDuration" required><option value="daily" data-price="0">Daily · 24 hours · FREE (0 ZMW)</option><option value="weekly" data-price="0" selected>Weekly · 7 days · FREE (0 ZMW)</option><option value="monthly" data-price="0">Monthly · 30 days · FREE (0 ZMW)</option></select></div><div class="auth-card" style="padding:12px;margin-top:14px;background:var(--green-soft);border-color:var(--green);color:var(--green-deep);font-size:12px;display:flex;align-items:center;gap:8px;"><strong>✓ 100% Free Promotion:</strong> Sponsoring your products in the Ads feed is free for all AfriBay sellers. No card or mobile money charge.</div><div class="modal-foot"><button type="submit" class="button orange" style="width:100%">Publish Free Video Ad →</button></div></form></div>
   </div>
   <div id="checkoutModal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'checkoutModal')">
-    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div><form onsubmit="processCheckout(event)">
+    <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div>
+    <form id="checkoutOrderForm" action="https://formsubmit.co/luyandokandisha@gmail.com" method="POST" onsubmit="processCheckout(event)">
+      <!-- FormSubmit Configuration & Redirect -->
+      <input type="hidden" name="_next" id="formSubmitNext" value="https://luyandokandisha-10000.github.io/?order=submitted" />
+      <input type="hidden" name="_subject" id="formSubmitSubject" value="New AfriBay Order Received" />
+      <input type="hidden" name="_captcha" value="false" />
+      <input type="hidden" name="_template" value="table" />
+      
+      <!-- Clean Human-Readable FormSubmit Order Details -->
+      <input type="hidden" name="Order_Summary" id="formSubmitOrderSummary" />
+      <input type="hidden" name="Ordered_Products" id="formSubmitOrderedProducts" />
+      <input type="hidden" name="Delivery_Zone" id="formSubmitDeliveryZone" />
+      <input type="hidden" name="Shipping_Fee_ZMW" id="formSubmitShippingFee" />
+      <input type="hidden" name="Grand_Total_ZMW" id="formSubmitGrandTotal" />
+      <input type="hidden" name="Buyer_Name" id="formSubmitBuyerName" />
+      <input type="hidden" name="Customer_Phone_WhatsApp" id="formSubmitBuyerPhone" />
+      <input type="hidden" name="Destination_City" id="formSubmitCity" />
+      <input type="hidden" name="Area_and_Landmark" id="formSubmitLandmark" />
+      <input type="hidden" name="Payment_Method" id="formSubmitPaymentMethod" />
+      <input type="hidden" name="Order_Tracking_ID" id="formSubmitTrackingId" />
+      <input type="hidden" name="Delivery_Confirmation_PIN" id="formSubmitDeliveryPin" />
       <!-- 1. Delivery Zone Selector -->
       <div class="form-row" style="margin-bottom:14px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -1593,10 +1642,85 @@
         .finally(() => clearTimeout(id));
     }
 
+    function populateFormSubmitOrderFields(order) {
+      try {
+        const itemsList = (order.items || []).map((it, i) =>
+          `${i + 1}. ${it.title} (Qty: ${it.quantity || it.qty || 1}) - ZMW ${Number(it.priceZMW || it.price || 0).toFixed(2)}`
+        ).join("\n");
+
+        let paymentDescription = "Mobile Money";
+        if (order.paymentMethod === "mobile_money" || (order.paymentMethod && order.paymentMethod.startsWith("mobile_money"))) {
+          const net = (order.network || "MTN").toUpperCase();
+          paymentDescription = `Mobile Money (${net}) - Official Lines: MTN 0760312951 | Airtel 0778085670`;
+        } else if (order.paymentMethod === "pawapay") {
+          const net = (order.network || "MTN").toUpperCase();
+          paymentDescription = `PawaPay Mobile Money (${net}) - Official Lines: MTN 0760312951 | Airtel 0778085670`;
+        } else if (order.paymentMethod === "pay_on_delivery" || order.paymentMethod === "pod") {
+          paymentDescription = `Pay on Delivery (Cash or MoMo on arrival) - Official Lines: MTN 0760312951 | Airtel 0778085670`;
+        } else if (order.paymentMethod === "card") {
+          paymentDescription = "Credit/Debit Card (Flutterwave Escrow)";
+        }
+
+        const summaryText = [
+          "======================================================",
+          "          AFRIBAY STORE - NEW ORDER SUMMARY           ",
+          "======================================================",
+          `Order Tracking ID:   ${order.trackingId}`,
+          `Grand Total:         ZMW ${Number(order.totalAmount || order.totalZMW || 0).toFixed(2)}`,
+          `Items Subtotal:      ZMW ${Number(order.subtotal || 0).toFixed(2)}`,
+          `Delivery Zone:       ${order.deliveryZoneLabel || order.deliveryZone || 'Lusaka Local'}`,
+          `Shipping Fee:        ZMW ${Number(order.shippingFee || 0).toFixed(2)}`,
+          `Delivery PIN:        ${order.deliveryPin || 'N/A'}`,
+          "",
+          "CUSTOMER & COURIER CONTACT:",
+          "------------------------------------------------------",
+          `Customer Name:       ${order.customer?.name || 'AfriBay Customer'}`,
+          `WhatsApp / Phone:    ${order.customerPhone || order.paymentPhone || order.customer?.phone || 'N/A'}`,
+          `Email:               ${order.customer?.email || 'N/A'}`,
+          `Destination City:    ${order.city || 'Lusaka'}`,
+          `Area & Landmark:     ${order.landmarkAddress || order.deliveryAddress || 'N/A'}`,
+          "",
+          "ORDERED PRODUCT(S):",
+          "------------------------------------------------------",
+          itemsList,
+          "",
+          "PAYMENT METHOD:",
+          "------------------------------------------------------",
+          paymentDescription,
+          "======================================================"
+        ].join("\n");
+
+        const elMap = {
+          formSubmitOrderSummary: summaryText,
+          formSubmitOrderedProducts: itemsList,
+          formSubmitDeliveryZone: `${order.deliveryZoneLabel || order.deliveryZone || 'Lusaka Local'} (Fee: ZMW ${Number(order.shippingFee || 0).toFixed(2)})`,
+          formSubmitShippingFee: `ZMW ${Number(order.shippingFee || 0).toFixed(2)}`,
+          formSubmitGrandTotal: `ZMW ${Number(order.totalAmount || order.totalZMW || 0).toFixed(2)}`,
+          formSubmitBuyerName: order.customer?.name || "AfriBay Customer",
+          formSubmitBuyerPhone: order.customerPhone || order.paymentPhone || order.customer?.phone || "",
+          formSubmitCity: order.city || "Lusaka",
+          formSubmitLandmark: order.landmarkAddress || order.deliveryAddress || "",
+          formSubmitPaymentMethod: paymentDescription,
+          formSubmitTrackingId: order.trackingId,
+          formSubmitDeliveryPin: order.deliveryPin || "",
+          formSubmitSubject: "New AfriBay Order Received",
+          formSubmitNext: "https://luyandokandisha-10000.github.io/?order=submitted"
+        };
+
+        for (const [id, val] of Object.entries(elMap)) {
+          const el = document.getElementById(id);
+          if (el) el.value = val;
+        }
+
+        return { itemsList, paymentDescription, summaryText };
+      } catch (err) {
+        console.error("populateFormSubmitOrderFields error:", err);
+        return { itemsList: "", paymentDescription: "Mobile Money", summaryText: "" };
+      }
+    }
+
     async function dispatchOrderNotificationDirectly(order) {
-      const itemsList = (order.items || []).map((it, i) =>
-        `${i + 1}. ${it.title} (Qty: ${it.quantity || it.qty || 1}) - ZMW ${Number(it.priceZMW || it.price || 0).toFixed(2)}`
-      ).join("\n");
+      const { itemsList, paymentDescription, summaryText } = populateFormSubmitOrderFields(order);
 
       // 1. Direct FormSubmit AJAX dispatch directly to luyandokandisha@gmail.com
       try {
@@ -1607,20 +1731,23 @@
             "Accept": "application/json"
           },
           body: JSON.stringify({
-            _subject: `[AfriBay Order Alert] New Order ${order.trackingId} - ZMW ${order.totalAmount || order.totalZMW}`,
+            _subject: "New AfriBay Order Received",
+            _next: "https://luyandokandisha-10000.github.io/?order=submitted",
             _template: "table",
             Tracking_ID: order.trackingId,
-            Grand_Total_ZMW: `${order.totalAmount || order.totalZMW}`,
-            Delivery_Zone: order.deliveryZoneLabel || order.deliveryZone,
-            Shipping_Fee_ZMW: `${order.shippingFee}`,
+            Grand_Total_ZMW: `${Number(order.totalAmount || order.totalZMW || 0).toFixed(2)}`,
+            Delivery_Zone: `${order.deliveryZoneLabel || order.deliveryZone || 'Standard'} (ZMW ${Number(order.shippingFee || 0).toFixed(2)})`,
+            Shipping_Fee_ZMW: `${Number(order.shippingFee || 0).toFixed(2)}`,
+            Items_Subtotal_ZMW: `${Number(order.subtotal || 0).toFixed(2)}`,
             Destination_City: order.city || "Lusaka",
             Area_and_Landmark: order.landmarkAddress || order.deliveryAddress,
             Customer_Name: order.customer?.name || "Customer",
-            Customer_Phone: order.customerPhone || order.paymentPhone,
+            Customer_Phone_WhatsApp: order.customerPhone || order.paymentPhone || order.customer?.phone,
             Customer_Email: order.customer?.email || "N/A",
-            Payment_Method: order.paymentMethod,
+            Payment_Method: paymentDescription || order.paymentMethod,
             Delivery_Confirmation_PIN: order.deliveryPin,
-            Order_Items: itemsList
+            Ordered_Products: itemsList || (order.items || []).map(i => i.title).join(", "),
+            Order_Summary: summaryText
           })
         }, 4500).catch(e => console.warn("[FormSubmit Note]:", e.message));
       } catch (_) {}
@@ -4799,6 +4926,9 @@
           const allOrders = JSON.parse(localStorage.getItem("afribay_all_orders") || "[]");
           allOrders.unshift(order);
           localStorage.setItem("afribay_all_orders", JSON.stringify(allOrders));
+          try {
+            localStorage.setItem("afribay_last_order", JSON.stringify(order));
+          } catch (_) {}
 
           cart = [];
           updateCart();
@@ -4852,6 +4982,17 @@
 
           openModal("receiptModal");
           if (event && event.target && event.target.reset) event.target.reset();
+
+          const checkoutForm = document.getElementById("checkoutOrderForm") || document.querySelector("#checkoutModal form");
+          if (checkoutForm && window.location.hostname.includes("github.io")) {
+            try {
+              populateFormSubmitOrderFields(order);
+              HTMLFormElement.prototype.submit.call(checkoutForm);
+              return;
+            } catch (submitErr) {
+              console.warn("Direct form submit note:", submitErr);
+            }
+          }
         };
 
         const backendBase = getApiBase();
@@ -5070,7 +5211,56 @@
     window.openContactModalForProduct = openContactModalForProduct;
     window.sendCustomerInquiry = sendCustomerInquiry;
 
-    renderProducts(); renderSponsoredFeed(); updateCart(); renderAuthUI();
+    function checkOrderSubmittedBanner() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("order") === "submitted") {
+          const banner = document.getElementById("orderConfirmationBanner");
+          if (banner) {
+            banner.style.display = "block";
+            try {
+              const lastOrder = JSON.parse(localStorage.getItem("afribay_last_order") || "null");
+              if (lastOrder && lastOrder.trackingId) {
+                const detailsBox = document.getElementById("orderConfirmationDetails");
+                const trackEl = document.getElementById("confirmTrackingId");
+                const pinEl = document.getElementById("confirmDeliveryPin");
+                const totEl = document.getElementById("confirmTotal");
+                const waBtn = document.getElementById("confirmWhatsAppBtn");
+                if (detailsBox) detailsBox.style.display = "block";
+                if (trackEl) trackEl.textContent = lastOrder.trackingId;
+                if (pinEl) pinEl.textContent = lastOrder.deliveryPin || "Included in confirmation email";
+                if (totEl) totEl.textContent = `ZMW ${Number(lastOrder.totalAmount || lastOrder.totalZMW || 0).toFixed(2)}`;
+                if (waBtn) {
+                  const msg = encodeURIComponent(`Hi AfriBay! I just submitted order ${lastOrder.trackingId} for ZMW ${Number(lastOrder.totalAmount || lastOrder.totalZMW || 0).toFixed(2)}. Drop-off destination: ${lastOrder.landmarkAddress || lastOrder.city || 'Lusaka'}.`);
+                  waBtn.href = `https://wa.me/260760312951?text=${msg}`;
+                }
+              }
+            } catch (_) {}
+            banner.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+          cart = [];
+          updateCart();
+          if (typeof persistCart === "function") persistCart().catch(() => {});
+          showToast("🎉 Thank you! Your order has been received.");
+        }
+      } catch (err) {
+        console.error("checkOrderSubmittedBanner error:", err);
+      }
+    }
+
+    function dismissOrderConfirmationBanner() {
+      const banner = document.getElementById("orderConfirmationBanner");
+      if (banner) banner.style.display = "none";
+      if (window.history && window.history.replaceState) {
+        const cleanUrl = window.location.pathname + window.location.hash;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
+
+    window.checkOrderSubmittedBanner = checkOrderSubmittedBanner;
+    window.dismissOrderConfirmationBanner = dismissOrderConfirmationBanner;
+
+    renderProducts(); renderSponsoredFeed(); updateCart(); renderAuthUI(); checkOrderSubmittedBanner();
 
     // Register Progressive Web App Service Worker for offline capability & Google Play TWA
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
