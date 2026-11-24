@@ -1,0 +1,137 @@
+rules_version = '2';
+
+// ===============================================================
+// AfriBay Marketplace — Production Cloud Firestore Security Rules
+// ===============================================================
+//
+// Assumed Data Models:
+//
+// Collection: products
+// Document ID: auto-generated or prod_<timestamp>_<hash>
+// Fields:
+//   - id: string (optional)
+//   - title: string (required, 1-120 chars)
+//   - description: string (required)
+//   - price: number (required, > 0)
+//   - priceZMW: number (optional)
+//   - category: string (required)
+//   - categoryCode: string (optional)
+//   - condition: string (optional)
+//   - seller: string (optional)
+//   - shopName: string (optional)
+//   - shopId: string (optional)
+//   - ownerEmail: string (optional)
+//   - ownerId: string (required, immutable)
+//   - location: string (optional)
+//   - imageUrls: list (optional)
+//   - videoUrl: string (optional)
+//   - createdAt: timestamp or number (required)
+//
+// Collection: shops
+// Document ID: auto-generated or custom
+// Fields:
+//   - userId: string (required, owner UID)
+//   - shopName: string (required)
+//   - mtnPhone: string (optional)
+//   - airtelPhone: string (optional)
+//   - contactPhone: string (optional)
+//   - physicalAddress: string (optional)
+//   - status: string (optional)
+//
+// Collection: video_ads
+// Collection: orders
+// Collection: delivery_reports
+// Collection: users
+// Collection: carts
+// ===============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isStoreOwner() {
+      return isAuthenticated() && (
+        (request.auth.token.email != null && request.auth.token.email.lower() == 'luyandokandisha@gmail.com') ||
+        request.auth.uid == 'luyandokandisha@gmail.com'
+      );
+    }
+
+    // ── PRODUCTS ──
+    // Public read so ANY customer or visitor in the world sees the marketplace products
+    match /products/{productId} {
+      allow read: if true;
+
+      allow create: if isAuthenticated() && (
+        isStoreOwner() ||
+        request.resource.data.ownerId == request.auth.uid ||
+        request.resource.data.ownerEmail == request.auth.token.email
+      );
+
+      allow update, delete: if isAuthenticated() && (
+        isStoreOwner() ||
+        resource.data.ownerId == request.auth.uid ||
+        resource.data.ownerEmail == request.auth.token.email
+      );
+    }
+
+    // ── SHOPS ──
+    match /shops/{shopId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && (
+        isStoreOwner() ||
+        request.resource.data.userId == request.auth.uid
+      );
+      allow update, delete: if isAuthenticated() && (
+        isStoreOwner() ||
+        resource.data.userId == request.auth.uid
+      );
+    }
+
+    // ── VIDEO ADS ──
+    match /video_ads/{adId} {
+      allow read: if true;
+      allow write: if isAuthenticated() && (
+        isStoreOwner() ||
+        request.resource.data.createdBy == request.auth.uid ||
+        resource.data.createdBy == request.auth.uid
+      );
+    }
+
+    // ── ORDERS ──
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read, update: if isAuthenticated() && (
+        isStoreOwner() ||
+        resource.data.customer.email == request.auth.token.email ||
+        resource.data.customer.uid == request.auth.uid
+      );
+      allow delete: if isStoreOwner();
+    }
+
+    // ── DELIVERY DELAY REPORTS ──
+    match /delivery_reports/{reportId} {
+      allow create: if true;
+      allow read, update, delete: if isStoreOwner() || (
+        isAuthenticated() && resource.data.buyerUid == request.auth.uid
+      );
+    }
+
+    // ── USERS ──
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isStoreOwner();
+    }
+
+    // ── CARTS ──
+    match /carts/{userId} {
+      allow read, write: if isOwner(userId) || isStoreOwner();
+    }
+  }
+}
