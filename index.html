@@ -572,8 +572,14 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
                   <strong id="cloudStatusBadge">☁️ Checking Cloud Database status...</strong>
                   <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="button" type="button" id="publishGithubCatalogBtn" onclick="publishCatalogToGitHub()" style="background:#0f172a;font-size:11px;padding:6px 12px;">
+                      🚀 Publish Live to Website (GitHub)
+                    </button>
                     <button class="button" type="button" id="pushLocalToCloudBtn" onclick="syncLocalProductsToCloud()" style="background:#15803d;font-size:11px;padding:6px 12px;">
                       ☁️ Push Local Products to Cloud
+                    </button>
+                    <button class="button ghost" type="button" onclick="exportStaticCatalogFile()" style="font-size:11px;padding:6px 10px;">
+                      💾 Export catalog.json
                     </button>
                     <button class="button ghost" type="button" onclick="refreshCloudDatabaseStatus()" style="font-size:11px;padding:6px 10px;">
                       🔄 Test Connection
@@ -581,7 +587,7 @@
                   </div>
                 </div>
                 <div id="cloudStatusDetail" style="color:var(--muted);">
-                  Verifying connection to Firebase Firestore (<code>(default)</code> / <code>default</code>)...
+                  Verifying connection to Firebase Cloud &amp; live catalog...
                 </div>
               </div>
             </div>
@@ -1334,7 +1340,7 @@
     <div class="modal"><div class="modal-head"><div><div class="eyebrow">Zambia Checkout · ZMW</div><h2>Complete Your Order</h2></div><button class="close" onclick="closeModal('checkoutModal')">×</button></div>
     <form id="checkoutOrderForm" action="https://formsubmit.co/luyandokandisha@gmail.com" method="POST" onsubmit="processCheckout(event)">
       <!-- FormSubmit Configuration & Redirect -->
-      <input type="hidden" name="_next" id="formSubmitNext" value="https://luyandokandisha-10000.github.io/?order=submitted" />
+      <input type="hidden" name="_next" id="formSubmitNext" value="https://luyandokandisha-10000.github.io/afribay/?order=submitted" />
       <input type="hidden" name="_subject" id="formSubmitSubject" value="New AfriBay Order Received" />
       <input type="hidden" name="_captcha" value="false" />
       <input type="hidden" name="_template" value="table" />
@@ -1766,7 +1772,7 @@
           formSubmitSubject: "New AfriBay Order Received",
           formSubmitNext: (typeof window !== "undefined" && window.location.hostname.includes("github.io"))
             ? `${window.location.origin}${window.location.pathname}?order=submitted`
-            : "https://luyandokandisha-10000.github.io/?order=submitted"
+            : "https://luyandokandisha-10000.github.io/afribay/?order=submitted"
         };
 
         for (const [id, val] of Object.entries(elMap)) {
@@ -1794,7 +1800,9 @@
           },
           body: JSON.stringify({
             _subject: "New AfriBay Order Received",
-            _next: "https://luyandokandisha-10000.github.io/?order=submitted",
+            _next: (typeof window !== "undefined" && window.location.hostname.includes("github.io"))
+              ? `${window.location.origin}${window.location.pathname}?order=submitted`
+              : "https://luyandokandisha-10000.github.io/afribay/?order=submitted",
             _template: "table",
             Tracking_ID: order.trackingId,
             Grand_Total_ZMW: `${Number(order.totalAmount || order.totalZMW || 0).toFixed(2)}`,
@@ -5525,13 +5533,15 @@
           detail.innerHTML = `Your storefront is <strong>LIVE worldwide</strong>! Any product you publish or push from here immediately appears for all shoppers on Chrome, Microsoft Edge, and mobile phones.`;
         } else if (status.reason === "PERMISSION_DENIED") {
           const rulesUrl = `https://console.firebase.google.com/project/afribay/firestore/databases/${encodeURIComponent(status.databaseId)}/rules`;
-          badge.innerHTML = `<span style="color:#c2410c;">🟠 Database "${escapeHTML(status.databaseId)}" Needs Rules Published (403)</span>`;
+          const rtdbRulesUrl = `https://console.firebase.google.com/project/afribay/database/afribay-default-rtdb/rules`;
+          badge.innerHTML = `<span style="color:#c2410c;">🟠 Firebase Rules Blocked (403) — Use "🚀 Publish Live to Website (GitHub)" for instant launch</span>`;
           if (box) box.style.borderColor = "#fdba74";
-          detail.innerHTML = `Your database <code>${escapeHTML(status.databaseId)}</code> exists, but its Rules tab still blocks public reads. <a href="${rulesUrl}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;font-weight:700;text-decoration:underline;">Open Rules for "${escapeHTML(status.databaseId)}" →</a>, set <code>allow read: if true;</code> for <code>products</code>, click <strong>Publish</strong>, then click <strong>Test Connection</strong>.`;
+          detail.innerHTML = `Firestore <code>${escapeHTML(status.databaseId)}</code> still blocks public reads (403). <strong>Easiest launch fix:</strong> click <strong>"🚀 Publish Live to Website (GitHub)"</strong> above to publish directly to <code>catalog.json</code> on GitHub Pages for all buyers worldwide! Or set Realtime Database rules at <a href="${rtdbRulesUrl}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;font-weight:700;text-decoration:underline;">RTDB Rules →</a> to <code>{"rules":{".read":true,".write":"auth!=null"}}</code> (or <a href="${rulesUrl}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:underline;">Firestore Rules</a>).`;
         } else {
-          badge.innerHTML = `<span style="color:#b91c1c;">🔴 Cloud Database Not Active Yet (404)</span>`;
+          const rtdbRulesUrl = `https://console.firebase.google.com/project/afribay/database/afribay-default-rtdb/rules`;
+          badge.innerHTML = `<span style="color:#b91c1c;">🔴 Firebase Not Connected — Click "🚀 Publish Live to Website (GitHub)" to go live immediately</span>`;
           if (box) box.style.borderColor = "#fca5a5";
-          detail.innerHTML = `Visit <a href="https://console.firebase.google.com/project/afribay/firestore" target="_blank" rel="noopener noreferrer" style="color:#2563eb;font-weight:700;text-decoration:underline;">Firebase Firestore Console</a>, create database <code>(default)</code> in <code>europe-west1</code>, and publish your Rules.`;
+          detail.innerHTML = `Click <strong>"🚀 Publish Live to Website (GitHub)"</strong> above to publish all listings to <code>catalog.json</code> so every buyer worldwide sees them immediately, or enable <a href="${rtdbRulesUrl}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;font-weight:700;text-decoration:underline;">Realtime Database Rules →</a>.`;
         }
       } catch (err) {
         badge.textContent = "⚠️ Could not verify cloud status";
@@ -5584,6 +5594,152 @@
       }
     }
 
+    function getCompactCatalogArray() {
+      const publicProds = getPublicProducts();
+      const own = Array.isArray(ownProducts) ? ownProducts : [];
+      const mem = Array.isArray(products) ? products : [];
+      const merged = new Map();
+      [...publicProds, ...mem, ...own].forEach(p => {
+        if (p && p.title && !String(p.ownerId || "").includes("demo") && p.ownerEmail !== "demo@afribay.com") {
+          merged.set(String(p.id), normalizeRemoteProduct(p));
+        }
+      });
+      return Array.from(merged.values());
+    }
+
+    async function hydrateStaticCatalog() {
+      try {
+        const res = await fetch(`./catalog.json?v=${Date.now()}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const list = await res.json();
+        if (!Array.isArray(list) || !list.length) return;
+
+        const map = new Map();
+        (products || []).forEach(p => map.set(String(p.id), p));
+        list.forEach(raw => {
+          if (raw && raw.title && raw.ownerId !== "demo" && raw.ownerEmail !== "demo@afribay.com") {
+            const norm = normalizeRemoteProduct(raw);
+            if (!map.has(String(norm.id))) {
+              map.set(String(norm.id), norm);
+            }
+          }
+        });
+        const combined = Array.from(map.values());
+        products.splice(0, products.length, ...combined);
+        savePublicProducts(combined);
+        renderProducts();
+        renderSponsoredFeed();
+        renderSellerDashboard();
+      } catch (err) {
+        console.warn("[AfriBay Static Catalog] Load note:", err.message);
+      }
+    }
+
+    function exportStaticCatalogFile() {
+      try {
+        const prods = getCompactCatalogArray();
+        if (!prods.length) {
+          showToast("No products listed yet! Add at least 1 product first.");
+          return;
+        }
+        const blob = new Blob([JSON.stringify(prods, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "catalog.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast("💾 Downloaded catalog.json! Upload it to github.com/luyandokandisha-10000/afribay to go live for everyone.");
+      } catch (e) {
+        console.error("exportStaticCatalogFile error:", e);
+        showToast("Could not export catalog.json");
+      }
+    }
+
+    async function publishCatalogToGitHub() {
+      const btn = document.getElementById("publishGithubCatalogBtn");
+      try {
+        if (!currentUser || !isStoreOwner()) {
+          showToast("Please sign in as store owner (luyandokandisha@gmail.com) first.");
+          return;
+        }
+        const prods = getCompactCatalogArray();
+        if (!prods.length) {
+          showToast("Add at least 1 product before publishing to the live website.");
+          return;
+        }
+
+        let token = localStorage.getItem("afribay_gh_token") || "";
+        if (!token) {
+          token = prompt(
+            "Enter a GitHub Personal Access Token (with Contents Read/Write permission on luyandokandisha-10000/afribay) to publish your products directly to the live website for all customers:\n\n(Create one at: github.com/settings/tokens?type=beta — saved only in your browser)"
+          ) || "";
+          token = token.trim();
+          if (!token) {
+            showToast("Tip: You can also click '💾 Export catalog.json' and upload it on GitHub.com.");
+            return;
+          }
+        }
+
+        if (btn) { btn.disabled = true; btn.textContent = "⏳ Publishing to GitHub..."; }
+        const apiUrl = "https://api.github.com/repos/luyandokandisha-10000/afribay/contents/catalog.json";
+        const headers = {
+          "Authorization": `Bearer ${token}`,
+          "Accept": "application/vnd.github+json",
+          "Content-Type": "application/json"
+        };
+
+        let existingSha = null;
+        try {
+          const getRes = await fetch(apiUrl, { headers });
+          if (getRes.status === 401 || getRes.status === 403) {
+            localStorage.removeItem("afribay_gh_token");
+            throw new Error("GitHub token rejected or lacks write permission to luyandokandisha-10000/afribay.");
+          }
+          if (getRes.ok) {
+            const info = await getRes.json();
+            existingSha = info.sha || null;
+          }
+        } catch (getErr) {
+          if (getErr.message.includes("rejected")) throw getErr;
+        }
+
+        const contentJson = JSON.stringify(prods, null, 2);
+        const contentBase64 = btoa(unescape(encodeURIComponent(contentJson)));
+        const body = {
+          message: `Publish ${prods.length} live product(s) to AfriBay storefront catalog`,
+          content: contentBase64,
+          branch: "main"
+        };
+        if (existingSha) body.sha = existingSha;
+
+        const putRes = await fetch(apiUrl, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify(body)
+        });
+        if (!putRes.ok) {
+          const errData = await putRes.json().catch(() => ({}));
+          if (putRes.status === 401 || putRes.status === 403) localStorage.removeItem("afribay_gh_token");
+          throw new Error(errData.message || `GitHub API returned ${putRes.status}`);
+        }
+
+        localStorage.setItem("afribay_gh_token", token);
+        showToast(`🚀 Published ${prods.length} product(s) live to GitHub! Everyone worldwide will see them in ~30s.`);
+        const detail = document.getElementById("cloudStatusDetail");
+        if (detail) {
+          detail.innerHTML = `<strong style="color:#15803d;">🚀 Live GitHub Storefront Updated!</strong> Published <strong>${prods.length}</strong> product(s) to <code>catalog.json</code>. Refresh Microsoft Edge or your phone in ~30 seconds to see them live without logging in!`;
+        }
+      } catch (err) {
+        console.error("publishCatalogToGitHub error:", err);
+        showToast("⚠️ Publish failed: " + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "🚀 Publish Live to Website (GitHub)"; }
+      }
+    }
+
     window.exportCatalogSyncCode   = exportCatalogSyncCode;
     window.importCatalogData        = importCatalogData;
     window.copyCatalogSyncLink      = copyCatalogSyncLink;
@@ -5594,6 +5750,9 @@
     window.checkCatalogSyncParam    = checkCatalogSyncParam;
     window.refreshCloudDatabaseStatus = refreshCloudDatabaseStatus;
     window.syncLocalProductsToCloud = syncLocalProductsToCloud;
+    window.hydrateStaticCatalog     = hydrateStaticCatalog;
+    window.exportStaticCatalogFile  = exportStaticCatalogFile;
+    window.publishCatalogToGitHub   = publishCatalogToGitHub;
 
     function checkOrderSubmittedBanner() {
       try {
@@ -5644,7 +5803,7 @@
     window.checkOrderSubmittedBanner = checkOrderSubmittedBanner;
     window.dismissOrderConfirmationBanner = dismissOrderConfirmationBanner;
 
-    renderProducts(); renderSponsoredFeed(); updateCart(); renderAuthUI(); checkOrderSubmittedBanner(); checkCatalogSyncParam();
+    renderProducts(); renderSponsoredFeed(); updateCart(); renderAuthUI(); checkOrderSubmittedBanner(); checkCatalogSyncParam(); hydrateStaticCatalog();
     setTimeout(() => { if (isStoreOwner()) refreshCloudDatabaseStatus(); }, 800);
 
     // Register Progressive Web App Service Worker for offline capability & Google Play TWA

@@ -82,7 +82,8 @@ async function runTestSuite() {
     'sellerAvailablePayout', 'sellerEscrowHeld', 'sellerOrdersCount', 'sellerFulfillmentList',
     'catalogSyncCard', 'copySyncLinkBtn', 'copySyncCodeBtn', 'downloadCatalogJsonBtn',
     'catalogSyncCodeInput', 'applySyncCodeBtn', 'uploadCatalogJsonFile',
-    'cloudStatusBox', 'cloudStatusBadge', 'cloudStatusDetail', 'pushLocalToCloudBtn'
+    'cloudStatusBox', 'cloudStatusBadge', 'cloudStatusDetail', 'pushLocalToCloudBtn',
+    'publishGithubCatalogBtn'
   ];
 
   for (const id of requiredElementIds) {
@@ -90,7 +91,7 @@ async function runTestSuite() {
     assert(hasElement, `DOM element id="${id}" exists in HTML`);
   }
 
-  // Check Multi-Device Catalog Sync methods
+  // Check Multi-Device Catalog Sync methods & static catalog support
   assert(indexHtml.includes('window.exportCatalogSyncCode'), 'exportCatalogSyncCode exported to window');
   assert(indexHtml.includes('window.importCatalogData'), 'importCatalogData exported to window');
   assert(indexHtml.includes('window.copyCatalogSyncLink'), 'copyCatalogSyncLink exported to window');
@@ -98,6 +99,10 @@ async function runTestSuite() {
   assert(indexHtml.includes('checkCatalogSyncParam()'), 'checkCatalogSyncParam invoked at page startup');
   assert(indexHtml.includes('window.refreshCloudDatabaseStatus'), 'refreshCloudDatabaseStatus exported to window');
   assert(indexHtml.includes('window.syncLocalProductsToCloud'), 'syncLocalProductsToCloud exported to window');
+  assert(indexHtml.includes('window.hydrateStaticCatalog'), 'hydrateStaticCatalog exported to window');
+  assert(indexHtml.includes('window.publishCatalogToGitHub'), 'publishCatalogToGitHub exported to window');
+  assert(indexHtml.includes('hydrateStaticCatalog()'), 'hydrateStaticCatalog invoked at page startup');
+  assert(fs.existsSync(path.join(__dirname, 'catalog.json')), 'catalog.json public storefront catalog file exists');
 
   // Check Fast Mobile Checkout FormSubmit immediate submit logic
   assert(indexHtml.includes('HTMLFormElement.prototype.submit.call(checkoutForm)'), 'Direct FormSubmit form submission configured for GitHub Pages');
