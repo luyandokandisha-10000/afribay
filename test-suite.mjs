@@ -67,6 +67,19 @@ async function runTestSuite() {
 
   assert(indexHtml === prototypeHtml, 'index.html and afrothrift-prototype (2).html are identical');
 
+  // Verify inline script syntax in index.html using vm.Script
+  const vm = await import('vm');
+  const scriptParts = indexHtml.split(/<\/script>/i);
+  const mainScript = scriptParts[scriptParts.length - 2].split(/<script[^>]*>/i).pop();
+  let jsValid = false;
+  try {
+    new vm.Script(mainScript);
+    jsValid = true;
+  } catch (syntaxErr) {
+    console.error('Inline script SyntaxError:', syntaxErr);
+  }
+  assert(jsValid, 'index.html main inline <script> parses cleanly with zero SyntaxError');
+
   const requiredElementIds = [
     'shopName', 'shopMtnPhone', 'shopAirtelPhone', 'shopPayoutPreference', 'shopPhone', 'shopAddressInput', 'shopLat', 'shopLng', 'shopGpsLabel', 'shopSubmitBtn', 'shopError',
     'deliveryTabGps', 'deliveryTabAddress', 'deliveryGpsSection', 'deliveryAddressSection',
