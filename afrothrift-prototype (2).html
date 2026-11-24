@@ -567,10 +567,22 @@
                 </label>
               </div>
 
-              <!-- Firebase Cloud Sync Status & Quick Setup Guide -->
-              <div style="margin-top:12px;padding:10px 12px;background:white;border-radius:8px;border:1px solid #e2e8f0;font-size:12px;color:#334155;line-height:1.5;">
-                <strong>☁️ Automated Cloud Sync Tip:</strong> To have products sync <em>automatically in real-time</em> across all devices without needing to copy sync links:
-                visit <a href="https://console.firebase.google.com/project/afribay/firestore" target="_blank" rel="noopener noreferrer" style="color:#2563eb;font-weight:700;text-decoration:underline;">Firebase Console Firestore Setup</a> and click <strong>"Create Database"</strong> (region: europe-west1). Once created, all phone listings will sync live to Microsoft Edge automatically!
+              <!-- Firebase Cloud Sync Status & 1-Click Push -->
+              <div id="cloudStatusBox" style="margin-top:12px;padding:12px 14px;background:white;border-radius:10px;border:1px solid #cbd5e1;font-size:12px;color:#334155;line-height:1.5;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+                  <strong id="cloudStatusBadge">☁️ Checking Cloud Database status...</strong>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="button" type="button" id="pushLocalToCloudBtn" onclick="syncLocalProductsToCloud()" style="background:#15803d;font-size:11px;padding:6px 12px;">
+                      ☁️ Push Local Products to Cloud
+                    </button>
+                    <button class="button ghost" type="button" onclick="refreshCloudDatabaseStatus()" style="font-size:11px;padding:6px 10px;">
+                      🔄 Test Connection
+                    </button>
+                  </div>
+                </div>
+                <div id="cloudStatusDetail" style="color:var(--muted);">
+                  Verifying connection to Firebase Firestore (<code>(default)</code> / <code>default</code>)...
+                </div>
               </div>
             </div>
 
@@ -1501,6 +1513,7 @@
   <script type="module">
     import { auth, googleProvider } from "./src/firebase.js";
     import {
+      checkCloudConnectionStatus,
       createOrder,
       createProduct,
       createShop,
@@ -1584,14 +1597,18 @@
           if (window.syncFirebaseUser) window.syncFirebaseUser(user);
           if (user) {
             try {
-              await upsertUserProfile(user);
-              await hydrateMarketplace();
-              const [shop, ownProducts, cartItems] = await Promise.all([
+              const results = await Promise.allSettled([
+                upsertUserProfile(user),
+                hydrateMarketplace(),
                 loadUserShop(user.uid),
                 loadUserProducts(user.uid),
                 loadCart(user.uid)
               ]);
+              const shop = results[2].status === "fulfilled" ? results[2].value : null;
+              const ownProducts = results[3].status === "fulfilled" ? results[3].value : [];
+              const cartItems = results[4].status === "fulfilled" ? results[4].value : [];
               if (window.applyAccountData) window.applyAccountData({ shop, ownProducts, cartItems });
+              if (window.refreshCloudDatabaseStatus) window.refreshCloudDatabaseStatus();
             } catch (error) {
               console.warn("Could not sync AfriBay account data:", error);
             }
@@ -1605,14 +1622,16 @@
     async function hydrateMarketplace() {
       try {
         try { await wipeDummyDataFromFirestore(); } catch (_) {}
-        const [remoteProducts, remoteAds] = await Promise.all([loadProducts(), loadActiveAds()]);
+        const [prodRes, adsRes] = await Promise.allSettled([loadProducts(), loadActiveAds()]);
+        const remoteProducts = prodRes.status === "fulfilled" ? prodRes.value : [];
+        const remoteAds = adsRes.status === "fulfilled" ? adsRes.value : [];
         if (window.applyRemoteMarketplace) window.applyRemoteMarketplace(remoteProducts, remoteAds);
       } catch (error) {
         console.warn("Using local AfriBay preview data until Firestore is available:", error);
       }
     }
     window.afriBayBackend = {
-      createOrder, createProduct, createShop, createVideoAd, hydrateMarketplace,
+      checkCloudConnectionStatus, createOrder, createProduct, createShop, createVideoAd, hydrateMarketplace,
       loadActiveAds, loadCart, loadProducts, loadUserProducts, loadUserShop,
       deleteShop, deleteProduct, reportOrderDelayed,
       saveCart, seedMarketplace, wipeDummyDataFromFirestore, uploadUserMedia,
@@ -1745,7 +1764,9 @@
           formSubmitTrackingId: order.trackingId,
           formSubmitDeliveryPin: order.deliveryPin || "",
           formSubmitSubject: "New AfriBay Order Received",
-          formSubmitNext: "https://luyandokandisha-10000.github.io/?order=submitted"
+          formSubmitNext: (typeof window !== "undefined" && window.location.hostname.includes("github.io"))
+            ? `${window.location.origin}${window.location.pathname}?order=submitted`
+            : "https://luyandokandisha-10000.github.io/?order=submitted"
         };
 
         for (const [id, val] of Object.entries(elMap)) {
@@ -2031,7 +2052,7 @@
     }
     function isValidMediaUrl(url) {
       if (!url || typeof url !== "string") return false;
-      return url.startsWith("data:") || url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("/");
+      return url.startsWith("data:") || url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("/") || url.startsWith("./") || url.startsWith("assets/");
     }
     function imageOrEmoji(product, className = "product-image") {
       const urls = Array.isArray(product.imageUrls) ? product.imageUrls : (product.imageUrl ? [product.imageUrl] : []);
@@ -3432,7 +3453,10 @@
         renderSellerDashboard();
         populateAdProductSelect();
 
-        // 3. Immediately close modal, reset form, and display success toast
+        const queuedImageFiles = pendingListingImages.map(img => img.file).filter(Boolean);
+        if (!queuedImageFiles.length && singleFile) queuedImageFiles.push(singleFile);
+
+        // 3. Immediately close modal, reset form, and update local store UI
         closeModal("listingModal");
         const formEl = document.getElementById("listingForm") || event?.target;
         if (formEl && formEl.reset) formEl.reset();
@@ -3440,14 +3464,14 @@
         pendingListingVideo = { file: null, dataUrl: "", sourceUrl: "" };
         renderListingPhotosPreview();
         clearListingVideo();
-        showToast(`🎉 "${title}" published successfully!`);
+        showToast(`⏳ Publishing "${title}" to live cloud...`);
 
-        // 4. Asynchronously sync to backend REST API & cloud in background (fire-and-forget, with timeouts)
+        // 4. Sync to backend REST API & Cloud Firestore / Realtime DB
         (async () => {
-          // Sync with backend server
+          // Sync with backend server (if running locally or via configured backend)
           try {
             const apiBase = getApiBase();
-            if (apiBase || window.location.protocol.startsWith("http")) {
+            if (apiBase || (window.location.protocol.startsWith("http") && window.location.port === "5000")) {
               fetch(`${apiBase}/api/products`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -3456,13 +3480,13 @@
             }
           } catch (_) {}
 
-          // Cloud Storage upload (bounded 4-second timeout)
-          let uploadedUrl = null;
-          if (singleFile && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
+          // Cloud Storage upload for primary image file (bounded 4-second timeout)
+          if (queuedImageFiles.length && currentUser.firebaseUid && window.afriBayBackend?.uploadUserMedia) {
             try {
-              const uploadP = window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, singleFile, "product-images");
+              const primaryFile = queuedImageFiles[0];
+              const uploadP = window.afriBayBackend.uploadUserMedia(currentUser.firebaseUid, primaryFile, "product-images");
               const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error("Storage timeout")), 4000));
-              uploadedUrl = await Promise.race([uploadP, timeoutP]);
+              const uploadedUrl = await Promise.race([uploadP, timeoutP]);
               if (uploadedUrl) {
                 product.imageUrls = [uploadedUrl, ...product.imageUrls.slice(1)];
                 fullPayload.imageUrls = product.imageUrls;
@@ -3470,22 +3494,29 @@
                 renderProducts();
               }
             } catch (upErr) {
-              console.warn("Cloud storage upload notice:", upErr.message);
+              console.warn("Cloud storage upload notice (using compressed inline image fallback):", upErr.message);
             }
           }
 
-          // Cloud Firestore createProduct (bounded 4-second timeout)
-          if (currentUser.firebaseUid && window.afriBayBackend?.createProduct) {
+          // Cloud Firestore / RTDB createProduct (bounded 6-second timeout)
+          if (window.afriBayBackend?.createProduct) {
             try {
-              const firestoreP = window.afriBayBackend.createProduct(currentUser.firebaseUid, fullPayload);
-              const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error("Firestore timeout")), 4000));
+              const uidForCloud = currentUser.firebaseUid || currentUser.email || OWNER_EMAIL;
+              const firestoreP = window.afriBayBackend.createProduct(uidForCloud, fullPayload);
+              const timeoutP = new Promise((_, rej) => setTimeout(() => rej(new Error("Cloud sync timeout")), 6000));
               const ref = await Promise.race([firestoreP, timeoutP]);
               if (ref && ref.id) {
                 product.id = ref.id;
+                product.cloudSynced = true;
                 persistLocalAccountData();
+                renderSellerDashboard();
+                showToast(`☁️ "${title}" is LIVE in the cloud for all buyers!`);
+                refreshCloudDatabaseStatus();
               }
             } catch (dbErr) {
-              console.warn("Cloud Firestore createProduct notice:", dbErr.message);
+              console.warn("Cloud createProduct failed:", dbErr.message);
+              showToast(`⚠️ "${title}" saved locally only — Cloud Database rejected write (${dbErr.code || dbErr.message}). Check Store Admin -> Cloud Status.`);
+              refreshCloudDatabaseStatus();
             }
           }
         })();
@@ -4946,22 +4977,6 @@
             updatedAt: new Date().toISOString()
           };
 
-          // Send email alert in background (non-blocking, fire-and-forget for instant mobile responsiveness)
-          try {
-            dispatchOrderNotificationDirectly(order).catch(notifyErr => {
-              console.warn("Order notification dispatch note:", notifyErr);
-            });
-          } catch (notifyErr) {
-            console.warn("Order notification dispatch note:", notifyErr);
-          }
-
-          try {
-            if (currentUser.firebaseUid && window.afriBayBackend?.createOrder) {
-              await window.afriBayBackend.createOrder(currentUser.firebaseUid, order);
-            }
-          } catch (error) {
-            console.warn("Saving order to local storage fallback:", error);
-          }
           const key = currentUser.firebaseUid || currentUser.email;
           const priorOrders = JSON.parse(localStorage.getItem(`afribay_orders_${key}`) || "[]");
           priorOrders.unshift(order);
@@ -4976,8 +4991,54 @@
 
           cart = [];
           updateCart();
+
+          const isGitHubPages = typeof window !== "undefined" && window.location.hostname.includes("github.io");
+          const checkoutForm = document.getElementById("checkoutOrderForm") || document.querySelector("#checkoutModal form");
+
+          // Fast path for GitHub Pages / mobile checkout: submit FormSubmit immediately without waiting on slow DB calls
+          if (checkoutForm && isGitHubPages) {
+            try {
+              saveLocalCart();
+              if (currentUser.firebaseUid && window.afriBayBackend?.createOrder) {
+                Promise.resolve(window.afriBayBackend.createOrder(currentUser.firebaseUid, order)).catch(() => {});
+              }
+              populateFormSubmitOrderFields(order);
+              if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = "✓ Order placed! Redirecting...";
+              }
+              HTMLFormElement.prototype.submit.call(checkoutForm);
+              return;
+            } catch (submitErr) {
+              console.warn("Direct form submit note:", submitErr);
+            }
+          }
+
+          // Non-blocking background email + cloud sync for local/Node server path
           try {
-            await persistCart();
+            dispatchOrderNotificationDirectly(order).catch(notifyErr => {
+              console.warn("Order notification dispatch note:", notifyErr);
+            });
+          } catch (notifyErr) {
+            console.warn("Order notification dispatch note:", notifyErr);
+          }
+
+          try {
+            if (currentUser.firebaseUid && window.afriBayBackend?.createOrder) {
+              await Promise.race([
+                window.afriBayBackend.createOrder(currentUser.firebaseUid, order),
+                new Promise(resolve => setTimeout(resolve, 1200))
+              ]);
+            }
+          } catch (error) {
+            console.warn("Saving order to local storage fallback:", error);
+          }
+
+          try {
+            await Promise.race([
+              persistCart(),
+              new Promise(resolve => setTimeout(resolve, 800))
+            ]);
           } catch (_) {}
           renderSellerDashboard();
           closeModal("checkoutModal");
@@ -5026,21 +5087,6 @@
 
           openModal("receiptModal");
           if (event && event.target && event.target.reset) event.target.reset();
-
-          const checkoutForm = document.getElementById("checkoutOrderForm") || document.querySelector("#checkoutModal form");
-          if (checkoutForm && window.location.hostname.includes("github.io")) {
-            try {
-              populateFormSubmitOrderFields(order);
-              if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.textContent = "✓ Order placed! Redirecting...";
-              }
-              HTMLFormElement.prototype.submit.call(checkoutForm);
-              return;
-            } catch (submitErr) {
-              console.warn("Direct form submit note:", submitErr);
-            }
-          }
         };
 
         const backendBase = getApiBase();
@@ -5459,6 +5505,85 @@
       }
     }
 
+    async function refreshCloudDatabaseStatus() {
+      const badge = document.getElementById("cloudStatusBadge");
+      const detail = document.getElementById("cloudStatusDetail");
+      const box = document.getElementById("cloudStatusBox");
+      if (!badge || !detail) return;
+
+      if (!window.afriBayBackend?.checkCloudConnectionStatus) {
+        badge.textContent = "⚪ Checking Cloud module...";
+        return;
+      }
+
+      try {
+        badge.textContent = "⏳ Testing Cloud Database...";
+        const status = await window.afriBayBackend.checkCloudConnectionStatus();
+        if (status.ok) {
+          badge.innerHTML = `<span style="color:#15803d;">🟢 Cloud Database Connected (${escapeHTML(status.databaseId)})</span>`;
+          if (box) box.style.borderColor = "#86efac";
+          detail.innerHTML = `Your storefront is <strong>LIVE worldwide</strong>! Any product you publish or push from here immediately appears for all shoppers on Chrome, Microsoft Edge, and mobile phones.`;
+        } else if (status.reason === "PERMISSION_DENIED") {
+          const rulesUrl = `https://console.firebase.google.com/project/afribay/firestore/databases/${encodeURIComponent(status.databaseId)}/rules`;
+          badge.innerHTML = `<span style="color:#c2410c;">🟠 Database "${escapeHTML(status.databaseId)}" Needs Rules Published (403)</span>`;
+          if (box) box.style.borderColor = "#fdba74";
+          detail.innerHTML = `Your database <code>${escapeHTML(status.databaseId)}</code> exists, but its Rules tab still blocks public reads. <a href="${rulesUrl}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;font-weight:700;text-decoration:underline;">Open Rules for "${escapeHTML(status.databaseId)}" →</a>, set <code>allow read: if true;</code> for <code>products</code>, click <strong>Publish</strong>, then click <strong>Test Connection</strong>.`;
+        } else {
+          badge.innerHTML = `<span style="color:#b91c1c;">🔴 Cloud Database Not Active Yet (404)</span>`;
+          if (box) box.style.borderColor = "#fca5a5";
+          detail.innerHTML = `Visit <a href="https://console.firebase.google.com/project/afribay/firestore" target="_blank" rel="noopener noreferrer" style="color:#2563eb;font-weight:700;text-decoration:underline;">Firebase Firestore Console</a>, create database <code>(default)</code> in <code>europe-west1</code>, and publish your Rules.`;
+        }
+      } catch (err) {
+        badge.textContent = "⚠️ Could not verify cloud status";
+        detail.textContent = err.message;
+      }
+    }
+
+    async function syncLocalProductsToCloud() {
+      const btn = document.getElementById("pushLocalToCloudBtn");
+      try {
+        if (!currentUser || !isStoreOwner()) {
+          showToast("Please sign in as store owner (luyandokandisha@gmail.com) first.");
+          return;
+        }
+        const localProds = (getPublicProducts().length ? getPublicProducts() : products).filter(p => !p.ownerId?.includes("demo"));
+        if (!localProds.length) {
+          showToast("No local products found to push to cloud yet.");
+          return;
+        }
+        if (btn) { btn.disabled = true; btn.textContent = "⏳ Pushing to Cloud..."; }
+        const uid = currentUser.firebaseUid || currentUser.email || OWNER_EMAIL;
+        let synced = 0;
+        let lastErr = "";
+        for (const p of localProds) {
+          try {
+            const payload = { ...p, ownerId: uid, ownerEmail: currentUser.email || OWNER_EMAIL };
+            const res = await window.afriBayBackend.createProduct(uid, payload);
+            if (res && res.id) {
+              p.id = res.id;
+              p.cloudSynced = true;
+              synced++;
+            }
+          } catch (e) {
+            lastErr = e.message || String(e);
+          }
+        }
+        persistLocalAccountData();
+        renderSellerDashboard();
+        if (synced > 0) {
+          showToast(`☁️ Pushed ${synced}/${localProds.length} product(s) to live Cloud!`);
+        } else {
+          showToast(`⚠️ Cloud rejected upload: ${lastErr || "Check Rules tab in Firebase Console"}`);
+        }
+        await refreshCloudDatabaseStatus();
+      } catch (err) {
+        console.error("syncLocalProductsToCloud error:", err);
+        showToast("Cloud sync error: " + err.message);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = "☁️ Push Local Products to Cloud"; }
+      }
+    }
+
     window.exportCatalogSyncCode   = exportCatalogSyncCode;
     window.importCatalogData        = importCatalogData;
     window.copyCatalogSyncLink      = copyCatalogSyncLink;
@@ -5467,6 +5592,8 @@
     window.downloadCatalogJson      = downloadCatalogJson;
     window.uploadCatalogJson        = uploadCatalogJson;
     window.checkCatalogSyncParam    = checkCatalogSyncParam;
+    window.refreshCloudDatabaseStatus = refreshCloudDatabaseStatus;
+    window.syncLocalProductsToCloud = syncLocalProductsToCloud;
 
     function checkOrderSubmittedBanner() {
       try {
@@ -5518,6 +5645,7 @@
     window.dismissOrderConfirmationBanner = dismissOrderConfirmationBanner;
 
     renderProducts(); renderSponsoredFeed(); updateCart(); renderAuthUI(); checkOrderSubmittedBanner(); checkCatalogSyncParam();
+    setTimeout(() => { if (isStoreOwner()) refreshCloudDatabaseStatus(); }, 800);
 
     // Register Progressive Web App Service Worker for offline capability & Google Play TWA
     if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {

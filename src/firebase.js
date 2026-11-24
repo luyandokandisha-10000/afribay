@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────
 // AfriBay — Firebase Production Configuration
-// Connected to Project: afribay (Firebase Auth, Firestore, Storage)
+// Connected to Project: afribay (Firebase Auth, Firestore, Storage, RTDB)
 // ─────────────────────────────────────────────────────────────
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
@@ -19,18 +19,23 @@ const FIREBASE_CONFIG = {
 
 const CONFIGURED = true;
 
-let app, auth, db, storage;
+let app, auth, db, dbNamedDefault, storage;
 
 try {
   app     = initializeApp(FIREBASE_CONFIG);
   auth    = getAuth(app);
   db      = CONFIGURED ? getFirestore(app) : null;
+  try {
+    dbNamedDefault = CONFIGURED ? getFirestore(app, "default") : null;
+  } catch (namedErr) {
+    dbNamedDefault = null;
+  }
   storage = CONFIGURED ? getStorage(app)   : null;
 } catch (err) {
   console.error("[AfriBay] Firebase initialisation failed:", err.message);
-  app = auth = db = storage = null;
+  app = auth = db = dbNamedDefault = storage = null;
 }
 
 export const googleProvider = new GoogleAuthProvider();
-export { app, auth, db, storage };
+export { app, auth, db, dbNamedDefault, storage, FIREBASE_CONFIG };
 export default app;

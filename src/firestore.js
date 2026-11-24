@@ -1,23 +1,21 @@
 // ─────────────────────────────────────────────────────────────
-// AfriBay — Firestore & Storage helpers
+// AfriBay — Firestore, Realtime DB & Storage helpers
 // ─────────────────────────────────────────────────────────────
 import {
   collection, doc, addDoc, setDoc, getDocs, getDoc, updateDoc, deleteDoc,
   query, where, orderBy, limit, serverTimestamp,
-  writeBatch, getCountFromServer
+  writeBatch
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "./firebase.js";
+import { auth, db, dbNamedDefault, storage, FIREBASE_CONFIG } from "./firebase.js";
 
-// ── Guard ─────────────────────────────────────────────────────
-function requireDb() {
-  if (!db) throw new Error("Firestore is not available. Complete the Firebase config in src/firebase.js.");
-  return db;
-}
-function requireStorage() {
-  if (!storage) throw new Error("Firebase Storage is not available. Complete the Firebase config in src/firebase.js.");
-  return storage;
-}
+const PROJECT_ID = FIREBASE_CONFIG.projectId || "afribay";
+const API_KEY = FIREBASE_CONFIG.apiKey || "";
+const RTDB_URL = (FIREBASE_CONFIG.databaseURL || "").replace(/\/$/, "");
+
+let resolvedDbInstance = null;
+let resolvedDbName = "(default)";
+let resolveDbPromise = null;
 
 function withTimeout(promise, ms = 4500) {
   return Promise.race([
@@ -26,9 +24,143 @@ function withTimeout(promise, ms = 4500) {
   ]);
 }
 
+async function probeFirestoreDbId(dbId) {
+  const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+  const timer = controller ? setTimeout(() => controller.abort(), 2500) : null;
+  try {
+    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/${encodeURIComponent(dbId)}/documents/products?pageSize=1&key=${API_KEY}`;
+    const res = await fetch(url, { signal: controller ? controller.signal : undefined });
+    return { dbId, status: res.status, exists: res.status !== 404 };
+  } catch (e) {
+    return { dbId, status: 0, exists: false, error: e.message };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+export async function resolveActiveDb() {
+  if (resolvedDbInstance) return resolvedDbInstance;
+  if (resolveDbPromise) return resolveDbPromise;
+
+  resolveDbPromise = (async () => {
+    try {
+      const [parensProbe, namedDefaultProbe] = await Promise.all([
+        probeFirestoreDbId("(default)"),
+        probeFirestoreDbId("default")
+      ]);
+      if (parensProbe.exists && db) {
+        resolvedDbInstance = db;
+        resolvedDbName = "(default)";
+      } else if (namedDefaultProbe.exists && dbNamedDefault) {
+        resolvedDbInstance = dbNamedDefault;
+        resolvedDbName = "default";
+      } else {
+        resolvedDbInstance = db || dbNamedDefault;
+        resolvedDbName = db ? "(default)" : "default";
+      }
+    } catch (_) {
+      resolvedDbInstance = db || dbNamedDefault;
+    }
+    return resolvedDbInstance;
+  })();
+
+  return resolveDbPromise;
+}
+
+// ── Guard ─────────────────────────────────────────────────────
+function requireDb() {
+  const target = resolvedDbInstance || db || dbNamedDefault;
+  if (!target) throw new Error("Firestore is not available. Complete the Firebase config in src/firebase.js.");
+  return target;
+}
+function requireStorage() {
+  if (!storage) throw new Error("Firebase Storage is not available. Complete the Firebase config in src/firebase.js.");
+  return storage;
+}
+
+async function getIdTokenSafe() {
+  try {
+    if (auth && auth.currentUser) {
+      return await withTimeout(auth.currentUser.getIdToken(), 2500);
+    }
+  } catch (_) {}
+  return "";
+}
+
+async function rtdbRequest(path, method = "GET", body = null, token = "") {
+  if (!RTDB_URL) return null;
+  const authQuery = token ? `?auth=${encodeURIComponent(token)}` : "";
+  const res = await withTimeout(fetch(`${RTDB_URL}/${path}.json${authQuery}`, {
+    method,
+    headers: body ? { "Content-Type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined
+  }), 3500);
+  if (!res.ok) {
+    const errText = await res.text().catch(() => String(res.status));
+    throw new Error(`RTDB ${res.status}: ${errText}`);
+  }
+  return res.json();
+}
+
+export async function checkCloudConnectionStatus() {
+  const [parensProbe, namedProbe] = await Promise.all([
+    probeFirestoreDbId("(default)"),
+    probeFirestoreDbId("default")
+  ]);
+
+  let rtdbStatus = { status: 0, ok: false };
+  if (RTDB_URL) {
+    try {
+      const token = await getIdTokenSafe();
+      const authQ = token ? `?auth=${encodeURIComponent(token)}` : "";
+      const r = await withTimeout(fetch(`${RTDB_URL}/products.json${authQ}`), 2500);
+      rtdbStatus = { status: r.status, ok: r.ok };
+    } catch (e) {
+      rtdbStatus = { status: 0, ok: false, error: e.message };
+    }
+  }
+
+  const activeProbe = parensProbe.exists ? parensProbe : (namedProbe.exists ? namedProbe : parensProbe);
+  if (activeProbe.exists && activeProbe.status === 200) {
+    return { ok: true, backend: "firestore", databaseId: activeProbe.dbId, status: 200, message: `Cloud Firestore (${activeProbe.dbId}) connected & public!` };
+  }
+  if (rtdbStatus.ok) {
+    return { ok: true, backend: "rtdb", databaseId: "realtime-db", status: 200, message: "Firebase Realtime Database connected & live!" };
+  }
+  if (namedProbe.exists && namedProbe.status === 403) {
+    return {
+      ok: false,
+      backend: "firestore",
+      databaseId: "default",
+      status: 403,
+      reason: "PERMISSION_DENIED",
+      message: "Database 'default' exists, but its Security Rules currently block reading products (403 PERMISSION_DENIED)."
+    };
+  }
+  if (parensProbe.exists && parensProbe.status === 403) {
+    return {
+      ok: false,
+      backend: "firestore",
+      databaseId: "(default)",
+      status: 403,
+      reason: "PERMISSION_DENIED",
+      message: "Database '(default)' exists, but its Security Rules currently block reading products (403 PERMISSION_DENIED)."
+    };
+  }
+  return {
+    ok: false,
+    backend: "none",
+    databaseId: "(default)",
+    status: 404,
+    reason: "NOT_FOUND",
+    message: "Cloud Firestore database is not activated yet in Firebase Console."
+  };
+}
+
 // ── User profile ──────────────────────────────────────────────
 export async function upsertUserProfile(user) {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
+  if (!firestore) return;
   await setDoc(
     doc(firestore, "users", user.uid),
     {
@@ -43,7 +175,7 @@ export async function upsertUserProfile(user) {
 }
 
 export async function createShop(uid, { shopName, mtnPhone, airtelPhone, contactPhone, payoutPreference, description, logoUrl, shop_lat, shop_lng, physicalAddress, trialEndsAt, subscriptionStatus }) {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   const now = Date.now();
   const trialExpiry = trialEndsAt || (now + 5 * 24 * 60 * 60 * 1000); // 5-day free trial default
   return withTimeout(addDoc(collection(firestore, "shops"), {
@@ -69,7 +201,7 @@ export async function createShop(uid, { shopName, mtnPhone, airtelPhone, contact
 }
 
 export async function loadUserShop(uid) {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   const snap = await getDocs(
     query(collection(firestore, "shops"), where("userId", "==", uid), limit(1))
   );
@@ -79,14 +211,12 @@ export async function loadUserShop(uid) {
 }
 
 export async function deleteShop(uid, shopId) {
-  const firestore = requireDb();
-  // Delete the shop document
+  const firestore = await resolveActiveDb();
   if (shopId) {
     try {
       await deleteDoc(doc(firestore, "shops", shopId));
     } catch (_) {}
   }
-  // Delete all products associated with this shop or user
   try {
     const snap = await getDocs(
       query(collection(firestore, "products"), where("ownerId", "==", uid))
@@ -102,27 +232,64 @@ export async function deleteShop(uid, shopId) {
 
 // ── Products ──────────────────────────────────────────────────
 export async function createProduct(uid, productData) {
-  const firestore = requireDb();
-  return withTimeout(addDoc(collection(firestore, "products"), {
+  const firestore = await resolveActiveDb();
+  const payload = {
     ...productData,
     ownerId:    uid,
     ownerEmail: productData.ownerEmail || "",
     isFeatured: false,
     viewCount:  0,
-    createdAt:  serverTimestamp(),
-  }), 5000);
+    createdAtMs: Number(productData.createdAt || Date.now()),
+  };
+
+  let fsResult = null;
+  let fsError = null;
+
+  try {
+    const docRef = await withTimeout(addDoc(collection(firestore, "products"), {
+      ...payload,
+      createdAt: serverTimestamp(),
+    }), 5000);
+    fsResult = docRef;
+  } catch (err) {
+    fsError = err;
+    console.warn(`[AfriBay Firestore (${resolvedDbName}) createProduct error]:`, err.message);
+  }
+
+  // Also mirror to Firebase Realtime Database if authenticated & allowed
+  let rtdbId = null;
+  try {
+    const token = await getIdTokenSafe();
+    const safeId = fsResult?.id || productData.id || `prod_${Date.now()}`;
+    await rtdbRequest(`products/${safeId}`, "PUT", { ...payload, id: safeId }, token);
+    rtdbId = safeId;
+  } catch (rtdbErr) {
+    console.warn("[AfriBay RTDB createProduct notice]:", rtdbErr.message);
+  }
+
+  if (fsResult) return fsResult;
+  if (rtdbId) return { id: rtdbId, backend: "rtdb" };
+  throw fsError || new Error("Could not save product to Cloud Database.");
 }
 
 export async function deleteProduct(uid, productId) {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   if (!productId) throw new Error("Missing productId");
-  const prodRef = doc(firestore, "products", productId);
-  await deleteDoc(prodRef);
+  try {
+    const prodRef = doc(firestore, "products", productId);
+    await deleteDoc(prodRef);
+  } catch (e) {
+    console.warn("Firestore deleteProduct note:", e.message);
+  }
+  try {
+    const token = await getIdTokenSafe();
+    await rtdbRequest(`products/${productId}`, "DELETE", null, token);
+  } catch (_) {}
   return { success: true };
 }
 
 export async function reportOrderDelayed(uid, trackingId, reason = "Product has not arrived in more than two days") {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   if (!trackingId) throw new Error("Missing trackingId");
   return addDoc(collection(firestore, "delivery_reports"), {
     buyerUid: uid,
@@ -134,17 +301,62 @@ export async function reportOrderDelayed(uid, trackingId, reason = "Product has 
 }
 
 export async function loadProducts() {
-  const firestore = requireDb();
-  const snap = await getDocs(
-    query(collection(firestore, "products"), orderBy("createdAt", "desc"), limit(80))
-  );
-  return snap.docs
-    .map(d => ({ id: d.id, ...d.data() }))
-    .filter(p => p.ownerId !== "demo" && p.ownerEmail !== "demo@afribay.com");
+  const merged = new Map();
+  let fsError = null;
+
+  try {
+    const firestore = await resolveActiveDb();
+    let snap;
+    try {
+      snap = await withTimeout(
+        getDocs(query(collection(firestore, "products"), orderBy("createdAt", "desc"), limit(80))),
+        4500
+      );
+    } catch (indexOrOrderErr) {
+      // Fallback: fetch collection without orderBy in case docs have mixed createdAt types or missing index
+      snap = await withTimeout(getDocs(collection(firestore, "products")), 4500);
+    }
+    snap.docs.forEach(d => {
+      const data = { id: d.id, ...d.data() };
+      if (data.ownerId !== "demo" && data.ownerEmail !== "demo@afribay.com") {
+        merged.set(String(data.id), data);
+      }
+    });
+  } catch (err) {
+    fsError = err;
+    console.warn(`[AfriBay Firestore (${resolvedDbName}) loadProducts notice]:`, err.message);
+  }
+
+  // Also read from RTDB fallback (public or authenticated)
+  try {
+    const token = await getIdTokenSafe();
+    const rtdbData = await rtdbRequest("products", "GET", null, token);
+    if (rtdbData && typeof rtdbData === "object") {
+      Object.entries(rtdbData).forEach(([key, val]) => {
+        if (val && typeof val === "object" && val.ownerId !== "demo" && val.ownerEmail !== "demo@afribay.com") {
+          const id = val.id || key;
+          if (!merged.has(String(id))) {
+            merged.set(String(id), { ...val, id });
+          }
+        }
+      });
+    }
+  } catch (_) {}
+
+  if (merged.size > 0) {
+    return Array.from(merged.values()).sort((a, b) => {
+      const tA = a.createdAt?.toMillis?.() || Number(a.createdAtMs || a.createdAt || 0);
+      const tB = b.createdAt?.toMillis?.() || Number(b.createdAtMs || b.createdAt || 0);
+      return tB - tA;
+    });
+  }
+
+  if (fsError) throw fsError;
+  return [];
 }
 
 export async function loadUserProducts(uid) {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   const snap = await getDocs(
     query(collection(firestore, "products"), where("ownerId", "==", uid))
   );
@@ -153,7 +365,7 @@ export async function loadUserProducts(uid) {
 
 // ── Video Ads ─────────────────────────────────────────────────
 export async function createVideoAd(uid, { shopId, productId, videoUrl, caption, priceZMW, isPaid, duration }) {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   return withTimeout(addDoc(collection(firestore, "video_ads"), {
     shopId,
     productId,
@@ -168,7 +380,7 @@ export async function createVideoAd(uid, { shopId, productId, videoUrl, caption,
 }
 
 export async function loadActiveAds() {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   const snap = await getDocs(
     query(collection(firestore, "video_ads"), where("isPaid", "==", true), limit(20))
   );
@@ -179,24 +391,22 @@ export async function loadActiveAds() {
 
 // ── Cart ──────────────────────────────────────────────────────
 export async function loadCart(uid) {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   const snap = await getDocs(collection(firestore, "carts", uid, "items"));
   return snap.docs.map(d => ({ ...d.data() }));
 }
 
 export async function saveCart(uid, items) {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   const itemsCol = collection(firestore, "carts", uid, "items");
 
-  // 1. Delete existing cart items
-  const existing = await getDocs(itemsCol);
+  const existing = await withTimeout(getDocs(itemsCol), 2500);
   if (!existing.empty) {
     const deleteBatch = writeBatch(firestore);
     existing.docs.forEach(d => deleteBatch.delete(d.ref));
     await deleteBatch.commit();
   }
 
-  // 2. Write new items
   if (items.length > 0) {
     const writeBatchInst = writeBatch(firestore);
     items.forEach(item => {
@@ -207,13 +417,13 @@ export async function saveCart(uid, items) {
         priceZMW:  Number(item.priceZMW  || 0),
       });
     });
-    await writeBatchInst.commit();
+    await withTimeout(writeBatchInst.commit(), 2500);
   }
 }
 
 // ── Orders & Escrow ──────────────────────────────────────────
 export async function createOrder(uid, order) {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   const deliveryPin = order.deliveryPin || String(Math.floor(100000 + Math.random() * 900000));
   const escrowStatus = order.escrowStatus || "escrow_held";
   const payoutStatus = order.payoutStatus || "held_in_escrow";
@@ -249,10 +459,9 @@ export async function createOrder(uid, order) {
   try {
     const docRef = await withTimeout(
       addDoc(collection(firestore, "orders", uid, "history"), orderRecord),
-      3500
+      2500
     );
 
-    // Also maintain top-level escrow tracking index if trackingId exists
     if (order.trackingId) {
       try {
         await withTimeout(
@@ -261,7 +470,7 @@ export async function createOrder(uid, order) {
             buyerUid: uid,
             orderDocId: docRef?.id || order.trackingId
           }),
-          2500
+          2000
         );
       } catch (_) {}
     }
@@ -274,7 +483,7 @@ export async function createOrder(uid, order) {
 }
 
 export async function assignOrderTransit(uid, orderDocId, riderInfo = {}) {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   const orderRef = doc(firestore, "orders", uid, "history", orderDocId);
   await updateDoc(orderRef, {
     escrowStatus: "in_transit",
@@ -287,7 +496,7 @@ export async function assignOrderTransit(uid, orderDocId, riderInfo = {}) {
 }
 
 export async function verifyDeliveryAndReleaseEscrow(uid, orderDocId, inputPin, verifiedBy = "rider") {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   const orderRef = doc(firestore, "orders", uid, "history", orderDocId);
   const snap = await getDoc(orderRef);
   if (!snap.exists()) {
@@ -309,7 +518,7 @@ export async function verifyDeliveryAndReleaseEscrow(uid, orderDocId, inputPin, 
 }
 
 export async function loadOrders(uid) {
-  const firestore = requireDb();
+  const firestore = await resolveActiveDb();
   const snap = await getDocs(
     query(collection(firestore, "orders", uid, "history"), orderBy("createdAt", "desc"), limit(50))
   );
@@ -317,44 +526,22 @@ export async function loadOrders(uid) {
 }
 
 export async function seedMarketplace() {
-  // Database Cleanup: No fake/dummy products or shops are seeded.
-  // Marketplace starts completely clean for genuine registered sellers and real products.
   return;
 }
 
 export async function wipeDummyDataFromFirestore() {
   try {
-    if (!db) return;
+    const firestore = await resolveActiveDb();
+    if (!firestore) return;
     const dummyOwners = ["demo", "demo@afribay.com"];
     const dummyShops = ["Lusaka Motors", "Mimi's Closet", "SmartHub Zambia", "Second Lap", "Home Tech ZA", "Naya Collective"];
-    
-    // Purge demo products
-    const prodSnap = await getDocs(collection(db, "products"));
-    const deleteBatch = writeBatch(db);
+
+    const prodSnap = await withTimeout(getDocs(collection(firestore, "products")), 3000);
+    const deleteBatch = writeBatch(firestore);
     let count = 0;
     prodSnap.docs.forEach(docSnap => {
       const data = docSnap.data();
       if (dummyOwners.includes(data.ownerId) || dummyOwners.includes(data.ownerEmail) || dummyShops.includes(data.shopName)) {
-        deleteBatch.delete(docSnap.ref);
-        count++;
-      }
-    });
-
-    // Purge demo video ads
-    const adsSnap = await getDocs(collection(db, "video_ads"));
-    adsSnap.docs.forEach(docSnap => {
-      const data = docSnap.data();
-      if (dummyOwners.includes(data.createdBy)) {
-        deleteBatch.delete(docSnap.ref);
-        count++;
-      }
-    });
-
-    // Purge demo shops
-    const shopSnap = await getDocs(collection(db, "shops"));
-    shopSnap.docs.forEach(docSnap => {
-      const data = docSnap.data();
-      if (dummyShops.includes(data.shopName) || dummyOwners.includes(data.userId)) {
         deleteBatch.delete(docSnap.ref);
         count++;
       }

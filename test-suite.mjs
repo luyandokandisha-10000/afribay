@@ -81,7 +81,8 @@ async function runTestSuite() {
     'sellerProducts', 'sellerViews', 'sellerProductCount', 'sellerAdCount',
     'sellerAvailablePayout', 'sellerEscrowHeld', 'sellerOrdersCount', 'sellerFulfillmentList',
     'catalogSyncCard', 'copySyncLinkBtn', 'copySyncCodeBtn', 'downloadCatalogJsonBtn',
-    'catalogSyncCodeInput', 'applySyncCodeBtn', 'uploadCatalogJsonFile'
+    'catalogSyncCodeInput', 'applySyncCodeBtn', 'uploadCatalogJsonFile',
+    'cloudStatusBox', 'cloudStatusBadge', 'cloudStatusDetail', 'pushLocalToCloudBtn'
   ];
 
   for (const id of requiredElementIds) {
@@ -95,14 +96,17 @@ async function runTestSuite() {
   assert(indexHtml.includes('window.copyCatalogSyncLink'), 'copyCatalogSyncLink exported to window');
   assert(indexHtml.includes('window.checkCatalogSyncParam'), 'checkCatalogSyncParam exported to window');
   assert(indexHtml.includes('checkCatalogSyncParam()'), 'checkCatalogSyncParam invoked at page startup');
+  assert(indexHtml.includes('window.refreshCloudDatabaseStatus'), 'refreshCloudDatabaseStatus exported to window');
+  assert(indexHtml.includes('window.syncLocalProductsToCloud'), 'syncLocalProductsToCloud exported to window');
 
   // Check Fast Mobile Checkout FormSubmit immediate submit logic
   assert(indexHtml.includes('HTMLFormElement.prototype.submit.call(checkoutForm)'), 'Direct FormSubmit form submission configured for GitHub Pages');
   assert(indexHtml.includes('submitBtn.textContent = "✓ Order placed! Redirecting..."'), 'Immediate visual feedback on order placement');
 
-  // Check Firebase Realtime Database configuration
+  // Check Firebase Realtime Database & named "default" Firestore DB configuration
   const firebaseConfigCode = fs.readFileSync(path.join(__dirname, 'src', 'firebase.js'), 'utf8');
   assert(firebaseConfigCode.includes('https://afribay-default-rtdb.europe-west1.firebasedatabase.app'), 'Firebase Realtime Database URL configured in src/firebase.js');
+  assert(firebaseConfigCode.includes('getFirestore(app, "default")'), 'Named Firestore database "default" fallback configured in src/firebase.js');
 
   // Check official subscription payment lines
   assert(indexHtml.includes('0760312951'), 'Official MTN subscription line 0760312951 exists in HTML');

@@ -3,7 +3,7 @@
 // Offline resiliency, shell caching, and instant startup
 // ─────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'afribay-cache-v2.0';
+const CACHE_NAME = 'afribay-cache-v2.2';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -69,10 +69,18 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Network-First for dynamic API endpoints & external providers
-  if (url.pathname.startsWith('/api/') || url.hostname.includes('flutterwave') || url.hostname.includes('googleapis') || url.hostname.includes('pawapay')) {
+  // Network-First for dynamic API endpoints, external providers, and local /src/ ES modules
+  if (url.pathname.startsWith('/api/') || url.pathname.includes('/src/') || url.hostname.includes('flutterwave') || url.hostname.includes('googleapis') || url.hostname.includes('pawapay')) {
     event.respondWith(
-      fetch(request).catch(() => caches.match(request))
+      fetch(request)
+        .then(response => {
+          if (response && response.status === 200 && url.pathname.includes('/src/')) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
