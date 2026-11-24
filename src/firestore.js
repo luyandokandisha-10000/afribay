@@ -232,7 +232,6 @@ export async function deleteShop(uid, shopId) {
 
 // ── Products ──────────────────────────────────────────────────
 export async function createProduct(uid, productData) {
-  const firestore = await resolveActiveDb();
   const payload = {
     ...productData,
     ownerId:    uid,
@@ -242,34 +241,37 @@ export async function createProduct(uid, productData) {
     createdAtMs: Number(productData.createdAt || Date.now()),
   };
 
-  let fsResult = null;
-  let fsError = null;
+  const token = await getIdTokenSafe();
+  const safeId = (productData.id && !String(productData.id).includes(".")) ? String(productData.id) : `prod_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
-  try {
-    const docRef = await withTimeout(addDoc(collection(firestore, "products"), {
+  const fsPromise = (async () => {
+    const firestore = await resolveActiveDb();
+    return withTimeout(addDoc(collection(firestore, "products"), {
       ...payload,
       createdAt: serverTimestamp(),
-    }), 5000);
-    fsResult = docRef;
-  } catch (err) {
-    fsError = err;
-    console.warn(`[AfriBay Firestore (${resolvedDbName}) createProduct error]:`, err.message);
-  }
+    }), 3500);
+  })();
 
-  // Also mirror to Firebase Realtime Database if authenticated & allowed
-  let rtdbId = null;
-  try {
-    const token = await getIdTokenSafe();
-    const safeId = fsResult?.id || productData.id || `prod_${Date.now()}`;
+  const rtdbPromise = (async () => {
+    if (!token) {
+      throw new Error("RTDB 401: Sign out and sign back in using Firebase Auth (or Sign in with Google) to upload products to Realtime Database.");
+    }
     await rtdbRequest(`products/${safeId}`, "PUT", { ...payload, id: safeId }, token);
-    rtdbId = safeId;
-  } catch (rtdbErr) {
-    console.warn("[AfriBay RTDB createProduct notice]:", rtdbErr.message);
+    return { id: safeId, backend: "rtdb" };
+  })();
+
+  const [fsOutcome, rtdbOutcome] = await Promise.allSettled([fsPromise, rtdbPromise]);
+
+  if (rtdbOutcome.status === "fulfilled") {
+    return rtdbOutcome.value;
+  }
+  if (fsOutcome.status === "fulfilled") {
+    return fsOutcome.value;
   }
 
-  if (fsResult) return fsResult;
-  if (rtdbId) return { id: rtdbId, backend: "rtdb" };
-  throw fsError || new Error("Could not save product to Cloud Database.");
+  const errMsg = rtdbOutcome.reason?.message || fsOutcome.reason?.message || "Could not save product to Cloud Database.";
+  console.warn("[AfriBay Cloud createProduct error]:", errMsg);
+  throw new Error(errMsg);
 }
 
 export async function deleteProduct(uid, productId) {
@@ -302,46 +304,47 @@ export async function reportOrderDelayed(uid, trackingId, reason = "Product has 
 
 export async function loadProducts() {
   const merged = new Map();
-  let fsError = null;
 
-  try {
+  const fsTask = (async () => {
     const firestore = await resolveActiveDb();
     let snap;
     try {
       snap = await withTimeout(
         getDocs(query(collection(firestore, "products"), orderBy("createdAt", "desc"), limit(80))),
-        4500
+        3500
       );
-    } catch (indexOrOrderErr) {
-      // Fallback: fetch collection without orderBy in case docs have mixed createdAt types or missing index
-      snap = await withTimeout(getDocs(collection(firestore, "products")), 4500);
+    } catch (_) {
+      snap = await withTimeout(getDocs(collection(firestore, "products")), 3500);
     }
-    snap.docs.forEach(d => {
-      const data = { id: d.id, ...d.data() };
-      if (data.ownerId !== "demo" && data.ownerEmail !== "demo@afribay.com") {
-        merged.set(String(data.id), data);
-      }
-    });
-  } catch (err) {
-    fsError = err;
-    console.warn(`[AfriBay Firestore (${resolvedDbName}) loadProducts notice]:`, err.message);
-  }
+    return snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(p => p.ownerId !== "demo" && p.ownerEmail !== "demo@afribay.com");
+  })();
 
-  // Also read from RTDB fallback (public or authenticated)
-  try {
+  const rtdbTask = (async () => {
     const token = await getIdTokenSafe();
     const rtdbData = await rtdbRequest("products", "GET", null, token);
+    const list = [];
     if (rtdbData && typeof rtdbData === "object") {
       Object.entries(rtdbData).forEach(([key, val]) => {
         if (val && typeof val === "object" && val.ownerId !== "demo" && val.ownerEmail !== "demo@afribay.com") {
-          const id = val.id || key;
-          if (!merged.has(String(id))) {
-            merged.set(String(id), { ...val, id });
-          }
+          list.push({ ...val, id: val.id || key });
         }
       });
     }
-  } catch (_) {}
+    return list;
+  })();
+
+  const [fsRes, rtdbRes] = await Promise.allSettled([fsTask, rtdbTask]);
+
+  if (rtdbRes.status === "fulfilled") {
+    rtdbRes.value.forEach(p => merged.set(String(p.id), p));
+  }
+  if (fsRes.status === "fulfilled") {
+    fsRes.value.forEach(p => {
+      if (!merged.has(String(p.id))) merged.set(String(p.id), p);
+    });
+  }
 
   if (merged.size > 0) {
     return Array.from(merged.values()).sort((a, b) => {
@@ -351,16 +354,19 @@ export async function loadProducts() {
     });
   }
 
-  if (fsError) throw fsError;
+  if (rtdbRes.status === "rejected" && fsRes.status === "rejected") {
+    throw rtdbRes.reason || fsRes.reason;
+  }
   return [];
 }
 
 export async function loadUserProducts(uid) {
-  const firestore = await resolveActiveDb();
-  const snap = await getDocs(
-    query(collection(firestore, "products"), where("ownerId", "==", uid))
-  );
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  try {
+    const all = await loadProducts();
+    return all.filter(p => p.ownerId === uid || (p.ownerEmail && p.ownerEmail.toLowerCase() === "luyandokandisha@gmail.com"));
+  } catch (_) {
+    return [];
+  }
 }
 
 // ── Video Ads ─────────────────────────────────────────────────
