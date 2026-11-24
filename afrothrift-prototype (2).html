@@ -473,7 +473,10 @@
                 <div class="member-badge">● Store Owner</div>
                 <h2 id="shopWelcome" style="margin-top:15px">Welcome back</h2>
                 <p id="shopDescription" style="color:var(--muted);font-size:13px;line-height:1.5">AfriBay Store Admin Workspace. Manage your product catalog, orders, and customer inquiries.</p>
-                <button id="shopSetupButton" class="button" onclick="openShopModalSafe()">Edit Store Details →</button>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+                  <button id="shopSetupButton" class="button" onclick="openShopModalSafe()">Edit Store Details →</button>
+                  <button id="resetStoreDataBtn" class="button ghost" type="button" style="color:#b23b3b;border-color:#fca5a5;" onclick="resetStoreAndListings()">🗑️ Reset Store & Clear All Listings</button>
+                </div>
               </div>
               <div class="auth-card">
                 <h3 style="margin-top:0">Selling tools</h3>
@@ -595,7 +598,16 @@
             </div>
 
             <div class="auth-card" style="margin-top:18px">
-              <div class="section-head" style="margin-top:0"><div><h2>Your shop overview</h2><p id="shopStatus">Create a shop to start listing products.</p></div><button id="shopOverviewAddBtn" class="button ghost" onclick="openListingEditor()">＋ Add new product</button></div>
+              <div class="section-head" style="margin-top:0">
+                <div>
+                  <h2>Your shop overview</h2>
+                  <p id="shopStatus">Create a shop to start listing products.</p>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                  <button id="resetAllProductsBtn" class="button ghost" type="button" style="color:#b23b3b;border-color:#fca5a5;font-size:12px;padding:6px 12px;" onclick="resetStoreAndListings()">🗑️ Delete All Listings & Reset Store</button>
+                  <button id="shopOverviewAddBtn" class="button ghost" onclick="openListingEditor()">＋ Add new product</button>
+                </div>
+              </div>
               <div class="ad-stats" style="margin:16px 0 20px"><div class="stat"><strong id="sellerViews">0</strong><small>Total views</small></div><div class="stat"><strong id="sellerProductCount">0</strong><small>Products</small></div><div class="stat"><strong id="sellerAdCount">0</strong><small>Active video ads</small></div></div>
               <div id="sellerProducts"></div>
             </div>
@@ -3092,6 +3104,13 @@
           }
         } catch (_) {}
 
+        // Delete from Firebase Realtime Database
+        try {
+          fetch(`https://afribay-default-rtdb.europe-west1.firebasedatabase.app/products/${encodeURIComponent(productId)}.json`, {
+            method: "DELETE"
+          }).catch(() => {});
+        } catch (_) {}
+
         // Remove from client collections
         const pIdx = products.findIndex(p => String(p.id) === String(productId));
         if (pIdx >= 0) products.splice(pIdx, 1);
@@ -3118,6 +3137,79 @@
     function confirmDeleteCurrentProduct() {
       if (selectedProductId != null) {
         confirmDeleteProduct(selectedProductId);
+      }
+    }
+
+    async function resetStoreAndListings() {
+      const confirmed = window.confirm(
+        "Are you sure you want to delete all current listings and reset the store?\n\nThis will remove all test products and shop data from this browser so you can start completely clean."
+      );
+      if (!confirmed) return;
+
+      try {
+        // 1. Remove from Firestore & RTDB if backend available
+        if (currentUser?.firebaseUid && window.afriBayBackend?.deleteProduct) {
+          const allToDel = [...products, ...ownProducts];
+          for (const p of allToDel) {
+            try {
+              await window.afriBayBackend.deleteProduct(currentUser.firebaseUid, p.id);
+            } catch (_) {}
+          }
+        }
+        if (currentShop && currentUser?.firebaseUid && window.afriBayBackend?.deleteShop) {
+          try {
+            await window.afriBayBackend.deleteShop(currentUser.firebaseUid, currentShop.id);
+          } catch (_) {}
+        }
+
+        // Direct RTDB wipe for products
+        try {
+          fetch("https://afribay-default-rtdb.europe-west1.firebasedatabase.app/products.json", {
+            method: "DELETE"
+          }).catch(() => {});
+        } catch (_) {}
+
+        // 2. Clear in-memory collections
+        products.splice(0, products.length);
+        ownProducts.splice(0, ownProducts.length);
+        cart.splice(0, cart.length);
+        currentShop = null;
+
+        // 3. Clear localStorage keys
+        localStorage.removeItem(PUBLIC_PRODUCTS_KEY);
+        localStorage.removeItem(PUBLIC_SHOPS_KEY);
+        localStorage.removeItem("afribay_cart");
+        localStorage.removeItem("afribay_public_products");
+        localStorage.removeItem("afribay_public_shops");
+
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && (k.startsWith("afribay_products_") || k.startsWith("afribay_shop_"))) {
+            keysToRemove.push(k);
+          }
+        }
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+
+        if (currentUser) {
+          currentUser.shopName = "";
+          localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+          const uIdx = users.findIndex(u => u.email === currentUser.email);
+          if (uIdx >= 0) {
+            users[uIdx].shopName = "";
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+          }
+        }
+
+        persistLocalAccountData();
+        updateCart();
+        renderProducts();
+        renderSellerDashboard();
+        renderAuthUI();
+        showToast("✓ All listings and shop data have been deleted. You have a clean slate!");
+      } catch (err) {
+        console.error("resetStoreAndListings error:", err);
+        showToast("Error resetting store: " + err.message);
       }
     }
 
@@ -5388,6 +5480,10 @@
     window.openContactModal    = openContactModal;
     window.openContactModalForProduct = openContactModalForProduct;
     window.sendCustomerInquiry = sendCustomerInquiry;
+    window.confirmDeleteProduct       = confirmDeleteProduct;
+    window.confirmDeleteCurrentProduct = confirmDeleteCurrentProduct;
+    window.confirmDeleteShop          = confirmDeleteShop;
+    window.resetStoreAndListings      = resetStoreAndListings;
 
     // ── Multi-Device Catalog Synchronization (Phone <-> Microsoft Edge / PC) ──
     function exportCatalogSyncCode() {

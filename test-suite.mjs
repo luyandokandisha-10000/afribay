@@ -96,7 +96,8 @@ async function runTestSuite() {
     'catalogSyncCard', 'copySyncLinkBtn', 'copySyncCodeBtn', 'downloadCatalogJsonBtn',
     'catalogSyncCodeInput', 'applySyncCodeBtn', 'uploadCatalogJsonFile',
     'cloudStatusBox', 'cloudStatusBadge', 'cloudStatusDetail', 'pushLocalToCloudBtn',
-    'publishGithubCatalogBtn', 'topStoreAdminBtn', 'publisherDeviceLockBanner'
+    'publishGithubCatalogBtn', 'topStoreAdminBtn', 'publisherDeviceLockBanner',
+    'resetStoreDataBtn', 'resetAllProductsBtn'
   ];
 
   for (const id of requiredElementIds) {
@@ -116,6 +117,9 @@ async function runTestSuite() {
   assert(indexHtml.includes('window.publishCatalogToGitHub'), 'publishCatalogToGitHub exported to window');
   assert(indexHtml.includes('window.isPcChromeBrowser'), 'isPcChromeBrowser exported to window');
   assert(indexHtml.includes('window.canPublishProducts'), 'canPublishProducts exported to window');
+  assert(indexHtml.includes('window.resetStoreAndListings'), 'resetStoreAndListings exported to window');
+  assert(indexHtml.includes('window.confirmDeleteProduct'), 'confirmDeleteProduct exported to window');
+  assert(indexHtml.includes('window.confirmDeleteShop'), 'confirmDeleteShop exported to window');
   assert(indexHtml.includes('hydrateStaticCatalog()'), 'hydrateStaticCatalog invoked at page startup');
   assert(fs.existsSync(path.join(__dirname, 'catalog.json')), 'catalog.json public storefront catalog file exists');
 
