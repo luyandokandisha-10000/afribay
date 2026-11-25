@@ -3,7 +3,7 @@
 // Offline resiliency, shell caching, and instant startup
 // ─────────────────────────────────────────────────────────────
 
-const CACHE_NAME = 'afribay-cache-v2.5';
+const CACHE_NAME = 'afribay-cache-v2.6';
 const STATIC_ASSETS = [
   './',
   './index.html',

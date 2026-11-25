@@ -480,7 +480,7 @@
               </div>
               <div class="auth-card">
                 <h3 style="margin-top:0">Selling tools</h3>
-                <div class="feature-row" id="createListingToolRow"><div class="feature-icon">＋</div><div><strong>Create a listing</strong><small id="createListingToolHint">Add photos, price, condition, and delivery details (PC Chrome only).</small></div><button id="createListingToolBtn" class="link-btn" onclick="openListingEditor()">Open</button></div>
+                <div class="feature-row" id="createListingToolRow"><div class="feature-icon">＋</div><div><strong>Create a listing</strong><small id="createListingToolHint">Add photos, price, condition, and delivery details (PC Microsoft Edge / Chrome).</small></div><button id="createListingToolBtn" class="link-btn" onclick="openListingEditor()">Open</button></div>
                 <div class="feature-row"><div class="feature-icon">✦</div><div><strong>Promote a product</strong><small>Get more eyes on your best finds.</small></div><button class="link-btn" onclick="showPanel('ads')">Open</button></div>
                 <div class="feature-row"><div class="feature-icon">▣</div><div><strong>Orders & payouts</strong><small>Track sales and fulfillment in one place.</small></div><button class="link-btn" onclick="openOrdersModal()">Open</button></div>
               </div>
@@ -1855,7 +1855,7 @@
     function isStoreOwner() {
       return Boolean(currentUser && currentUser.email && currentUser.email.toLowerCase() === OWNER_EMAIL.toLowerCase());
     }
-    function isPcChromeBrowser() {
+    function isPcAuthorizedBrowser() {
       try {
         if (typeof navigator === "undefined") return false;
         const ua = navigator.userAgent || "";
@@ -1865,16 +1865,28 @@
         const brands = (navigator.userAgentData && Array.isArray(navigator.userAgentData.brands)) ? navigator.userAgentData.brands : [];
         const isEdge = /Edg\//i.test(ua) || /EdgA\//i.test(ua) || /EdgiOS\//i.test(ua) || /Edge\//i.test(ua) ||
           brands.some(b => /Microsoft Edge/i.test(b.brand));
-        if (isEdge) return false;
-        const isOther = /OPR\/|Opera|SamsungBrowser|Vivaldi|YaBrowser|UCBrowser|Firefox/i.test(ua);
-        if (isOther) return false;
-        return /Chrome\//i.test(ua) || brands.some(b => /Google Chrome|Chromium/i.test(b.brand));
+        const isChrome = /Chrome\//i.test(ua) || brands.some(b => /Google Chrome|Chromium/i.test(b.brand));
+        return isEdge || isChrome;
+      } catch (_) {
+        return false;
+      }
+    }
+    function isPcChromeBrowser() {
+      return isPcAuthorizedBrowser();
+    }
+    function isPcEdgeBrowser() {
+      try {
+        if (typeof navigator === "undefined") return false;
+        const ua = navigator.userAgent || "";
+        const brands = (navigator.userAgentData && Array.isArray(navigator.userAgentData.brands)) ? navigator.userAgentData.brands : [];
+        return /Edg\//i.test(ua) || /EdgA\//i.test(ua) || /EdgiOS\//i.test(ua) || /Edge\//i.test(ua) ||
+          brands.some(b => /Microsoft Edge/i.test(b.brand));
       } catch (_) {
         return false;
       }
     }
     function canPublishProducts() {
-      return isStoreOwner() && isPcChromeBrowser();
+      return isStoreOwner() && isPcAuthorizedBrowser();
     }
 
     /**
@@ -2447,24 +2459,25 @@
         const toolHint = document.getElementById("createListingToolHint");
         if (lockBanner) {
           if (canPub) {
+            const browserName = isPcEdgeBrowser() ? "Microsoft Edge" : "PC Desktop";
             lockBanner.style.background = "linear-gradient(135deg,#ecfdf5,#f0fdf4)";
             lockBanner.style.borderColor = "#86efac";
-            lockBanner.innerHTML = `<div><strong style="color:#15803d;">🔓 PC Chrome Publisher Active</strong><br><small style="color:#166534;">Signed in as <strong>${escapeHTML(OWNER_EMAIL)}</strong> on Google Chrome (PC). Every product you publish here appears everywhere (Edge, mobile phones, and all buyers).</small></div>`;
+            lockBanner.innerHTML = `<div><strong style="color:#15803d;">🔓 PC Store Admin Active (${browserName})</strong><br><small style="color:#166534;">Signed in as <strong>${escapeHTML(OWNER_EMAIL)}</strong> on ${browserName} (PC). Every product you publish or manage here syncs live to all customers across Edge, Chrome, and mobile devices.</small></div>`;
           } else {
             lockBanner.style.background = "#fffbeb";
             lockBanner.style.borderColor = "#fcd34d";
-            lockBanner.innerHTML = `<div><strong style="color:#b45309;">🔒 Read-Only View (Publishing Locked to PC Google Chrome)</strong><br><small style="color:#92400e;">You are signed in as <strong>${escapeHTML(OWNER_EMAIL)}</strong> on Microsoft Edge or a mobile browser. Product publishing/editing is locked here — open Google Chrome on your PC to publish products, and they will appear automatically here and for all customers.</small></div>`;
+            lockBanner.innerHTML = `<div><strong style="color:#b45309;">🔒 Mobile Read-Only View (Publishing Locked to PC Desktop)</strong><br><small style="color:#92400e;">You are signed in as <strong>${escapeHTML(OWNER_EMAIL)}</strong> on a mobile browser. Product publishing and management is locked on mobile — open <strong>Microsoft Edge</strong> (or Chrome) on your PC to publish, edit, or reset products.</small></div>`;
           }
         }
         if (addBtn) {
           addBtn.style.display = canPub ? "inline-flex" : "none";
         }
         if (toolBtn) {
-          toolBtn.textContent = canPub ? "Open" : "PC Chrome Only";
+          toolBtn.textContent = canPub ? "Open" : "PC Only";
           toolBtn.style.opacity = canPub ? "1" : "0.6";
         }
         if (toolHint) {
-          toolHint.textContent = canPub ? "Add photos, price, condition, and delivery details." : "Locked on Edge & Mobile — open Google Chrome on PC to publish.";
+          toolHint.textContent = canPub ? "Add photos, price, condition, and delivery details." : "Locked on mobile — open Microsoft Edge or Chrome on PC to publish.";
         }
         const guestSettingsMenu = document.getElementById("guestSettingsMenu"); if (guestSettingsMenu) guestSettingsMenu.style.display = signedIn ? "none" : "block";
         const avatarButton = document.getElementById("avatarButton"); if (avatarButton) avatarButton.textContent = signedIn ? initials(currentUser.name) : "AF";
@@ -3078,7 +3091,7 @@
     async function confirmDeleteProduct(productId) {
       if (!productId) return;
       if (!canPublishProducts()) {
-        return showToast("🔒 Deleting products is locked to luyandokandisha@gmail.com on PC Google Chrome.");
+        return showToast("🔒 Deleting products is locked to luyandokandisha@gmail.com on PC (Microsoft Edge or Chrome).");
       }
       const target = findProduct(productId);
       const title = target ? target.title : "this product";
@@ -3305,8 +3318,8 @@
       if (!isStoreOwner()) {
         return showToast("Only the store owner (luyandokandisha@gmail.com) can publish products.");
       }
-      if (!isPcChromeBrowser()) {
-        return showToast("🔒 Publishing is locked to Google Chrome on PC. Switch to Chrome on your PC to publish products.");
+      if (!canPublishProducts()) {
+        return showToast("🔒 Publishing is locked to PC desktop (Microsoft Edge or Chrome). Open on PC to publish products.");
       }
       if (!currentShop) {
         currentShop = {
@@ -3502,8 +3515,8 @@
           showToast("Only the store owner can publish products.");
           return;
         }
-        if (!isPcChromeBrowser()) {
-          const msg = "🔒 Publishing is only allowed from Google Chrome on PC. Switch to PC Chrome to publish.";
+        if (!canPublishProducts()) {
+          const msg = "🔒 Publishing is only allowed from PC (Microsoft Edge or Chrome). Open on PC to publish.";
           setAuthError("listingError", msg);
           showToast(msg);
           return;
@@ -3702,7 +3715,7 @@
           return;
         }
         if (!canPublishProducts()) {
-          showToast("🔒 Promoting & publishing products is locked to luyandokandisha@gmail.com on PC Google Chrome.");
+          showToast("🔒 Promoting & publishing products is locked to luyandokandisha@gmail.com on PC (Microsoft Edge or Chrome).");
           return;
         }
         populateAdProductSelect();
@@ -4098,15 +4111,15 @@
         grid.innerHTML = canPublishProducts() ? `
           <div class="empty" style="padding:48px 16px;text-align:center;grid-column:1/-1;">
             <div style="font-size:40px;margin-bottom:8px">🛍️</div>
-            <h3 style="margin:0 0 6px 0;font-size:18px;">Your Storefront is Ready (PC Chrome Publisher)</h3>
-            <p style="color:var(--muted);font-size:13px;max-width:380px;margin:0 auto 16px;">Welcome, Store Owner! Add your products here on PC Chrome and they will appear on Microsoft Edge, phones, and for all customers.</p>
+            <h3 style="margin:0 0 6px 0;font-size:18px;">Your Storefront is Ready (PC Publisher Active)</h3>
+            <p style="color:var(--muted);font-size:13px;max-width:380px;margin:0 auto 16px;">Welcome, Store Owner! Add your products here on PC (Microsoft Edge or Chrome) and they will appear for all customers across Edge, Chrome, and mobile devices.</p>
             <button class="button" type="button" onclick="openListingEditor()" style="padding:10px 22px;font-weight:700;">＋ Add First Product →</button>
           </div>
         ` : (isStoreOwner() ? `
           <div class="empty" style="padding:48px 16px;text-align:center;grid-column:1/-1;">
             <div style="font-size:40px;margin-bottom:8px">🔒</div>
             <h3 style="margin:0 0 6px 0;font-size:18px;">No Cloud Products Loaded Yet</h3>
-            <p style="color:var(--muted);font-size:13px;max-width:420px;margin:0 auto 16px;">Product publishing is locked to Google Chrome on your PC. Open your PC Chrome, sign in as <strong>luyandokandisha@gmail.com</strong>, and publish or push your listings to cloud.</p>
+            <p style="color:var(--muted);font-size:13px;max-width:420px;margin:0 auto 16px;">Product publishing is locked on mobile. Open Microsoft Edge or Chrome on your PC, sign in as <strong>luyandokandisha@gmail.com</strong>, and publish or push your listings to cloud.</p>
             <button class="button ghost" type="button" onclick="window.afriBayBackend?.hydrateMarketplace?.()" style="padding:10px 22px;font-weight:700;">🔄 Refresh Storefront</button>
           </div>
         ` : `
@@ -5476,6 +5489,8 @@
     window.savePrivacySetting  = savePrivacySetting;
     window.isStoreOwner        = isStoreOwner;
     window.isPcChromeBrowser   = isPcChromeBrowser;
+    window.isPcAuthorizedBrowser = isPcAuthorizedBrowser;
+    window.isPcEdgeBrowser     = isPcEdgeBrowser;
     window.canPublishProducts  = canPublishProducts;
     window.openContactModal    = openContactModal;
     window.openContactModalForProduct = openContactModalForProduct;
@@ -5728,8 +5743,8 @@
           showToast("Please sign in as store owner (luyandokandisha@gmail.com) first.");
           return;
         }
-        if (!isPcChromeBrowser()) {
-          showToast("🔒 Cloud pushing is locked to Google Chrome on PC.");
+        if (!canPublishProducts()) {
+          showToast("🔒 Cloud pushing is locked to Microsoft Edge or Chrome on PC.");
           return;
         }
         const localProds = (getPublicProducts().length ? getPublicProducts() : products).filter(p => !p.ownerId?.includes("demo"));
@@ -5841,8 +5856,8 @@
           showToast("Please sign in as store owner (luyandokandisha@gmail.com) first.");
           return;
         }
-        if (!isPcChromeBrowser()) {
-          showToast("🔒 Publishing live to GitHub is locked to Google Chrome on PC.");
+        if (!canPublishProducts()) {
+          showToast("🔒 Publishing live to GitHub is locked to Microsoft Edge or Chrome on PC.");
           return;
         }
         const prods = getCompactCatalogArray();

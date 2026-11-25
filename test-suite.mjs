@@ -116,6 +116,8 @@ async function runTestSuite() {
   assert(indexHtml.includes('window.hydrateStaticCatalog'), 'hydrateStaticCatalog exported to window');
   assert(indexHtml.includes('window.publishCatalogToGitHub'), 'publishCatalogToGitHub exported to window');
   assert(indexHtml.includes('window.isPcChromeBrowser'), 'isPcChromeBrowser exported to window');
+  assert(indexHtml.includes('window.isPcAuthorizedBrowser'), 'isPcAuthorizedBrowser exported to window');
+  assert(indexHtml.includes('window.isPcEdgeBrowser'), 'isPcEdgeBrowser exported to window');
   assert(indexHtml.includes('window.canPublishProducts'), 'canPublishProducts exported to window');
   assert(indexHtml.includes('window.resetStoreAndListings'), 'resetStoreAndListings exported to window');
   assert(indexHtml.includes('window.confirmDeleteProduct'), 'confirmDeleteProduct exported to window');
