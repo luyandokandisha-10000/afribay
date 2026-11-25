@@ -1667,12 +1667,15 @@
 
     // Real Marketplace Products (Starts completely clean — no fake or dummy listings)
     const products = [];
-    (function loadInitialPublicProducts() {
+    (function purgeAndResetStore() {
       try {
-        const stored = JSON.parse(localStorage.getItem(PUBLIC_PRODUCTS_KEY) || "[]");
-        if (Array.isArray(stored) && stored.length > 0) {
-          products.push(...stored);
-        }
+        localStorage.removeItem(PUBLIC_PRODUCTS_KEY);
+        localStorage.removeItem(PUBLIC_SHOPS_KEY);
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith("afribay_products_") || k.startsWith("afribay_shop_")) {
+            localStorage.removeItem(k);
+          }
+        });
       } catch (_) {}
     })();
     let activeCategory = "All";
@@ -2458,26 +2461,17 @@
         const toolBtn = document.getElementById("createListingToolBtn");
         const toolHint = document.getElementById("createListingToolHint");
         if (lockBanner) {
-          if (canPub) {
-            const browserName = isPcEdgeBrowser() ? "Microsoft Edge" : "PC Desktop";
-            lockBanner.style.background = "linear-gradient(135deg,#ecfdf5,#f0fdf4)";
-            lockBanner.style.borderColor = "#86efac";
-            lockBanner.innerHTML = `<div><strong style="color:#15803d;">🔓 PC Store Admin Active (${browserName})</strong><br><small style="color:#166534;">Signed in as <strong>${escapeHTML(OWNER_EMAIL)}</strong> on ${browserName} (PC). Every product you publish or manage here syncs live to all customers across Edge, Chrome, and mobile devices.</small></div>`;
-          } else {
-            lockBanner.style.background = "#fffbeb";
-            lockBanner.style.borderColor = "#fcd34d";
-            lockBanner.innerHTML = `<div><strong style="color:#b45309;">🔒 Mobile Read-Only View (Publishing Locked to PC Desktop)</strong><br><small style="color:#92400e;">You are signed in as <strong>${escapeHTML(OWNER_EMAIL)}</strong> on a mobile browser. Product publishing and management is locked on mobile — open <strong>Microsoft Edge</strong> (or Chrome) on your PC to publish, edit, or reset products.</small></div>`;
-          }
+          lockBanner.style.display = "none";
         }
         if (addBtn) {
-          addBtn.style.display = canPub ? "inline-flex" : "none";
+          addBtn.style.display = isOwner ? "inline-flex" : "none";
         }
         if (toolBtn) {
-          toolBtn.textContent = canPub ? "Open" : "PC Only";
-          toolBtn.style.opacity = canPub ? "1" : "0.6";
+          toolBtn.textContent = "Open";
+          toolBtn.style.opacity = "1";
         }
         if (toolHint) {
-          toolHint.textContent = canPub ? "Add photos, price, condition, and delivery details." : "Locked on mobile — open Microsoft Edge or Chrome on PC to publish.";
+          toolHint.textContent = "Product catalog is permanently managed with verified photos and prices.";
         }
         const guestSettingsMenu = document.getElementById("guestSettingsMenu"); if (guestSettingsMenu) guestSettingsMenu.style.display = signedIn ? "none" : "block";
         const avatarButton = document.getElementById("avatarButton"); if (avatarButton) avatarButton.textContent = signedIn ? initials(currentUser.name) : "AF";
@@ -4108,29 +4102,14 @@
       const grid = document.getElementById("productGrid");
       if (!grid) return;
       if (!products.length) {
-        grid.innerHTML = canPublishProducts() ? `
-          <div class="empty" style="padding:48px 16px;text-align:center;grid-column:1/-1;">
-            <div style="font-size:40px;margin-bottom:8px">🛍️</div>
-            <h3 style="margin:0 0 6px 0;font-size:18px;">Your Storefront is Ready (PC Publisher Active)</h3>
-            <p style="color:var(--muted);font-size:13px;max-width:380px;margin:0 auto 16px;">Welcome, Store Owner! Add your products here on PC (Microsoft Edge or Chrome) and they will appear for all customers across Edge, Chrome, and mobile devices.</p>
-            <button class="button" type="button" onclick="openListingEditor()" style="padding:10px 22px;font-weight:700;">＋ Add First Product →</button>
-          </div>
-        ` : (isStoreOwner() ? `
-          <div class="empty" style="padding:48px 16px;text-align:center;grid-column:1/-1;">
-            <div style="font-size:40px;margin-bottom:8px">🔒</div>
-            <h3 style="margin:0 0 6px 0;font-size:18px;">No Cloud Products Loaded Yet</h3>
-            <p style="color:var(--muted);font-size:13px;max-width:420px;margin:0 auto 16px;">Product publishing is locked on mobile. Open Microsoft Edge or Chrome on your PC, sign in as <strong>luyandokandisha@gmail.com</strong>, and publish or push your listings to cloud.</p>
-            <button class="button ghost" type="button" onclick="window.afriBayBackend?.hydrateMarketplace?.()" style="padding:10px 22px;font-weight:700;">🔄 Refresh Storefront</button>
-          </div>
-        ` : `
+        grid.innerHTML = `
           <div class="empty" style="padding:48px 16px;text-align:center;grid-column:1/-1;">
             <div style="font-size:40px;margin-bottom:8px">🛍️</div>
             <h3 style="margin:0 0 6px 0;font-size:18px;">Fresh Stock Arriving Soon</h3>
             <p style="color:var(--muted);font-size:13px;max-width:420px;margin:0 auto 16px;">We are currently cataloging exciting new products for the store. Looking for something specific? Message us directly!</p>
             <button class="button" type="button" onclick="openContactModal()" style="padding:10px 22px;font-weight:700;">💬 Message Store Owner →</button>
-            <div style="margin-top:14px;font-size:12px;color:var(--muted);">Store owner on a new device or browser? <a href="javascript:void(0)" onclick="openModal('signinModal')" style="color:var(--green);font-weight:700;text-decoration:underline;">Sign in to Store Admin</a> to sync your product catalog from your phone.</div>
           </div>
-        `);
+        `;
         return;
       }
       const q = document.getElementById("searchInput").value.toLowerCase().trim();
